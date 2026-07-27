@@ -19,6 +19,9 @@ type HostAuthority = {
   isLocal: boolean;
 };
 
+const CANONICAL_PRODUCTION_ORIGIN =
+  "https://planet-damage-calculator.sk-yaho2026.chatgpt.site";
+
 function normalizeHostname(value: string): string | null {
   const hostname = value.toLowerCase();
 
@@ -88,6 +91,7 @@ function parseHostAuthority(value: string | null): HostAuthority | null {
 
   let hostname: string;
   let portText: string | undefined;
+  let isLocal: boolean;
 
   if (value.startsWith("[")) {
     const match = /^(\[[0-9a-f:.]+\])(?::([0-9]+))?$/i.exec(value);
@@ -101,6 +105,7 @@ function parseHostAuthority(value: string | null): HostAuthority | null {
       return null;
     }
     portText = match[2];
+    isLocal = match[1].toLowerCase() === "[::1]";
   } else {
     const match = /^([^:]+)(?::([0-9]+))?$/.exec(value);
     if (!match) {
@@ -113,6 +118,9 @@ function parseHostAuthority(value: string | null): HostAuthority | null {
     }
     hostname = normalizedHostname;
     portText = match[2];
+    isLocal =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1";
   }
 
   let port = "";
@@ -131,20 +139,15 @@ function parseHostAuthority(value: string | null): HostAuthority | null {
 
   return {
     authority: `${hostname}${port}`,
-    isLocal:
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "[::1]",
+    isLocal,
   };
 }
 
 function requestOrigin(requestHeaders: HeaderReader): URL {
-  const host = parseHostAuthority(requestHeaders.get("host")) ?? {
-    authority: "localhost",
-    isLocal: true,
-  };
-  const protocol = host.isLocal ? "http" : "https";
-  return new URL(`${protocol}://${host.authority}`);
+  const host = parseHostAuthority(requestHeaders.get("host"));
+  return host?.isLocal
+    ? new URL(`http://${host.authority}`)
+    : new URL(CANONICAL_PRODUCTION_ORIGIN);
 }
 
 export function createMetadata(requestHeaders: HeaderReader): Metadata {

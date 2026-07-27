@@ -51,6 +51,47 @@ it("uses the current AP pool as the manual pure-substat maximum", () => {
   });
 });
 
+it("uses a zero AP maximum when an invalid level normalizes to zero", () => {
+  const input = createDefaultInput("corsair");
+  input.character.level = "0";
+  input.character.manualPureSub = "1";
+
+  const normalized = normalizeInput(input);
+
+  expect(normalized.value.character).toMatchObject({
+    level: 0,
+    manualPureSub: 0,
+  });
+  expect(normalized.issues.map(({ path }) => path)).toEqual([
+    "character.level",
+    "character.manualPureSub",
+  ]);
+  expect(normalized.issues[1]).toMatchObject({
+    code: "INVALID_NUMBER",
+    message: "Enter a value from 0 to 0.",
+  });
+});
+
+it("uses a zero AP maximum when a blank level normalizes to zero", () => {
+  const input = createDefaultInput("corsair");
+  input.character.level = "";
+  input.character.manualPureSub = "1";
+
+  expect(normalizeInput(input)).toMatchObject({
+    value: {
+      character: {
+        level: 0,
+        manualPureSub: 0,
+      },
+    },
+    issues: [{
+      path: "character.manualPureSub",
+      code: "INVALID_NUMBER",
+      message: "Enter a value from 0 to 0.",
+    }],
+  });
+});
+
 it("ignores Night Lord stat-window STR validation for other jobs", () => {
   const input = createDefaultInput("corsair");
   input.character.nightLordStrStat = "not-used";

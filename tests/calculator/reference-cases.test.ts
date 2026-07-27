@@ -125,6 +125,27 @@ it("propagates normalization and AP allocation issues", () => {
   ]);
 });
 
+it("returns zero pure stats and attacks when level zero is invalid", () => {
+  const input = createDefaultInput("corsair");
+  input.character.level = "0";
+  input.equipment.weapon!.attackFlat = "100";
+
+  expect(calculateDamageResult(input)).toMatchObject({
+    mainStat: 0,
+    subStat: 0,
+    totalAttack: 100,
+    statAttack: 0,
+    convertedAttack: 0,
+    pureMain: 0,
+    pureSub: 0,
+    issues: [{
+      severity: "error",
+      path: "character.level",
+      code: "INVALID_NUMBER",
+    }],
+  });
+});
+
 it("returns a complete zero-damage result with a missing weapon warning", () => {
   expect(calculateDamageResult(createDefaultInput("corsair"))).toMatchObject({
     mainStat: 899,

@@ -7,12 +7,26 @@ import { createMetadata } from "@/app/layout";
 const title = "플래닛 데미지 계산기";
 const description =
   "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.";
+const canonicalOrigin =
+  "https://planet-damage-calculator.sk-yaho2026.chatgpt.site/";
+const canonicalImage =
+  "https://planet-damage-calculator.sk-yaho2026.chatgpt.site/og.png";
 
 describe("social metadata", () => {
-  it("ignores spoofed forwarded headers and uses the direct Host authority", () => {
+  function expectCanonicalUrls(metadata: ReturnType<typeof createMetadata>) {
+    expect(metadata.openGraph).toMatchObject({
+      url: canonicalOrigin,
+      images: [{ url: canonicalImage }],
+    });
+    expect(metadata.twitter).toMatchObject({
+      images: [{ url: canonicalImage }],
+    });
+  }
+
+  it("uses the canonical production origin despite direct and forwarded spoofing", () => {
     const metadata = createMetadata(new Headers({
-      "host": "official.example:8443",
-      "x-forwarded-host": "evil.example:8080",
+      "host": "evil.example:8443",
+      "x-forwarded-host": "forwarded-evil.example:8080",
       "x-forwarded-proto": "http",
     }));
 
@@ -25,9 +39,9 @@ describe("social metadata", () => {
         siteName: title,
         title,
         description,
-        url: "https://official.example:8443/",
+        url: canonicalOrigin,
         images: [{
-          url: "https://official.example:8443/og.png",
+          url: canonicalImage,
           width: 1536,
           height: 1024,
           alt: title,
@@ -38,7 +52,7 @@ describe("social metadata", () => {
         title,
         description,
         images: [{
-          url: "https://official.example:8443/og.png",
+          url: canonicalImage,
           alt: title,
         }],
       },
@@ -47,12 +61,25 @@ describe("social metadata", () => {
     expect(JSON.stringify(metadata)).not.toContain("http://");
   });
 
+  it("normalizes the exact canonical Host to the canonical production origin", () => {
+    const metadata = createMetadata(new Headers({
+      "host": "planet-damage-calculator.sk-yaho2026.chatgpt.site",
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "http",
+    }));
+
+    expectCanonicalUrls(metadata);
+    expect(JSON.stringify(metadata)).not.toContain("evil.example");
+    expect(JSON.stringify(metadata)).not.toContain("http://");
+  });
+
   it.each([
-    ["localhost", "http://localhost/og.png"],
-    ["localhost:443", "http://localhost:443/og.png"],
-    ["127.0.0.1:3000", "http://127.0.0.1:3000/og.png"],
-    ["[::1]:3100", "http://[::1]:3100/og.png"],
-  ])("uses HTTP only for the explicit local Host %s", (host, imageUrl) => {
+    ["localhost", "http://localhost/", "http://localhost/og.png"],
+    ["localhost:443", "http://localhost:443/", "http://localhost:443/og.png"],
+    ["localhost:65535", "http://localhost:65535/", "http://localhost:65535/og.png"],
+    ["127.0.0.1:3000", "http://127.0.0.1:3000/", "http://127.0.0.1:3000/og.png"],
+    ["[::1]:3100", "http://[::1]:3100/", "http://[::1]:3100/og.png"],
+  ])("uses HTTP only for the explicit local Host %s", (host, origin, imageUrl) => {
     const metadata = createMetadata(new Headers({
       "host": host,
       "x-forwarded-host": "evil.example",
@@ -60,6 +87,12 @@ describe("social metadata", () => {
     }));
 
     expect(metadata.openGraph).toMatchObject({
+      url: origin,
+      images: [{
+        url: imageUrl,
+      }],
+    });
+    expect(metadata.twitter).toMatchObject({
       images: [{
         url: imageUrl,
       }],
@@ -68,21 +101,27 @@ describe("social metadata", () => {
   });
 
   it.each([
-    ["guild.example:8443", "https://guild.example:8443/og.png"],
-    ["guild.example:80", "https://guild.example:80/og.png"],
-    ["[2001:db8::1]:8443", "https://[2001:db8::1]:8443/og.png"],
-  ])("uses HTTPS and preserves the valid Host authority %s", (host, imageUrl) => {
+    ["attacker domain", "evil.example"],
+    ["attacker domain with port", "evil.example:8443"],
+    ["public IPv6", "[2001:db8::1]:8443"],
+    ["alternate IPv6 loopback spelling", "[0:0:0:0:0:0:0:1]:3100"],
+    ["arbitrary ChatGPT Sites domain", "evil.chatgpt.site"],
+    [
+      "canonical lookalike",
+      "planet-damage-calculator.sk-yaho2026.chatgpt.site.evil.example",
+    ],
+    [
+      "canonical Host with a port",
+      "planet-damage-calculator.sk-yaho2026.chatgpt.site:443",
+    ],
+  ])("falls back to the canonical origin for a valid non-loopback Host: %s", (_, host) => {
     const metadata = createMetadata(new Headers({
       "host": host,
       "x-forwarded-host": "evil.example",
       "x-forwarded-proto": "http",
     }));
 
-    expect(metadata.openGraph).toMatchObject({
-      images: [{
-        url: imageUrl,
-      }],
-    });
+    expectCanonicalUrls(metadata);
     expect(JSON.stringify(metadata)).not.toContain("evil.example");
     expect(JSON.stringify(metadata)).not.toContain("http://");
   });
@@ -96,13 +135,18 @@ describe("social metadata", () => {
     ["control character", "official.example\r\nevil.example"],
     ["empty port", "official.example:"],
     ["port zero", "official.example:0"],
+    ["localhost empty port", "localhost:"],
+    ["localhost port zero", "localhost:0"],
+    ["localhost oversized port", "localhost:65536"],
+    ["IPv4 loopback port zero", "127.0.0.1:0"],
+    ["IPv6 loopback port zero", "[::1]:0"],
     ["oversized port", "official.example:65536"],
     ["unbracketed IPv6", "2001:db8::1"],
     ["malformed IPv6", "[::1"],
     ["non-decimal IPv4", "0x7f000001"],
     ["empty DNS label", "official..example"],
     ["invalid DNS label", "-official.example"],
-  ])("uses a local fallback for an invalid direct Host: %s", (_, host) => {
+  ])("uses the canonical fallback for an invalid direct Host: %s", (_, host) => {
     const requestHeaders: Pick<Headers, "get"> = {
       get(name) {
         const values: Record<string, string | null> = {
@@ -116,18 +160,10 @@ describe("social metadata", () => {
 
     const metadata = createMetadata(requestHeaders);
 
-    expect(metadata.openGraph).toMatchObject({
-      url: "http://localhost/",
-      images: [{
-        url: "http://localhost/og.png",
-      }],
-    });
-    expect(metadata.twitter).toMatchObject({
-      images: [{
-        url: "http://localhost/og.png",
-      }],
-    });
+    expectCanonicalUrls(metadata);
     expect(JSON.stringify(metadata)).not.toContain("evil.example");
+    expect(JSON.stringify(metadata)).not.toContain("http://");
+    expect(JSON.stringify(metadata)).not.toContain("localhost");
   });
 
   it("ships the approved social image without changing its bytes", () => {

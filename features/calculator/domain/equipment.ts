@@ -90,6 +90,7 @@ export function sumEquipment(
 }
 
 function apPool(level: number): number {
+  if (!Number.isInteger(level) || level < 1 || level > 200) return 0;
   return level * 5 + (level >= 120 ? 22 : level >= 70 ? 17 : 12);
 }
 
@@ -118,7 +119,7 @@ export function allocatePureStats(input: PureStatAllocationInput): PureStatAlloc
       requirement,
     ));
 
-  const pureSub = input.manualPureSub ?? (() => {
+  const pureSub = pool === 0 ? 0 : input.manualPureSub ?? (() => {
     let candidate = Math.min(input.minimumSub, pool);
     while (candidate < pool && !requirementsMet(candidate)) candidate += 1;
     return candidate;

@@ -72,6 +72,7 @@ export function parseNumber(
 }
 
 function apPool(level: number): number {
+  if (!Number.isInteger(level) || level < 1 || level > 200) return 0;
   return level * 5 + (level >= 120 ? 22 : level >= 70 ? 17 : 12);
 }
 

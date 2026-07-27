@@ -171,6 +171,31 @@ describe("calculator app", () => {
     expect(convertedAttack).not.toHaveTextContent(/^0$/);
   });
 
+  it("shows a level error and zero attacks when level zero is invalid", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await user.type(screen.getByLabelText("무기 공격력"), "100");
+
+    const statAttack = screen.getByLabelText("스탯 공격력 결과");
+    const convertedAttack = screen.getByLabelText("환산 공격력 결과");
+    expect(statAttack).not.toHaveTextContent(/^0$/);
+    expect(convertedAttack).not.toHaveTextContent(/^0$/);
+
+    const level = screen.getByLabelText("레벨");
+    await user.clear(level);
+    await user.type(level, "0");
+
+    expect(level).toHaveAttribute("aria-invalid", "true");
+    const errorId = level.getAttribute("aria-describedby");
+    expect(errorId).not.toBeNull();
+    expect(document.getElementById(errorId!))
+      .toHaveTextContent("Enter a value from 1 to 200.");
+    expect(statAttack).toHaveTextContent(/^0$/);
+    expect(convertedAttack).toHaveTextContent(/^0$/);
+  });
+
   it("offers only the three MVP jobs", () => {
     render(<Page />);
 

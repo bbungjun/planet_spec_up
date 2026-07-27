@@ -91,3 +91,20 @@ it("caps automatic pure-sub allocation at the AP pool when a requirement is impo
     }],
   });
 });
+
+it("allocates no pure stats for normalized invalid level zero", () => {
+  expect(allocatePureStats({
+    level: 0,
+    mapleWarriorRate: 0,
+    minimumSub: 4,
+    equipmentSub: 0,
+    equipmentSubPercent: 0,
+    requirements: [],
+    manualPureSub: 4,
+  })).toMatchObject({
+    pool: 0,
+    pureMain: 0,
+    pureSub: 0,
+    issues: [],
+  });
+});
