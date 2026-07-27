@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
-import RootLayout, { metadata } from "@/app/layout";
+import RootLayout, { PRODUCT_METADATA } from "@/app/layout";
 import Page from "@/app/page";
 import userEvent from "@testing-library/user-event";
 import {
@@ -76,7 +76,7 @@ afterEach(() => {
 
 describe("calculator app", () => {
   it("publishes the Korean product metadata and document language", () => {
-    expect(metadata).toMatchObject({
+    expect(PRODUCT_METADATA).toMatchObject({
       title: "플래닛 데미지 계산기",
       description:
         "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.",
@@ -85,7 +85,7 @@ describe("calculator app", () => {
     const layout = RootLayout({ children: <main>계산기</main> });
     expect(layout.type).toBe("html");
     expect(layout.props.lang).toBe("ko");
-    expect(JSON.stringify(metadata)).not.toContain("codex-preview");
+    expect(JSON.stringify(PRODUCT_METADATA)).not.toContain("codex-preview");
   });
 
   it("uses 44px controls and tabular numerals for editable and result values", () => {
