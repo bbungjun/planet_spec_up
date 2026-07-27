@@ -19,6 +19,10 @@ const decimalFormat = new Intl.NumberFormat("ko-KR", {
   maximumFractionDigits: 4,
 });
 
+const percentFormat = new Intl.NumberFormat("ko-KR", {
+  maximumFractionDigits: 20,
+});
+
 export function ResultsPanel({
   job,
   result,
@@ -75,7 +79,7 @@ export function ResultsPanel({
           </div>
           <div>
             <dt>보공·총뎀 적용값</dt>
-            <dd>{integerFormat.format(result.formulaInputs.bossAndTotalDamage)}%</dd>
+            <dd>{percentFormat.format(result.formulaInputs.bossAndTotalDamage)}%</dd>
           </div>
           <div>
             <dt>순수 주스탯</dt>

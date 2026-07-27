@@ -261,6 +261,25 @@ describe("calculator app", () => {
     expect(within(evidenceRow!).getByText("33%")).toBeInTheDocument();
   });
 
+  it("preserves meaningful decimals in the boss and total damage evidence", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.type(screen.getByLabelText("보스 공격력 및 총데미지"), "20.5");
+    await user.selectOptions(
+      screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
+      "3",
+    );
+    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용"));
+
+    const results = screen.getByRole("complementary", { name: "계산 결과" });
+    const label = within(results).getByText("보공·총뎀 적용값");
+    const evidenceRow = label.closest("div");
+    expect(evidenceRow).not.toBeNull();
+    expect(within(evidenceRow!).getByText("33.5%")).toBeInTheDocument();
+    expect(within(evidenceRow!).queryByText("34%")).not.toBeInTheDocument();
+  });
+
   it("renders formula inputs and navigates an issue to its equipment card", async () => {
     const user = userEvent.setup();
     render(<Page />);
