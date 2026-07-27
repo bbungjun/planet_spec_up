@@ -253,7 +253,7 @@ describe("MVP job rules", () => {
 
   it("creates a complete empty input with one record per visible slot", () => {
     const input = createDefaultInput("corsair");
-    expect(input.character.level).toBe(160);
+    expect(input.character.level).toBe("160");
     expect(input.character.job).toBe("corsair");
     expect(input.equipment.weapon).toBeDefined();
     expect(input.equipment.overall).toBeDefined();
@@ -398,7 +398,7 @@ export const JOB_RULES: Record<JobId, JobRule> = {
 };
 ```
 
-Create `features/calculator/domain/defaults.ts` with `emptyEquipment()` and `createDefaultInput(job)`. `createDefaultInput` must create only `JOB_RULES[job].visibleSlots`, set level `"160"`, skill percent to the job default, Maple Warrior to `20`, Sharp Eyes to `"none"`, all three guild levels to `0`, `guildActiveBoss` to `false`, and all other strings to `""`.
+Create `features/calculator/domain/defaults.ts` with `emptyEquipment()` and `createDefaultInput(job)`. `createDefaultInput` must create only `JOB_RULES[job].visibleSlots`, set level `"160"` as the editable initial default (users may change or temporarily clear it within the UI's 1–200 validation range), skill percent to the job default, Maple Warrior to `20`, Sharp Eyes to `"none"`, all three guild levels to `0`, `guildActiveBoss` to `false`, and all other strings to `""`.
 
 - [ ] **Step 5: Run tests and commit**
 
