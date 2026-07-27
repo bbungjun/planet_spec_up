@@ -119,26 +119,24 @@ export function allocatePureStats(input: PureStatAllocationInput): PureStatAlloc
     ));
 
   const pureSub = input.manualPureSub ?? (() => {
-    let candidate = input.minimumSub;
-    while (!requirementsMet(candidate)) candidate += 1;
+    let candidate = Math.min(input.minimumSub, pool);
+    while (candidate < pool && !requirementsMet(candidate)) candidate += 1;
     return candidate;
   })();
-  const issues = input.manualPureSub === null
-    ? []
-    : input.requirements
-      .filter((requirement) => !hasRequirement(
-        pureSub,
-        input.equipmentSub,
-        input.equipmentSubPercent,
-        input.mapleWarriorRate,
-        requirement,
-      ))
-      .map((requirement): ValidationIssue => ({
-        severity: "warning",
-        path: `equipment.${requirement.slot}.requiredSub`,
-        code: "UNMET_SUBSTAT_REQUIREMENT",
-        message: "The selected pure substat does not meet this equipment requirement.",
-      }));
+  const issues = input.requirements
+    .filter((requirement) => !hasRequirement(
+      pureSub,
+      input.equipmentSub,
+      input.equipmentSubPercent,
+      input.mapleWarriorRate,
+      requirement,
+    ))
+    .map((requirement): ValidationIssue => ({
+      severity: "warning",
+      path: `equipment.${requirement.slot}.requiredSub`,
+      code: "UNMET_SUBSTAT_REQUIREMENT",
+      message: "The selected pure substat does not meet this equipment requirement.",
+    }));
 
   return {
     pool,

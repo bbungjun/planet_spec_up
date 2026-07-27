@@ -70,3 +70,24 @@ it("keeps a supplied manual pure substat and warns when it misses a requirement"
     issues: [{ severity: "warning", path: "equipment.weapon.requiredSub" }],
   });
 });
+
+it("caps automatic pure-sub allocation at the AP pool when a requirement is impossible", () => {
+  expect(allocatePureStats({
+    level: 1,
+    mapleWarriorRate: 0,
+    minimumSub: 4,
+    equipmentSub: 0,
+    equipmentSubPercent: 0,
+    requirements: [{ slot: "weapon", requiredSub: 9999, itemSub: 0 }],
+    manualPureSub: null,
+  })).toMatchObject({
+    pool: 17,
+    pureMain: 0,
+    pureSub: 17,
+    issues: [{
+      severity: "warning",
+      path: "equipment.weapon.requiredSub",
+      code: "UNMET_SUBSTAT_REQUIREMENT",
+    }],
+  });
+});
