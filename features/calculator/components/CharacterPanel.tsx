@@ -76,7 +76,8 @@ function NumericField({
       />
       {error === undefined ? null : (
         <span id={errorId} className="field-error">
-          {error.message}
+          <span className="field-error-icon" aria-hidden="true">!</span>
+          <span>{error.message}</span>
         </span>
       )}
     </div>

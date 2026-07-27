@@ -7,11 +7,12 @@
   },
   "scripts": {
     "dev": "vinext dev",
-    "build": "vinext build",
+    "build": "node scripts/run-vinext-build.mjs",
     "start": "vinext start",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "typecheck": "tsc --noEmit --incremental false && tsc --noEmit -p tsconfig.worker.json",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .omo",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/workers-types": "4.20260515.1",
     "@tailwindcss/postcss": "4.2.1",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",

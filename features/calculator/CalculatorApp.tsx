@@ -221,28 +221,30 @@ export function CalculatorApp() {
             onSelectSlot={setSelectedSlot}
           />
         </div>
-        <div className="calculator-center" aria-label="장비 입력">
-          {inputMode === "cards" ? (
-            <EquipmentEditor
-              input={input}
-              selectedSlot={selectedSlot}
-              issues={result.issues}
-              onEquipmentChange={handleEquipmentChange}
-              onSelectSlot={setSelectedSlot}
-            />
-          ) : (
-            <BulkEditor
-              input={input}
-              issues={result.issues}
-              onEquipmentChange={handleEquipmentChange}
-            />
-          )}
+        <div className="calculator-main">
+          <div className="calculator-center" aria-label="장비 입력">
+            {inputMode === "cards" ? (
+              <EquipmentEditor
+                input={input}
+                selectedSlot={selectedSlot}
+                issues={result.issues}
+                onEquipmentChange={handleEquipmentChange}
+                onSelectSlot={setSelectedSlot}
+              />
+            ) : (
+              <BulkEditor
+                input={input}
+                issues={result.issues}
+                onEquipmentChange={handleEquipmentChange}
+              />
+            )}
+          </div>
+          <ResultsPanel
+            job={input.character.job}
+            result={result}
+            onNavigate={handleNavigate}
+          />
         </div>
-        <ResultsPanel
-          job={input.character.job}
-          result={result}
-          onNavigate={handleNavigate}
-        />
       </div>
     </main>
   );

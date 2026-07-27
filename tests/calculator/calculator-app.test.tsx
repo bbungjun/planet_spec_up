@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
+import RootLayout, { metadata } from "@/app/layout";
 import Page from "@/app/page";
 import userEvent from "@testing-library/user-event";
 import {
@@ -74,6 +75,63 @@ afterEach(() => {
 });
 
 describe("calculator app", () => {
+  it("publishes the Korean product metadata and document language", () => {
+    expect(metadata).toMatchObject({
+      title: "플래닛 데미지 계산기",
+      description:
+        "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.",
+    });
+
+    const layout = RootLayout({ children: <main>계산기</main> });
+    expect(layout.type).toBe("html");
+    expect(layout.props.lang).toBe("ko");
+    expect(JSON.stringify(metadata)).not.toContain("codex-preview");
+  });
+
+  it("uses 44px controls and tabular numerals for editable and result values", () => {
+    render(<Page />);
+
+    const level = screen.getByLabelText("레벨");
+    const reset = screen.getByRole("button", { name: "초기화" });
+    const result = screen.getByLabelText("환산 공격력 결과");
+
+    expect(window.getComputedStyle(level).minHeight).toBe("44px");
+    expect(window.getComputedStyle(reset).minHeight).toBe("44px");
+    expect(window.getComputedStyle(level).fontVariantNumeric)
+      .toContain("tabular-nums");
+    expect(window.getComputedStyle(result).fontVariantNumeric)
+      .toContain("tabular-nums");
+  });
+
+  it("groups the editor and results into the responsive right-hand stack", () => {
+    const { container } = render(<Page />);
+
+    const stack = container.querySelector(".calculator-main");
+    const editor = container.querySelector(".calculator-center");
+    const results = screen.getByRole("complementary", { name: "계산 결과" });
+
+    expect(stack).toBeInTheDocument();
+    expect(stack?.children).toHaveLength(2);
+    expect(stack?.children[0]).toBe(editor);
+    expect(stack?.children[1]).toBe(results);
+  });
+
+  it("pairs invalid-field text with a visible icon", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    const field = screen.getByLabelText("목걸이 DEX");
+    await user.type(field, "-1");
+
+    const errorId = field.getAttribute("aria-describedby");
+    expect(errorId).not.toBeNull();
+    const error = document.getElementById(errorId!);
+    expect(error).toHaveTextContent("Enter a value from 0 to 9999.");
+    expect(error?.querySelector(".field-error-icon")).toHaveTextContent("!");
+    expect(error?.querySelector(".field-error-icon"))
+      .toHaveAttribute("aria-hidden", "true");
+  });
+
   it("keeps light calculator surfaces readable with a light page foreground", () => {
     document.body.style.color = "rgb(237, 237, 237)";
     render(<Page />);
