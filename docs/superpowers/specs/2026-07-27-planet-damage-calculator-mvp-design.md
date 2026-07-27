@@ -125,6 +125,7 @@
 - 추가 크리티컬 확률
 - 공격력 비율
 - 순수 부스탯 수동값 또는 자동
+- 나이트로드 스탯창 STR
 - 길드 스킬 적용값
 
 ### 장비 옵션
@@ -134,10 +135,8 @@
 - 부위 식별자
 - 주스탯 고정값
 - 부스탯 고정값
-- 나이트로드용 STR 고정값
 - 주스탯 비율
 - 부스탯 비율
-- 나이트로드용 STR 비율
 - 공격력 고정값
 - 공격력 비율
 - 착용 요구 부스탯
@@ -151,8 +150,10 @@
 type SavedSetup = {
   schemaVersion: 1;
   savedAt: string;
-  character: CharacterInput;
-  equipment: Record<EquipmentSlot, EquipmentInput>;
+  input: {
+    character: CharacterInput;
+    equipment: Record<EquipmentSlot, EquipmentInput>;
+  };
 };
 ```
 
@@ -245,7 +246,7 @@ statAttack =
   floor((mainStat × weaponConstant + subStat + extraSubStat) × totalAttack / 100)
 ```
 
-`extraSubStat`은 나이트로드의 최종 STR이며 신궁과 캡틴은 0이다.
+`extraSubStat`은 나이트로드 사용자가 입력한 스탯창 STR이며 신궁과 캡틴은 0이다.
 
 환산 공격력:
 
@@ -316,6 +317,7 @@ UI는 계산 결과를 직접 만들지 않는다. OCR도 계산하지 않고 �
 | --- | --- |
 | 레벨 | 정수 1~200 |
 | 장비 고정 스탯·공격력·요구 스탯 | 정수 0~9,999 |
+| 나이트로드 스탯창 STR | 정수 0~9,999 |
 | 장비 스탯%·공격력%·보공/총뎀% | 0~999 |
 | 몬스터 방어율·방무·크리확률 | 0~100 |
 | 타격당 평균 데미지% | 0 또는 1~10,000 |
