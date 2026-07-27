@@ -1,8 +1,13 @@
-import { JOB_RULES } from "../domain/job-rules";
+import { JOB_RULES, type JobRule } from "../domain/job-rules";
 import type {
   CalculationResult,
+  CharacterInput,
+  EquipmentInput,
+  EquipmentSlot,
   JobId,
 } from "../domain/types";
+import { EQUIPMENT_SLOT_LABELS } from "../labels";
+import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
 
 type ResultsPanelProps = {
   job: JobId;
@@ -22,6 +27,41 @@ const decimalFormat = new Intl.NumberFormat("ko-KR", {
 const percentFormat = new Intl.NumberFormat("ko-KR", {
   maximumFractionDigits: 20,
 });
+
+const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
+  level: "레벨",
+  skillPercent: "타격당 평균 데미지 비율",
+  monsterDefense: "몬스터 방어율",
+  bossAndTotalDamage: "보스 공격력 및 총데미지",
+  ignoreDefense: "방어율 무시",
+  criticalRate: "추가 크리티컬 확률",
+  manualPureSub: "순수 부스탯 수동값",
+  nightLordStrStat: "나이트로드 스탯창 STR",
+};
+
+function issueContext(path: string, rule: JobRule): string {
+  const [group, candidate, fieldCandidate] = path.split(".");
+
+  if (group === "equipment") {
+    const slot = candidate as EquipmentSlot;
+    const field = fieldCandidate as keyof EquipmentInput;
+    const fieldDefinition = EQUIPMENT_FIELD_DEFINITIONS.find(
+      (definition) => definition.field === field,
+    );
+    const slotLabel = EQUIPMENT_SLOT_LABELS[slot];
+    if (slotLabel !== undefined && fieldDefinition !== undefined) {
+      return `${slotLabel} ${
+        fieldDefinition.suffix(rule.mainStat, rule.subStat)
+      }`;
+    }
+  }
+
+  if (group === "character") {
+    return CHARACTER_FIELD_LABELS[candidate as keyof CharacterInput] ?? path;
+  }
+
+  return path;
+}
 
 export function ResultsPanel({
   job,
@@ -110,21 +150,27 @@ export function ResultsPanel({
           <p className="no-issues">문제가 없습니다.</p>
         ) : (
           <ul>
-            {result.issues.map((issue, index) => (
-              <li key={`${issue.path}-${issue.code}-${index}`}>
-                <button
-                  type="button"
-                  className={`issue-button is-${issue.severity}`}
-                  aria-label={`${
-                    issue.severity === "error" ? "오류" : "경고"
-                  } ${issue.message}`}
-                  onClick={() => onNavigate(issue.path)}
-                >
-                  <span>{issue.severity === "error" ? "오류" : "경고"}</span>
-                  {issue.message}
-                </button>
-              </li>
-            ))}
+            {result.issues.map((issue, index) => {
+              const severityLabel = issue.severity === "error" ? "오류" : "경고";
+              const context = issueContext(issue.path, rule);
+
+              return (
+                <li key={`${issue.path}-${issue.code}-${index}`}>
+                  <button
+                    type="button"
+                    className={`issue-button is-${issue.severity}`}
+                    aria-label={`${severityLabel} ${context}: ${issue.message}`}
+                    onClick={() => onNavigate(issue.path)}
+                  >
+                    <span>{severityLabel}</span>
+                    <div>
+                      <strong>{context}</strong>
+                      <div>{issue.message}</div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

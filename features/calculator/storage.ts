@@ -1,4 +1,5 @@
-import type { CalculatorInput, CharacterInput, EquipmentInput, EquipmentSlot } from "./domain/types";
+import { JOB_RULES } from "./domain/job-rules";
+import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
 
@@ -35,11 +36,6 @@ const equipmentKeys = [
   "attackPercent",
   "requiredSub",
 ] as const satisfies readonly (keyof EquipmentInput)[];
-
-const equipmentSlots = [
-  "necklace", "cape", "earrings", "eye", "face", "hat", "shoes", "gloves", "overall", "top", "bottom",
-  "weapon", "title", "ring_1", "ring_2", "ring_3", "ring_4", "projectile", "blessing_1", "blessing_2", "buff",
-] as const satisfies readonly EquipmentSlot[];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -82,11 +78,12 @@ function isEquipmentInput(value: unknown): value is EquipmentInput {
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {
   if (!isRecord(value) || !hasOnlyKeys(value, ["character", "equipment"])) return false;
-  if (!isCharacterInput(value.character) || !isRecord(value.equipment)) return false;
+  const equipment = value.equipment;
+  if (!isCharacterInput(value.character) || !isRecord(equipment)) return false;
 
-  return Object.entries(value.equipment).every(
-    ([slot, equipment]) => equipmentSlots.includes(slot as EquipmentSlot) && isEquipmentInput(equipment),
-  );
+  const visibleSlots = JOB_RULES[value.character.job].visibleSlots;
+  return hasOnlyKeys(equipment, visibleSlots)
+    && visibleSlots.every((slot) => isEquipmentInput(equipment[slot]));
 }
 
 export function serializeSetup(input: CalculatorInput, savedAt = new Date().toISOString()): string {

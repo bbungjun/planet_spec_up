@@ -12,6 +12,7 @@ import {
   vi,
 } from "vitest";
 import Page from "@/app/page";
+import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { deserializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
 
 beforeEach(() => {
@@ -117,6 +118,25 @@ it("reports corrupt storage once without changing the current input", async () =
 
   await user.type(necklace, "5");
   expect(necklace).toHaveValue(445);
+});
+
+it("rejects an incomplete saved setup without replacing the Page state", async () => {
+  const user = userEvent.setup();
+  render(<Page />);
+  await user.type(screen.getByLabelText("목걸이 DEX"), "44");
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    savedAt: "2026-07-27T00:00:00.000Z",
+    input: {
+      ...createDefaultInput("corsair"),
+      equipment: {},
+    },
+  }));
+
+  await user.click(screen.getByRole("button", { name: "불러오기" }));
+
+  expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(44);
+  expect(screen.getByRole("alert")).toHaveTextContent("불러올 수 없습니다");
 });
 
 it("requires confirmation before reset and clears the persisted slot only when confirmed", async () => {

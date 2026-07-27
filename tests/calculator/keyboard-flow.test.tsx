@@ -58,7 +58,7 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   expect((bulkAttack as HTMLInputElement).value).toBe("-1");
   expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^0$/);
   await user.click(screen.getByRole("button", {
-    name: "오류 Enter a value from 0 to 9999.",
+    name: "오류 무기 공격력: Enter a value from 0 to 9999.",
   }));
 
   expect(screen.getByRole("button", { name: "일괄 입력 보기" })).toBeInTheDocument();
@@ -67,4 +67,27 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   expect(focusedAttack).toHaveValue(-1);
   expect(focusedAttack).toHaveAttribute("aria-invalid", "true");
   expect(focusedAttack).toHaveFocus();
+});
+
+it("gives identical validation messages unique field names and navigates each exactly", async () => {
+  const user = userEvent.setup();
+  render(<Page />);
+
+  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.type(screen.getByLabelText("일괄 입력 모자 DEX"), "-1");
+  await user.type(screen.getByLabelText("일괄 입력 망토 STR"), "-1");
+
+  const hatIssueName = "오류 모자 DEX: Enter a value from 0 to 9999.";
+  const capeIssueName = "오류 망토 STR: Enter a value from 0 to 9999.";
+  expect(screen.getByRole("button", { name: hatIssueName })).not.toBe(
+    screen.getByRole("button", { name: capeIssueName }),
+  );
+
+  await user.click(screen.getByRole("button", { name: capeIssueName }));
+  expect(screen.getByRole("heading", { name: "망토 옵션" })).toBeInTheDocument();
+  expect(screen.getByLabelText("망토 STR")).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: hatIssueName }));
+  expect(screen.getByRole("heading", { name: "모자 옵션" })).toBeInTheDocument();
+  expect(screen.getByLabelText("모자 DEX")).toHaveFocus();
 });

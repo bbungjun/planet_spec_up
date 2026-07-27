@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
+import type { EquipmentInput } from "@/features/calculator/domain/types";
 import { deserializeSetup, serializeSetup } from "@/features/calculator/storage";
 import { useSavedSetup } from "@/features/calculator/hooks/useSavedSetup";
 
@@ -29,6 +30,44 @@ it("rejects corrupt, unsupported, and partial data without merging", () => {
     savedAt: "2026-07-27T00:00:00.000Z",
     input: partialInput,
   }))).toMatchObject({ ok: false });
+});
+
+it("rejects equipment that is empty, incomplete, extra, or incompatible with the saved job", () => {
+  const corsair = createDefaultInput("corsair");
+  const missingWeapon = { ...corsair.equipment };
+  delete missingWeapon.weapon;
+  const incompleteNecklace = {
+    ...corsair.equipment,
+    necklace: { ...corsair.equipment.necklace },
+  };
+  delete (
+    incompleteNecklace.necklace as Partial<EquipmentInput>
+  ).requiredSub;
+  const marksmanEquipment = createDefaultInput("marksman").equipment;
+
+  const invalidEquipmentCases: readonly [string, unknown][] = [
+    ["empty", {}],
+    ["missing weapon", missingWeapon],
+    ["extra top slot", {
+      ...corsair.equipment,
+      top: { ...corsair.equipment.necklace },
+    }],
+    ["incomplete necklace record", incompleteNecklace],
+    ["marksman slots for a corsair", marksmanEquipment],
+  ];
+
+  for (const [caseName, equipment] of invalidEquipmentCases) {
+    const raw = JSON.stringify({
+      schemaVersion: 1,
+      savedAt: "2026-07-27T00:00:00.000Z",
+      input: { ...corsair, equipment },
+    });
+
+    expect(
+      deserializeSetup(raw),
+      caseName,
+    ).toEqual({ ok: false, message: "invalid saved setup" });
+  }
 });
 
 it("saves, loads, and clears its one storage slot through callbacks", () => {
