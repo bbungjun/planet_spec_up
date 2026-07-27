@@ -109,11 +109,12 @@ export function calculateFromSnapshot(
     rule.weaponConstant,
     totalAttack,
   );
+  const bossAndTotalDamage = snapshot.bossAndTotalDamage
+    + snapshot.guildBossLevel
+    + (snapshot.guildActiveBoss ? 10 : 0);
   const convertedAttack = calculateConvertedAttack(
     statAttack,
-    snapshot.bossAndTotalDamage
-      + snapshot.guildBossLevel
-      + (snapshot.guildActiveBoss ? 10 : 0),
+    bossAndTotalDamage,
     defenseMultiplier,
     criticalMultiplier,
   );
@@ -127,6 +128,9 @@ export function calculateFromSnapshot(
     convertedAttack,
     defenseMultiplier,
     criticalMultiplier,
+    formulaInputs: {
+      bossAndTotalDamage,
+    },
     pureMain,
     pureSub,
     issues: snapshot.issues ?? [],

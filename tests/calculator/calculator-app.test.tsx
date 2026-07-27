@@ -1,13 +1,98 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import Page from "@/app/page";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+let stylesheet: HTMLStyleElement;
+const calculatorStyles = readFileSync(
+  resolve(process.cwd(), "app/globals.css"),
+  "utf8",
+);
+
+beforeAll(() => {
+  stylesheet = document.createElement("style");
+  stylesheet.textContent = calculatorStyles
+    .replace(/^@import\s+[^;]+;\s*/m, "")
+    .replace(/@theme\s+inline\s*\{[^}]*\}\s*/m, "");
+  document.head.append(stylesheet);
+});
+
+afterAll(() => {
+  stylesheet.remove();
+});
+
+function relativeLuminance(color: string): number {
+  const variable = color.match(/^var\((--[^,)]+)(?:,[^)]+)?\)$/);
+  const resolvedColor = variable === null
+    ? color
+    : window.getComputedStyle(document.documentElement)
+      .getPropertyValue(variable[1])
+      .trim();
+  const hex = resolvedColor.match(/^#([0-9a-f]{6})$/i)?.[1];
+  const channels = hex === undefined
+    ? resolvedColor.match(/\d+(?:\.\d+)?/g)?.slice(0, 3).map(Number)
+    : [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
+  if (channels === undefined || channels.length !== 3) {
+    throw new Error(`Unsupported computed color: ${resolvedColor || color}`);
+  }
+
+  const [red, green, blue] = channels.map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928
+      ? value / 12.92
+      : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return red * 0.2126 + green * 0.7152 + blue * 0.0722;
+}
+
+function contrastRatio(element: Element): number {
+  const style = window.getComputedStyle(element);
+  const foreground = relativeLuminance(style.color);
+  const background = relativeLuminance(
+    style.backgroundColor === "rgba(0, 0, 0, 0)" && style.background.startsWith("var(")
+      ? style.background
+      : style.backgroundColor,
+  );
+  const lighter = Math.max(foreground, background);
+  const darker = Math.min(foreground, background);
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
+  document.body.style.removeProperty("color");
 });
 
 describe("calculator app", () => {
+  it("keeps light calculator surfaces readable with a light page foreground", () => {
+    document.body.style.color = "rgb(237, 237, 237)";
+    render(<Page />);
+
+    const surfaces = [
+      screen.getByRole("complementary", { name: "계산 결과" }),
+      screen.getByRole("button", { name: "목걸이 편집" }),
+      screen.getByRole("button", { name: "초기화" }),
+    ];
+    surfaces.forEach((surface) => {
+      const name = surface.getAttribute("aria-label") ?? surface.textContent;
+      const style = window.getComputedStyle(surface);
+      expect(
+        contrastRatio(surface),
+        `${name ?? "surface"}: ${style.color} on ${style.backgroundColor}; background=${style.background}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   it("updates live results when a card equipment value changes", async () => {
     const user = userEvent.setup();
     render(<Page />);
@@ -156,6 +241,24 @@ describe("calculator app", () => {
     const necklace = screen.getByRole("button", { name: "목걸이 편집" });
     expect(necklace).toHaveClass("is-complete");
     expect(within(necklace).getByText("✓ 입력 완료")).toBeVisible();
+  });
+
+  it("shows the effective boss and total damage factor used by the formula", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.type(screen.getByLabelText("보스 공격력 및 총데미지"), "20");
+    await user.selectOptions(
+      screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
+      "3",
+    );
+    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용"));
+
+    const results = screen.getByRole("complementary", { name: "계산 결과" });
+    const label = within(results).getByText("보공·총뎀 적용값");
+    const evidenceRow = label.closest("div");
+    expect(evidenceRow).not.toBeNull();
+    expect(within(evidenceRow!).getByText("33%")).toBeInTheDocument();
   });
 
   it("renders formula inputs and navigates an issue to its equipment card", async () => {

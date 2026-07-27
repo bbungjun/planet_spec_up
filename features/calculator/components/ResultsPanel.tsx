@@ -74,6 +74,10 @@ export function ResultsPanel({
             <dd>{integerFormat.format(result.totalAttack)}</dd>
           </div>
           <div>
+            <dt>보공·총뎀 적용값</dt>
+            <dd>{integerFormat.format(result.formulaInputs.bossAndTotalDamage)}%</dd>
+          </div>
+          <div>
             <dt>순수 주스탯</dt>
             <dd>{integerFormat.format(result.pureMain)}</dd>
           </div>

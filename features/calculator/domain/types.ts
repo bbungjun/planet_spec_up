@@ -60,6 +60,9 @@ export type CalculationResult = {
   convertedAttack: number;
   defenseMultiplier: number;
   criticalMultiplier: number;
+  formulaInputs: {
+    bossAndTotalDamage: number;
+  };
   pureMain: number;
   pureSub: number;
   issues: ValidationIssue[];
