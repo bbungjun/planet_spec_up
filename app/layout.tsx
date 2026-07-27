@@ -14,74 +14,141 @@ export const PRODUCT_METADATA = {
 
 type HeaderReader = Pick<Headers, "get">;
 
-function firstHeaderValue(value: string | null): string | null {
-  const candidate = value?.split(",", 1)[0].trim();
-  return candidate || null;
-}
+type HostAuthority = {
+  authority: string;
+  isLocal: boolean;
+};
 
-function safeHost(value: string | null): string | null {
-  const candidate = firstHeaderValue(value);
-  if (!candidate || candidate.length > 300) {
+function normalizeHostname(value: string): string | null {
+  const hostname = value.toLowerCase();
+
+  if (/^[0-9.]+$/.test(hostname)) {
+    const octets = hostname.split(".");
+    if (
+      octets.length !== 4 ||
+      octets.some(
+        (octet) =>
+          !/^(0|[1-9][0-9]{0,2})$/.test(octet) ||
+          Number(octet) > 255,
+      )
+    ) {
+      return null;
+    }
+
+    return octets.join(".");
+  }
+
+  const hostnameWithoutFinalDot = hostname.endsWith(".")
+    ? hostname.slice(0, -1)
+    : hostname;
+  if (!hostnameWithoutFinalDot || hostnameWithoutFinalDot.length > 253) {
     return null;
   }
 
-  for (const character of candidate) {
+  const labels = hostnameWithoutFinalDot.split(".");
+  if (
+    labels.some(
+      (label) =>
+        label.length === 0 ||
+        label.length > 63 ||
+        !/^[a-z0-9-]+$/.test(label) ||
+        label.startsWith("-") ||
+        label.endsWith("-"),
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    if (new URL(`https://${hostname}`).hostname !== hostname) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
+  return hostname;
+}
+
+function parseHostAuthority(value: string | null): HostAuthority | null {
+  if (!value || value.length > 300) {
+    return null;
+  }
+
+  for (const character of value) {
     const code = character.charCodeAt(0);
     if (
       code <= 0x20 ||
       code === 0x7f ||
-      "\\/?#@".includes(character)
+      "\\/?#@,".includes(character)
     ) {
       return null;
     }
   }
 
-  try {
-    const parsed = new URL(`https://${candidate}`);
+  let hostname: string;
+  let portText: string | undefined;
+
+  if (value.startsWith("[")) {
+    const match = /^(\[[0-9a-f:.]+\])(?::([0-9]+))?$/i.exec(value);
+    if (!match) {
+      return null;
+    }
+
+    try {
+      hostname = new URL(`http://${match[1]}`).hostname.toLowerCase();
+    } catch {
+      return null;
+    }
+    portText = match[2];
+  } else {
+    const match = /^([^:]+)(?::([0-9]+))?$/.exec(value);
+    if (!match) {
+      return null;
+    }
+
+    const normalizedHostname = normalizeHostname(match[1]);
+    if (!normalizedHostname) {
+      return null;
+    }
+    hostname = normalizedHostname;
+    portText = match[2];
+  }
+
+  let port = "";
+  if (portText !== undefined) {
+    const portNumber = Number(portText);
     if (
-      parsed.username ||
-      parsed.password ||
-      parsed.pathname !== "/" ||
-      parsed.search ||
-      parsed.hash
+      portText.length > 5 ||
+      !Number.isInteger(portNumber) ||
+      portNumber < 1 ||
+      portNumber > 65535
     ) {
       return null;
     }
-
-    return parsed.host || null;
-  } catch {
-    return null;
-  }
-}
-
-function isLocalHost(host: string): boolean {
-  const hostname = new URL(`http://${host}`).hostname.toLowerCase();
-  return (
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "[::1]"
-  );
-}
-
-function safeProtocol(value: string | null, host: string): "http" | "https" {
-  const protocol = firstHeaderValue(value)?.toLowerCase();
-  if (protocol === "http" || protocol === "https") {
-    return protocol;
+    port = `:${portNumber}`;
   }
 
-  return isLocalHost(host) ? "http" : "https";
+  return {
+    authority: `${hostname}${port}`,
+    isLocal:
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]",
+  };
+}
+
+function requestOrigin(requestHeaders: HeaderReader): URL {
+  const host = parseHostAuthority(requestHeaders.get("host")) ?? {
+    authority: "localhost",
+    isLocal: true,
+  };
+  const protocol = host.isLocal ? "http" : "https";
+  return new URL(`${protocol}://${host.authority}`);
 }
 
 export function createMetadata(requestHeaders: HeaderReader): Metadata {
-  const host =
-    safeHost(requestHeaders.get("x-forwarded-host")) ??
-    safeHost(requestHeaders.get("host")) ??
-    "localhost";
-  const protocol = safeProtocol(
-    requestHeaders.get("x-forwarded-proto"),
-    host,
-  );
-  const origin = new URL(`${protocol}://${host}`);
+  const origin = requestOrigin(requestHeaders);
   const imageUrl = new URL("/og.png", origin).toString();
 
   return {

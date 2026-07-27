@@ -9,11 +9,11 @@ const description =
   "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.";
 
 describe("social metadata", () => {
-  it("uses the forwarded request origin for absolute Open Graph and X images", () => {
+  it("ignores spoofed forwarded headers and uses the direct Host authority", () => {
     const metadata = createMetadata(new Headers({
-      "host": "internal.example:8787",
-      "x-forwarded-host": "planet.example, proxy.internal",
-      "x-forwarded-proto": "https, http",
+      "host": "official.example:8443",
+      "x-forwarded-host": "evil.example:8080",
+      "x-forwarded-proto": "http",
     }));
 
     expect(metadata).toMatchObject({
@@ -25,9 +25,9 @@ describe("social metadata", () => {
         siteName: title,
         title,
         description,
-        url: "https://planet.example/",
+        url: "https://official.example:8443/",
         images: [{
-          url: "https://planet.example/og.png",
+          url: "https://official.example:8443/og.png",
           width: 1536,
           height: 1024,
           alt: title,
@@ -38,41 +38,96 @@ describe("social metadata", () => {
         title,
         description,
         images: [{
-          url: "https://planet.example/og.png",
+          url: "https://official.example:8443/og.png",
           alt: title,
         }],
       },
     });
+    expect(JSON.stringify(metadata)).not.toContain("evil.example");
+    expect(JSON.stringify(metadata)).not.toContain("http://");
   });
 
-  it("rejects forwarded path and protocol injection before using the host fallback", () => {
+  it.each([
+    ["localhost", "http://localhost/og.png"],
+    ["localhost:443", "http://localhost:443/og.png"],
+    ["127.0.0.1:3000", "http://127.0.0.1:3000/og.png"],
+    ["[::1]:3100", "http://[::1]:3100/og.png"],
+  ])("uses HTTP only for the explicit local Host %s", (host, imageUrl) => {
     const metadata = createMetadata(new Headers({
-      "host": "guild.example:8443",
-      "x-forwarded-host": "attacker.example/steal?next=/og.png",
-      "x-forwarded-proto": "javascript",
+      "host": host,
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "https",
     }));
 
     expect(metadata.openGraph).toMatchObject({
-      url: "https://guild.example:8443/",
       images: [{
-        url: "https://guild.example:8443/og.png",
+        url: imageUrl,
       }],
     });
-    expect(JSON.stringify(metadata)).not.toContain("attacker.example");
-    expect(JSON.stringify(metadata)).not.toContain("javascript:");
+    expect(JSON.stringify(metadata)).not.toContain("evil.example");
   });
 
-  it("uses HTTP only for a local request when no forwarded protocol exists", () => {
+  it.each([
+    ["guild.example:8443", "https://guild.example:8443/og.png"],
+    ["guild.example:80", "https://guild.example:80/og.png"],
+    ["[2001:db8::1]:8443", "https://[2001:db8::1]:8443/og.png"],
+  ])("uses HTTPS and preserves the valid Host authority %s", (host, imageUrl) => {
     const metadata = createMetadata(new Headers({
-      "host": "localhost:3000",
+      "host": host,
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "http",
     }));
 
     expect(metadata.openGraph).toMatchObject({
-      url: "http://localhost:3000/",
       images: [{
-        url: "http://localhost:3000/og.png",
+        url: imageUrl,
       }],
     });
+    expect(JSON.stringify(metadata)).not.toContain("evil.example");
+    expect(JSON.stringify(metadata)).not.toContain("http://");
+  });
+
+  it.each([
+    ["missing", null],
+    ["multi-value", "official.example,evil.example"],
+    ["path", "official.example/path"],
+    ["query", "official.example?next=evil"],
+    ["userinfo", "user@official.example"],
+    ["control character", "official.example\r\nevil.example"],
+    ["empty port", "official.example:"],
+    ["port zero", "official.example:0"],
+    ["oversized port", "official.example:65536"],
+    ["unbracketed IPv6", "2001:db8::1"],
+    ["malformed IPv6", "[::1"],
+    ["non-decimal IPv4", "0x7f000001"],
+    ["empty DNS label", "official..example"],
+    ["invalid DNS label", "-official.example"],
+  ])("uses a local fallback for an invalid direct Host: %s", (_, host) => {
+    const requestHeaders: Pick<Headers, "get"> = {
+      get(name) {
+        const values: Record<string, string | null> = {
+          host,
+          "x-forwarded-host": "evil.example",
+          "x-forwarded-proto": "https",
+        };
+        return values[name.toLowerCase()] ?? null;
+      },
+    };
+
+    const metadata = createMetadata(requestHeaders);
+
+    expect(metadata.openGraph).toMatchObject({
+      url: "http://localhost/",
+      images: [{
+        url: "http://localhost/og.png",
+      }],
+    });
+    expect(metadata.twitter).toMatchObject({
+      images: [{
+        url: "http://localhost/og.png",
+      }],
+    });
+    expect(JSON.stringify(metadata)).not.toContain("evil.example");
   });
 
   it("ships the approved social image without changing its bytes", () => {
