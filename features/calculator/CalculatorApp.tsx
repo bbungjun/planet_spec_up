@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
 import { createDefaultInput } from "./domain/defaults";
 import { JOB_RULES } from "./domain/job-rules";
@@ -9,9 +9,12 @@ import type {
   CharacterInput,
   EquipmentInput,
   EquipmentSlot,
+  InputMode,
   JobId,
 } from "./domain/types";
+import { useSavedSetup } from "./hooks/useSavedSetup";
 import { AppHeader } from "./components/AppHeader";
+import { BulkEditor } from "./components/BulkEditor";
 import {
   CharacterPanel,
   type CharacterChangeHandler,
@@ -35,13 +38,55 @@ function firstSlot(job: JobId): EquipmentSlot {
 }
 
 export function CalculatorApp() {
+  const { load, save, clear } = useSavedSetup();
   const [input, setInput] = useState<CalculatorInput>(
     () => createDefaultInput("corsair"),
   );
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlot>(
     () => firstSlot("corsair"),
   );
+  const [inputMode, setInputMode] = useState<InputMode>("cards");
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const pendingFocusPath = useRef<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
   const result = useMemo(() => calculateDamageResult(input), [input]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const saved = load();
+        if (!saved.ok) {
+          if (saved.message !== "empty") {
+            setStorageError("저장 데이터를 불러올 수 없습니다.");
+          }
+          return;
+        }
+
+        setInput(saved.value.input);
+        setSelectedSlot(firstSlot(saved.value.input.character.job));
+        setSavedAt(saved.value.savedAt);
+        setStorageError(null);
+      } catch {
+        setStorageError("저장 데이터를 불러올 수 없습니다.");
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [load]);
+
+  useEffect(() => {
+    const path = pendingFocusPath.current;
+    if (path === null) return;
+
+    const target = document.querySelector<HTMLElement>(
+      `[data-field-path="${path}"]`,
+    );
+    if (target !== null) {
+      target.focus();
+      pendingFocusPath.current = null;
+    }
+  }, [focusRequest, inputMode, selectedSlot]);
 
   const handleCharacterChange: CharacterChangeHandler = (field, value) => {
     setInput((current) => ({
@@ -85,31 +130,83 @@ export function CalculatorApp() {
   };
 
   const handleReset = () => {
-    if (
-      hasEquipmentValues(input)
-      && !window.confirm("입력한 장비 값을 초기화할까요?")
-    ) {
-      return;
-    }
+    if (!window.confirm("현재 입력과 저장된 세팅을 초기화할까요?")) return;
 
     const job = input.character.job;
     setInput(createDefaultInput(job));
     setSelectedSlot(firstSlot(job));
+    try {
+      clear();
+      setSavedAt(null);
+      setStorageError(null);
+    } catch {
+      setStorageError("저장된 세팅을 초기화할 수 없습니다.");
+    }
+  };
+
+  const handleSave = () => {
+    try {
+      save(input);
+      const saved = load();
+      if (!saved.ok) {
+        setStorageError("세팅을 저장할 수 없습니다.");
+        return;
+      }
+      setSavedAt(saved.value.savedAt);
+      setStorageError(null);
+    } catch {
+      setStorageError("세팅을 저장할 수 없습니다.");
+    }
+  };
+
+  const handleLoad = () => {
+    try {
+      const saved = load();
+      if (!saved.ok) {
+        setStorageError(
+          saved.message === "empty"
+            ? "저장된 세팅이 없습니다."
+            : "저장 데이터를 불러올 수 없습니다.",
+        );
+        return;
+      }
+
+      setInput(saved.value.input);
+      setSelectedSlot(firstSlot(saved.value.input.character.job));
+      setSavedAt(saved.value.savedAt);
+      setStorageError(null);
+    } catch {
+      setStorageError("저장 데이터를 불러올 수 없습니다.");
+    }
   };
 
   const handleNavigate = (path: string) => {
     const [group, candidate] = path.split(".");
-    if (group !== "equipment") return;
-
-    const slot = candidate as EquipmentSlot;
-    if (input.equipment[slot] !== undefined) {
-      setSelectedSlot(slot);
+    if (group === "equipment") {
+      const slot = candidate as EquipmentSlot;
+      if (input.equipment[slot] !== undefined) {
+        setSelectedSlot(slot);
+      }
     }
+
+    setInputMode("cards");
+    pendingFocusPath.current = path;
+    setFocusRequest((request) => request + 1);
   };
 
   return (
     <main className="calculator-shell">
-      <AppHeader onReset={handleReset} />
+      <AppHeader
+        inputMode={inputMode}
+        savedAt={savedAt}
+        storageError={storageError}
+        onToggleMode={() => setInputMode((mode) => (
+          mode === "cards" ? "bulk" : "cards"
+        ))}
+        onSave={handleSave}
+        onLoad={handleLoad}
+        onReset={handleReset}
+      />
       <div className="calculator-workspace">
         <div className="calculator-left" aria-label="캐릭터 및 장비">
           <CharacterPanel
@@ -125,12 +222,21 @@ export function CalculatorApp() {
           />
         </div>
         <div className="calculator-center" aria-label="장비 입력">
-          <EquipmentEditor
-            input={input}
-            selectedSlot={selectedSlot}
-            issues={result.issues}
-            onEquipmentChange={handleEquipmentChange}
-          />
+          {inputMode === "cards" ? (
+            <EquipmentEditor
+              input={input}
+              selectedSlot={selectedSlot}
+              issues={result.issues}
+              onEquipmentChange={handleEquipmentChange}
+              onSelectSlot={setSelectedSlot}
+            />
+          ) : (
+            <BulkEditor
+              input={input}
+              issues={result.issues}
+              onEquipmentChange={handleEquipmentChange}
+            />
+          )}
         </div>
         <ResultsPanel
           job={input.character.job}

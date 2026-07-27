@@ -115,6 +115,9 @@ export function ResultsPanel({
                 <button
                   type="button"
                   className={`issue-button is-${issue.severity}`}
+                  aria-label={`${
+                    issue.severity === "error" ? "오류" : "경고"
+                  } ${issue.message}`}
                   onClick={() => onNavigate(issue.path)}
                 >
                   <span>{issue.severity === "error" ? "오류" : "경고"}</span>

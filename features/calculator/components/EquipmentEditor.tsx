@@ -1,3 +1,4 @@
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import type {
   CalculatorInput,
@@ -18,16 +19,17 @@ type EquipmentEditorProps = {
   selectedSlot: EquipmentSlot;
   issues: readonly ValidationIssue[];
   onEquipmentChange: EquipmentChangeHandler;
+  onSelectSlot: (slot: EquipmentSlot) => void;
 };
 
-type FieldDefinition = {
+export type EquipmentFieldDefinition = {
   field: keyof EquipmentInput;
   suffix: (mainStat: string, subStat: string) => string;
   max: number;
   step: number | "any";
 };
 
-const FIELD_DEFINITIONS: readonly FieldDefinition[] = [
+export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = [
   { field: "mainFlat", suffix: (main) => main, max: 9999, step: 1 },
   { field: "subFlat", suffix: (_main, sub) => sub, max: 9999, step: 1 },
   { field: "mainPercent", suffix: (main) => `${main}%`, max: 999, step: "any" },
@@ -42,12 +44,39 @@ export function EquipmentEditor({
   selectedSlot,
   issues,
   onEquipmentChange,
+  onSelectSlot,
 }: EquipmentEditorProps) {
   const equipment = input.equipment[selectedSlot];
   const rule = JOB_RULES[input.character.job];
   const slotLabel = EQUIPMENT_SLOT_LABELS[selectedSlot];
+  const fieldRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const focusFirstFieldAfterSlotChange = useRef(false);
+
+  useEffect(() => {
+    if (!focusFirstFieldAfterSlotChange.current) return;
+    focusFirstFieldAfterSlotChange.current = false;
+    fieldRefs.current[0]?.focus();
+  }, [selectedSlot]);
 
   if (equipment === undefined) return null;
+
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+    fieldIndex: number,
+  ) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+
+    if (event.ctrlKey) {
+      const currentIndex = rule.visibleSlots.indexOf(selectedSlot);
+      const nextIndex = (currentIndex + 1) % rule.visibleSlots.length;
+      focusFirstFieldAfterSlotChange.current = true;
+      onSelectSlot(rule.visibleSlots[nextIndex]);
+      return;
+    }
+
+    fieldRefs.current[fieldIndex + 1]?.focus();
+  };
 
   return (
     <section className="panel equipment-editor" aria-labelledby="editor-heading">
@@ -63,7 +92,7 @@ export function EquipmentEditor({
       </p>
 
       <div className="equipment-field-grid">
-        {FIELD_DEFINITIONS.map(({ field, suffix, max, step }) => {
+        {EQUIPMENT_FIELD_DEFINITIONS.map(({ field, suffix, max, step }, fieldIndex) => {
           const path = `equipment.${selectedSlot}.${field}`;
           const id = path.replaceAll(".", "-");
           const label = `${slotLabel} ${suffix(rule.mainStat, rule.subStat)}`;
@@ -83,8 +112,12 @@ export function EquipmentEditor({
                 step={step}
                 value={equipment[field]}
                 data-field-path={path}
+                ref={(element) => {
+                  fieldRefs.current[fieldIndex] = element;
+                }}
                 aria-invalid={error === undefined ? undefined : true}
                 aria-describedby={error === undefined ? undefined : errorId}
+                onKeyDown={(event) => handleKeyDown(event, fieldIndex)}
                 onChange={(event) => onEquipmentChange(
                   selectedSlot,
                   field,
