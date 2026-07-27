@@ -861,9 +861,9 @@ Expected: storage tests PASS.
 - Modify: `tests/calculator/calculator-app.test.tsx`
 
 **Interfaces:**
-- Consumes: `createDefaultInput`, `calculateDamageResult`, `useSavedSetup`, domain types
-- Produces: accessible calculator UI and live result updates
-- Consumer: Task 7
+- Consumes: `createDefaultInput`, `calculateDamageResult`, domain types
+- Produces: accessible card-only calculator UI and live result updates
+- Consumer: Task 7, which adds bulk mode, keyboard flow, and finalized save actions
 
 - [ ] **Step 1: Expand the failing UI test**
 
@@ -907,12 +907,13 @@ Expected: FAIL because the interactive calculator UI does not exist.
 `CalculatorApp.tsx` must:
 
 - Start from `createDefaultInput("corsair")`.
-- Keep `selectedSlot`, `inputMode`, and `CalculatorInput` state.
+- Keep `selectedSlot` and `CalculatorInput` state.
 - Derive `result` with `useMemo(() => calculateDamageResult(input), [input])`.
 - Keep all input values as strings.
 - Update only the targeted equipment field.
 - Confirm before resetting or changing job when any equipment field is non-empty.
 - On confirmed job change, replace input with `createDefaultInput(newJob)`.
+- Render the card editor directly. Task 6 must not import or create `BulkEditor`; Task 7 adds mode state and switching.
 
 Use this composition:
 
@@ -925,7 +926,7 @@ Use this composition:
       <EquipmentNavigator />
     </div>
     <div className="calculator-center">
-      {inputMode === "cards" ? <EquipmentEditor /> : <BulkEditor />}
+      <EquipmentEditor />
     </div>
     <ResultsPanel />
   </div>
@@ -985,7 +986,7 @@ git commit -m "feat: add live three-panel calculator"
 
 **Interfaces:**
 - Consumes: Task 6 calculator state callbacks and Task 5 storage
-- Produces: card/bulk state parity, keyboard navigation, save/load/reset, issue navigation
+- Produces: `inputMode`, card/bulk state parity, keyboard navigation, save/load/reset, issue navigation
 
 - [ ] **Step 1: Write failing keyboard and mode parity tests**
 
@@ -1049,6 +1050,7 @@ In `EquipmentEditor.tsx`:
 
 `BulkEditor.tsx` receives the same `input` and `onEquipmentChange` callbacks as the card editor.
 
+- Add `inputMode` state and the card/bulk mode switch to `CalculatorApp.tsx` and `AppHeader.tsx`.
 - Rows are the current job's visible slots.
 - Columns are only fields applicable to the current job.
 - Every cell label follows `"일괄 입력 {부위} {스탯}"`.
