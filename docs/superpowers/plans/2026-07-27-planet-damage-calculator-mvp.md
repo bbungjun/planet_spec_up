@@ -6,7 +6,7 @@
 
 **Architecture:** vinext 기반 단일 페이지 React 앱으로 구현하되, 계산 규칙은 UI와 브라우저 API에 의존하지 않는 순수 TypeScript 모듈에 둔다. 카드 입력과 일괄 입력은 하나의 상태를 공유하고, 저장 슬롯과 향후 OCR은 정규화된 입력 모델만 계산 엔진에 전달한다.
 
-**Tech Stack:** Node.js 22.13+, TypeScript 5.9, React 19.2, Next-compatible App Router, vinext 0.0.50, Vite 8, Vitest 4.1.10, Testing Library React 16.3.2, Testing Library User Event 14.6.1, Testing Library jest-dom 7.0.0, jsdom 30
+**Tech Stack:** Node.js 22.13+, TypeScript 5.9, React 19.2, Next-compatible App Router, vinext 0.0.50, Vite 8, Vitest 4.1.10, Testing Library React 16.3.2, Testing Library User Event 14.6.1, Testing Library jest-dom 7.0.0, jsdom 29.0.1
 
 ## Global Constraints
 
@@ -112,7 +112,7 @@ Expected: vinext prints one healthy Local URL. Keep this process running through
 - [ ] **Step 3: Install the unit/UI test dependencies**
 
 ```powershell
-npm install --save-dev vitest@4.1.10 @testing-library/react@16.3.2 @testing-library/user-event@14.6.1 @testing-library/jest-dom@7.0.0 jsdom@30.0.0
+npm install --save-dev vitest@4.1.10 @testing-library/react@16.3.2 @testing-library/user-event@14.6.1 @testing-library/jest-dom@7.0.0 jsdom@29.0.1
 ```
 
 Add this script to `package.json`:
