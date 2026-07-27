@@ -175,6 +175,8 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
+    await user.type(screen.getByLabelText("목걸이 DEX"), "100");
+    await user.type(screen.getByLabelText("목걸이 STR"), "50");
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 

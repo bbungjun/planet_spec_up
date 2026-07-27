@@ -60,6 +60,39 @@ export function calculateFromSnapshot(
   snapshot: CalculationSnapshot,
 ): CalculationResult {
   const rule = JOB_RULES[snapshot.job];
+  const defenseMultiplier = calculateDefenseMultiplier(
+    snapshot.monsterDefense,
+    snapshot.ignoreDefense + snapshot.guildIgnoreLevel * 2,
+  );
+  const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
+  const criticalMultiplier = calculateCriticalMultiplier(
+    rule.baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate,
+    rule.baseCriticalDamage + sharpEyes.criticalDamage,
+    snapshot.skillPercent,
+  );
+  const bossAndTotalDamage = snapshot.bossAndTotalDamage
+    + snapshot.guildBossLevel
+    + (snapshot.guildActiveBoss ? 10 : 0);
+
+  if (snapshot.level < 1) {
+    return {
+      mainStat: 0,
+      subStat: 0,
+      extraStr: 0,
+      totalAttack: 0,
+      statAttack: 0,
+      convertedAttack: 0,
+      defenseMultiplier,
+      criticalMultiplier,
+      formulaInputs: {
+        bossAndTotalDamage,
+      },
+      pureMain: 0,
+      pureSub: 0,
+      issues: snapshot.issues ?? [],
+    };
+  }
+
   const warriorRate = mapleWarriorRate(snapshot.mapleWarrior);
   const defaultAllocation = allocatePureStats({
     level: snapshot.level,
@@ -92,16 +125,6 @@ export function calculateFromSnapshot(
     snapshot.flatAttack + snapshot.guildAttackLevel,
     snapshot.attackPercent,
   );
-  const defenseMultiplier = calculateDefenseMultiplier(
-    snapshot.monsterDefense,
-    snapshot.ignoreDefense + snapshot.guildIgnoreLevel * 2,
-  );
-  const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
-  const criticalMultiplier = calculateCriticalMultiplier(
-    rule.baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate,
-    rule.baseCriticalDamage + sharpEyes.criticalDamage,
-    snapshot.skillPercent,
-  );
   const statAttack = calculateStatAttack(
     mainStat,
     subStat,
@@ -109,9 +132,6 @@ export function calculateFromSnapshot(
     rule.weaponConstant,
     totalAttack,
   );
-  const bossAndTotalDamage = snapshot.bossAndTotalDamage
-    + snapshot.guildBossLevel
-    + (snapshot.guildActiveBoss ? 10 : 0);
   const convertedAttack = calculateConvertedAttack(
     statAttack,
     bossAndTotalDamage,

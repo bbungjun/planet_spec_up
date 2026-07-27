@@ -125,24 +125,114 @@ it("propagates normalization and AP allocation issues", () => {
   ]);
 });
 
-it("returns zero pure stats and attacks when level zero is invalid", () => {
+it.each([
+  ["invalid zero", "0", ["INVALID_NUMBER", "UNMET_SUBSTAT_REQUIREMENT"]],
+  ["blank", "", ["UNMET_SUBSTAT_REQUIREMENT"]],
+] as const)("zeros the complete damage result for %s level input", (_, level, issueCodes) => {
   const input = createDefaultInput("corsair");
-  input.character.level = "0";
+  input.character.level = level;
+  input.equipment.weapon!.mainFlat = "100";
+  input.equipment.weapon!.subFlat = "50";
   input.equipment.weapon!.attackFlat = "100";
+  input.equipment.weapon!.requiredSub = "9999";
 
-  expect(calculateDamageResult(input)).toMatchObject({
+  const result = calculateDamageResult(input);
+
+  expect(result).toMatchObject({
     mainStat: 0,
     subStat: 0,
-    totalAttack: 100,
+    extraStr: 0,
+    totalAttack: 0,
     statAttack: 0,
     convertedAttack: 0,
+    defenseMultiplier: 1,
+    criticalMultiplier: 1,
+    formulaInputs: {
+      bossAndTotalDamage: 0,
+    },
     pureMain: 0,
     pureSub: 0,
-    issues: [{
-      severity: "error",
-      path: "character.level",
-      code: "INVALID_NUMBER",
-    }],
+  });
+  expect(result.issues.map(({ code }) => code)).toEqual(issueCodes);
+});
+
+it.each([0, 0.5, -1])(
+  "zeros every snapshot damage input when level %s is below one",
+  (level) => {
+    const preservedIssue = {
+      severity: "warning" as const,
+      path: "equipment.weapon.requiredSub",
+      code: "UNMET_SUBSTAT_REQUIREMENT",
+      message: "preserved warning",
+    };
+    const result = calculateFromSnapshot({
+      ...common,
+      level,
+      job: "corsair",
+      skillPercent: 380,
+      sharpEyes: "sharp_30",
+      criticalRate: 10,
+      guildBossLevel: 5,
+      guildIgnoreLevel: 5,
+      guildAttackLevel: 5,
+      guildActiveBoss: true,
+      pureMain: 99,
+      pureSub: 88,
+      issues: [preservedIssue],
+    });
+
+    expect(result).toMatchObject({
+      mainStat: 0,
+      subStat: 0,
+      extraStr: 0,
+      totalAttack: 0,
+      statAttack: 0,
+      convertedAttack: 0,
+      defenseMultiplier: 0.8,
+      formulaInputs: {
+        bossAndTotalDamage: 35,
+      },
+      pureMain: 0,
+      pureSub: 0,
+      issues: [preservedIssue],
+    });
+    expect(result.criticalMultiplier).toBeCloseTo(1.0921052631578947, 12);
+  },
+);
+
+it("zeros Night Lord STR and attack for a level-zero snapshot", () => {
+  expect(calculateFromSnapshot({
+    ...common,
+    level: 0,
+    job: "night_lord",
+    mapleWarrior: 0,
+    equipmentMain: 0,
+    equipmentSub: 0,
+    mainPercent: 0,
+    subPercent: 0,
+    nightLordStrStat: 4,
+    percentEligibleAttack: 100,
+    flatAttack: 0,
+    attackPercent: 0,
+    bossAndTotalDamage: 0,
+    monsterDefense: 0,
+    ignoreDefense: 0,
+    skillPercent: 150,
+  })).toMatchObject({
+    mainStat: 0,
+    subStat: 0,
+    extraStr: 0,
+    totalAttack: 0,
+    statAttack: 0,
+    convertedAttack: 0,
+    defenseMultiplier: 1,
+    criticalMultiplier: 1.3333333333333333,
+    formulaInputs: {
+      bossAndTotalDamage: 0,
+    },
+    pureMain: 0,
+    pureSub: 0,
+    issues: [],
   });
 });
 
