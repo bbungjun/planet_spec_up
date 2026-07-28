@@ -304,6 +304,56 @@ describe("EquipmentOcrPanel", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:pending-ocr");
   });
 
+  it("revokes the preview URL exactly once when OCR is cancelled", async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:cancelled-ocr");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const recognizer = createRecognizer(
+      vi.fn(() => new Promise<string>(() => undefined)),
+    );
+    renderPanel(recognizer);
+
+    await user.upload(
+      screen.getByLabelText("장비 스크린샷 파일"),
+      new File(["cancel-preview"], "cancel-preview.png", { type: "image/png" }),
+    );
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole("button", { name: "OCR 취소" }));
+
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:cancelled-ocr");
+  });
+
+  it("revokes the superseded URL before starting the second selected image", async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValueOnce("blob:first-ocr")
+      .mockReturnValueOnce("blob:second-ocr");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const pending: Array<(text: string) => void> = [];
+    const recognizer = createRecognizer(
+      vi.fn(() => new Promise<string>((resolve) => {
+        pending.push(resolve);
+      })),
+    );
+    renderPanel(recognizer);
+    const fileInput = screen.getByLabelText("장비 스크린샷 파일");
+
+    await user.upload(fileInput, new File(["first"], "first.png", { type: "image/png" }));
+    await waitFor(() => expect(pending).toHaveLength(1));
+    await user.upload(fileInput, new File(["second"], "second.png", { type: "image/png" }));
+    await waitFor(() => expect(pending).toHaveLength(2));
+
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenNthCalledWith(1, "blob:first-ocr");
+    pending[1](attachedTooltipText);
+    await screen.findByLabelText("OCR DEX");
+    expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    expect(revokeObjectURL).toHaveBeenNthCalledWith(2, "blob:second-ocr");
+    expect(createObjectURL).toHaveBeenCalledTimes(2);
+  });
+
   it("retries a retryable recognition failure and shows the successful proposal", async () => {
     const user = userEvent.setup();
     const recognizer = createRecognizer(
@@ -378,6 +428,35 @@ describe("EquipmentOcrPanel", () => {
 
     expect(screen.queryByLabelText("OCR LUK")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it("clears a ready proposal and Apply controls when the target changes", async () => {
+    const user = userEvent.setup();
+    const recognizer = createRecognizer();
+    const onApply = vi.fn();
+    const view = renderPanel(recognizer, onApply, target);
+
+    await user.upload(
+      screen.getByLabelText("장비 스크린샷 파일"),
+      new File(["ready-target"], "ready-target.png", { type: "image/png" }),
+    );
+    await screen.findByLabelText("OCR DEX");
+    expect(screen.getByRole("button", { name: "인식값 적용" })).toBeInTheDocument();
+
+    const nextTarget: OcrTarget = { job: "night_lord", slot: "hat" };
+    view.rerender(
+      <EquipmentOcrPanel
+        target={nextTarget}
+        onApply={onApply}
+        createRecognizer={() => recognizer}
+      />,
+    );
+
+    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("OCR LUK")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "인식값 적용" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "취소" })).not.toBeInTheDocument();
     expect(onApply).not.toHaveBeenCalled();
   });
 
