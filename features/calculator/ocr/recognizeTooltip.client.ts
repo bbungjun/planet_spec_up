@@ -89,7 +89,7 @@ export const toRecognitionError = (
   error: unknown,
 ): TooltipRecognitionError => {
   if (isTooltipRecognitionError(error)) {
-    return error;
+    return { code: error.code, retryable: error.retryable };
   }
 
   if (isAbortError(error)) {
@@ -149,7 +149,14 @@ export const createBrowserTooltipRecognizer = (): TooltipRecognizer => {
     null;
   let queuedRecognition: Promise<unknown> = Promise.resolve();
 
-  const reportWorkerProgress = (message: WorkerLogMessage) => {
+  const reportWorkerProgress = (
+    generation: number,
+    message: WorkerLogMessage,
+  ) => {
+    if (generation !== workerGeneration) {
+      return;
+    }
+
     activeProgress?.({
       status: progressStatus(message.status),
       progress: clampProgress(message.progress),
@@ -201,7 +208,10 @@ export const createBrowserTooltipRecognizer = (): TooltipRecognizer => {
       const createdWorker = (await createWorker(
         ["kor", "eng"],
         1,
-        { logger: reportWorkerProgress },
+        {
+          logger: (message) => reportWorkerProgress(generation, message),
+          errorHandler: () => undefined,
+        },
       )) as BrowserOcrWorker;
 
       if (generation === workerGeneration) {
@@ -268,7 +278,8 @@ export const createBrowserTooltipRecognizer = (): TooltipRecognizer => {
         throw createAbortError();
       }
 
-      throw error;
+      await terminateCurrentWorker();
+      throw toRecognitionError(error);
     } finally {
       if (activeProgress === onProgress) {
         activeProgress = null;

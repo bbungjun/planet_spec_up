@@ -53,6 +53,126 @@ describe("browser tooltip OCR adapter helpers", () => {
     expect(createWorker).not.toHaveBeenCalled();
   });
 
+  it("contains startup and recognition failures and retries with fresh workers", async () => {
+    const failedWorker = {
+      recognize: vi.fn().mockRejectedValue(new Error("recognition failed")),
+      terminate: vi.fn().mockResolvedValue(undefined),
+    };
+    const healthyWorker = {
+      recognize: vi.fn().mockResolvedValue({ data: { text: "DEX +10" } }),
+      terminate: vi.fn().mockResolvedValue(undefined),
+    };
+    const startupError = new Error("worker startup failed");
+    const workerOptions = [] as Array<Record<string, unknown>>;
+    createWorker
+      .mockImplementationOnce(async (_langs, _oem, options) => {
+        workerOptions.push(options);
+        throw startupError;
+      })
+      .mockImplementationOnce(async (_langs, _oem, options) => {
+        workerOptions.push(options);
+        return failedWorker;
+      })
+      .mockImplementationOnce(async (_langs, _oem, options) => {
+        workerOptions.push(options);
+        return healthyWorker;
+      });
+
+    const recognizer = createBrowserTooltipRecognizer();
+    const file = new File(["x"], "item.png", { type: "image/png" });
+    const options = () => ({
+      signal: new AbortController().signal,
+      onProgress: vi.fn(),
+    });
+
+    await expect(recognizer.recognize(file, options())).rejects.toEqual({
+      code: "OCR_FAILED",
+      retryable: true,
+    });
+    await expect(recognizer.recognize(file, options())).rejects.toEqual({
+      code: "OCR_FAILED",
+      retryable: true,
+    });
+    expect(failedWorker.terminate).toHaveBeenCalledTimes(1);
+    await expect(recognizer.recognize(file, options())).resolves.toBe("DEX +10");
+
+    expect(createWorker).toHaveBeenCalledTimes(3);
+    expect(workerOptions).toHaveLength(3);
+    expect(workerOptions.every((value) => typeof value.errorHandler === "function")).toBe(
+      true,
+    );
+  });
+
+  it("drops progress from a cancelled startup before the next recognition", async () => {
+    let resolveFirstStartup: ((worker: unknown) => void) | undefined;
+    let resolveSecondRecognition: ((result: { data: { text: string } }) => void) | undefined;
+    let firstLogger: ((message: { status: string; progress: number }) => void) | undefined;
+    let secondLogger: ((message: { status: string; progress: number }) => void) | undefined;
+    const firstWorker = {
+      recognize: vi.fn().mockResolvedValue({ data: { text: "STR +1" } }),
+      terminate: vi.fn().mockResolvedValue(undefined),
+    };
+    const secondWorker = {
+      recognize: vi.fn(
+        () =>
+          new Promise<{ data: { text: string } }>((resolve) => {
+            resolveSecondRecognition = resolve;
+          }),
+      ),
+      terminate: vi.fn().mockResolvedValue(undefined),
+    };
+    createWorker
+      .mockImplementationOnce(async (_langs, _oem, { logger }) => {
+        firstLogger = logger;
+        return new Promise((resolve) => {
+          resolveFirstStartup = resolve;
+        });
+      })
+      .mockImplementationOnce(async (_langs, _oem, { logger }) => {
+        secondLogger = logger;
+        return secondWorker;
+      });
+
+    const recognizer = createBrowserTooltipRecognizer();
+    const firstController = new AbortController();
+    const firstProgress = vi.fn();
+    const secondProgress = vi.fn();
+    const firstRecognition = recognizer.recognize(
+      new File(["first"], "first.png", { type: "image/png" }),
+      { signal: firstController.signal, onProgress: firstProgress },
+    );
+
+    await vi.waitFor(() => {
+      expect(createWorker).toHaveBeenCalledTimes(1);
+      expect(firstLogger).toEqual(expect.any(Function));
+    });
+    firstController.abort();
+    await expect(firstRecognition).rejects.toMatchObject({ name: "AbortError" });
+
+    const secondRecognition = recognizer.recognize(
+      new File(["second"], "second.png", { type: "image/png" }),
+      { signal: new AbortController().signal, onProgress: secondProgress },
+    );
+    await vi.waitFor(() => {
+      expect(createWorker).toHaveBeenCalledTimes(2);
+      expect(secondLogger).toEqual(expect.any(Function));
+      expect(secondWorker.recognize).toHaveBeenCalledTimes(1);
+    });
+
+    firstLogger?.({ status: "loading language traineddata", progress: 0.1 });
+    expect(secondProgress).not.toHaveBeenCalled();
+    secondLogger?.({ status: "recognizing text", progress: 0.8 });
+    resolveSecondRecognition?.({ data: { text: "DEX +10" } });
+    await expect(secondRecognition).resolves.toBe("DEX +10");
+    expect(secondProgress).toHaveBeenCalledWith({
+      status: "recognizing",
+      progress: 0.8,
+    });
+
+    resolveFirstStartup?.(firstWorker);
+    await vi.waitFor(() => expect(firstWorker.terminate).toHaveBeenCalledTimes(1));
+  });
+
   it("loads one worker lazily, reports progress, and reuses it", async () => {
     const worker = {
       recognize: vi.fn().mockResolvedValue({ data: { text: "STR +10" } }),
