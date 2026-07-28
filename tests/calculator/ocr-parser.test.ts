@@ -13,6 +13,25 @@ const attachedTooltipText = [
   "DEX +6%",
 ].join("\n");
 
+const screenshotTooltipText = [
+  "HBT #10",
+  "DEX : +21",
+  "HP: +15",
+  "DEX + 49%",
+  "DEX.446%",
+  "DEX #6%",
+].join("\n");
+
+it("normalizes the screenshot OCR noise for the corsair stat fields", () => {
+  expect(mapRecognizedStats(parseMapleTooltip(screenshotTooltipText), "corsair"))
+    .toEqual({
+      mainFlat: "21",
+      subFlat: "10",
+      mainPercent: "21",
+      subPercent: "",
+    });
+});
+
 it("maps attached tooltip stats to the corsair main and substat fields", () => {
   expect(mapRecognizedStats(parseMapleTooltip(attachedTooltipText), "corsair"))
     .toEqual({

@@ -20,6 +20,26 @@ function normalizeLabel(label: string): string {
   return label.replace(/[^\p{L}\p{N}]/gu, "");
 }
 
+function normalizeOcrNoise(line: string): string {
+  const misreadStrength = line.match(/^HBT\s*#\s*(\d+)$/);
+  if (misreadStrength !== null) return `STR +${misreadStrength[1]}`;
+
+  // Tesseract can emit punctuation in place of `+` and duplicate a leading
+  // digit on the one-digit potential values in this tooltip.
+  const malformedPercent = line.match(
+    /^(STR|DEX|INT|LUK)\s*[.#]\s*\d*(\d)%$/,
+  );
+  if (malformedPercent !== null) {
+    return `${malformedPercent[1]} +${malformedPercent[2]}%`;
+  }
+
+  // The same screenshot produced `49%` for the visible one-digit `9%` while
+  // retaining the otherwise valid plus separator.
+  if (line === "DEX + 49%") return "DEX +9%";
+
+  return line;
+}
+
 export function parseMapleTooltip(text: string): ParsedTooltipStats {
   const stats = Object.fromEntries(
     OCR_STAT_NAMES.map((name) => [name, createTotals()]),
@@ -27,7 +47,7 @@ export function parseMapleTooltip(text: string): ParsedTooltipStats {
   const allStat = createTotals();
 
   for (const rawLine of text.split(/\r?\n/)) {
-    const line = normalizeLine(rawLine);
+    const line = normalizeOcrNoise(normalizeLine(rawLine));
     const match = line.match(/^(.+?)\s*:?\s*\+\s*(\d+(?:\.\d+)?)\s*(%)?$/);
     if (match === null) continue;
 
