@@ -313,6 +313,7 @@ export function EquipmentOcrPanel({
           type="file"
           accept="image/png,image/jpeg,image/webp"
           aria-label="장비 스크린샷 파일"
+          tabIndex={-1}
           onChange={handleFileChange}
         />
         <div
