@@ -14,6 +14,21 @@ import {
   vi,
 } from "vitest";
 
+const mockedTooltipRecognizer = vi.hoisted(() => ({
+  recognize: vi.fn(),
+  terminate: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/features/calculator/ocr/recognizeTooltip.client", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("@/features/calculator/ocr/recognizeTooltip.client")
+  >();
+  return {
+    ...actual,
+    createBrowserTooltipRecognizer: () => mockedTooltipRecognizer,
+  };
+});
+
 let stylesheet: HTMLStyleElement;
 const calculatorStyles = readFileSync(
   resolve(process.cwd(), "app/globals.css"),
@@ -75,6 +90,62 @@ afterEach(() => {
 });
 
 describe("calculator app", () => {
+  it("applies the reviewed OCR replacement only to the captured equipment card", async () => {
+    const user = userEvent.setup();
+    const attachedTooltipText = [
+      "STR +10",
+      "DEX +21",
+      "HP +15",
+      "DEX +9%",
+      "DEX +6%",
+      "DEX +6%",
+    ].join("\n");
+    mockedTooltipRecognizer.recognize.mockResolvedValue(attachedTooltipText);
+    render(<Page />);
+
+    await user.clear(screen.getByLabelText("목걸이 DEX"));
+    await user.type(screen.getByLabelText("목걸이 DEX"), "77");
+    await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
+
+    await user.clear(screen.getByLabelText("한벌옷 DEX"));
+    await user.type(screen.getByLabelText("한벌옷 DEX"), "99");
+    await user.clear(screen.getByLabelText("한벌옷 STR%"));
+    await user.type(screen.getByLabelText("한벌옷 STR%"), "88");
+    await user.clear(screen.getByLabelText("한벌옷 공격력"));
+    await user.type(screen.getByLabelText("한벌옷 공격력"), "123");
+    await user.clear(screen.getByLabelText("한벌옷 공격력%"));
+    await user.type(screen.getByLabelText("한벌옷 공격력%"), "9");
+    await user.clear(screen.getByLabelText("한벌옷 요구 STR"));
+    await user.type(screen.getByLabelText("한벌옷 요구 STR"), "45");
+
+    await user.upload(
+      screen.getByLabelText("장비 스크린샷 파일"),
+      new File(["screenshot"], "overall.png", { type: "image/png" }),
+    );
+    await screen.findByLabelText("OCR DEX");
+
+    expect(screen.getByLabelText("한벌옷 DEX")).toHaveValue(99);
+    expect(screen.getByLabelText("한벌옷 STR")).toHaveValue(null);
+    expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(null);
+    expect(screen.getByLabelText("한벌옷 STR%"))
+      .toHaveValue(88);
+    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
+    expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
+
+    await user.click(screen.getByRole("button", { name: "인식값 적용" }));
+
+    expect(screen.getByLabelText("한벌옷 DEX")).toHaveValue(21);
+    expect(screen.getByLabelText("한벌옷 STR")).toHaveValue(10);
+    expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(21);
+    expect(screen.getByLabelText("한벌옷 STR%")).toHaveValue(null);
+    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
+
+    await user.click(screen.getByRole("button", { name: "목걸이 편집" }));
+    expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(77);
+  });
+
   it("publishes the Korean product metadata and document language", () => {
     expect(PRODUCT_METADATA).toMatchObject({
       title: "플래닛 데미지 계산기",

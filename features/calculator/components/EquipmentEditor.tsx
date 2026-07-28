@@ -7,6 +7,8 @@ import type {
   ValidationIssue,
 } from "../domain/types";
 import { EQUIPMENT_SLOT_LABELS } from "../labels";
+import { EquipmentOcrPanel } from "./EquipmentOcrPanel";
+import type { OcrTarget, StatReplacement } from "../ocr/types";
 
 export type EquipmentChangeHandler = (
   slot: EquipmentSlot,
@@ -20,6 +22,7 @@ type EquipmentEditorProps = {
   issues: readonly ValidationIssue[];
   onEquipmentChange: EquipmentChangeHandler;
   onSelectSlot: (slot: EquipmentSlot) => void;
+  onOcrApply: (target: OcrTarget, replacement: StatReplacement) => void;
 };
 
 export type EquipmentFieldDefinition = {
@@ -45,6 +48,7 @@ export function EquipmentEditor({
   issues,
   onEquipmentChange,
   onSelectSlot,
+  onOcrApply,
 }: EquipmentEditorProps) {
   const equipment = input.equipment[selectedSlot];
   const rule = JOB_RULES[input.character.job];
@@ -134,6 +138,10 @@ export function EquipmentEditor({
           );
         })}
       </div>
+      <EquipmentOcrPanel
+        target={{ job: input.character.job, slot: selectedSlot }}
+        onApply={onOcrApply}
+      />
     </section>
   );
 }

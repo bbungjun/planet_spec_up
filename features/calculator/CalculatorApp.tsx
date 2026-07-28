@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
 import { createDefaultInput } from "./domain/defaults";
 import { JOB_RULES } from "./domain/job-rules";
+import { applyStatReplacement } from "./ocr/applyStatReplacement";
+import type { OcrTarget, StatReplacement } from "./ocr/types";
 import type {
   CalculatorInput,
   CharacterInput,
@@ -111,6 +113,23 @@ export function CalculatorApp() {
             ...equipment,
             [field]: value,
           } as EquipmentInput,
+        },
+      };
+    });
+  };
+
+  const handleOcrApply = (target: OcrTarget, replacement: StatReplacement) => {
+    setInput((current) => {
+      if (current.character.job !== target.job) return current;
+
+      const equipment = current.equipment[target.slot];
+      if (equipment === undefined) return current;
+
+      return {
+        ...current,
+        equipment: {
+          ...current.equipment,
+          [target.slot]: applyStatReplacement(equipment, replacement),
         },
       };
     });
@@ -230,6 +249,7 @@ export function CalculatorApp() {
                 issues={result.issues}
                 onEquipmentChange={handleEquipmentChange}
                 onSelectSlot={setSelectedSlot}
+                onOcrApply={handleOcrApply}
               />
             ) : (
               <BulkEditor
