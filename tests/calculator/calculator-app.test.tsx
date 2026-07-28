@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import RootLayout, { PRODUCT_METADATA } from "@/app/layout";
 import Page from "@/app/page";
+import type { EquipmentOcrPanelProps } from "@/features/calculator/components/EquipmentOcrPanel";
 import userEvent from "@testing-library/user-event";
 import {
   afterAll,
@@ -18,6 +19,7 @@ const mockedTooltipRecognizer = vi.hoisted(() => ({
   recognize: vi.fn(),
   terminate: vi.fn().mockResolvedValue(undefined),
 }));
+const mockedApplyStatReplacement = vi.hoisted(() => vi.fn());
 
 vi.mock("@/features/calculator/ocr/recognizeTooltip.client", async (importOriginal) => {
   const actual = await importOriginal<
@@ -26,6 +28,65 @@ vi.mock("@/features/calculator/ocr/recognizeTooltip.client", async (importOrigin
   return {
     ...actual,
     createBrowserTooltipRecognizer: () => mockedTooltipRecognizer,
+  };
+});
+
+vi.mock("@/features/calculator/components/EquipmentOcrPanel", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("@/features/calculator/components/EquipmentOcrPanel")
+  >();
+  const ActualPanel = actual.EquipmentOcrPanel;
+  return {
+    ...actual,
+    EquipmentOcrPanel: (props: EquipmentOcrPanelProps) => (
+      <>
+        <ActualPanel {...props} />
+        <button
+          type="button"
+          onClick={() => props.onApply(
+            { job: "night_lord", slot: "necklace" },
+            {
+              mainFlat: "999",
+              subFlat: "999",
+              mainPercent: "99",
+              subPercent: "99",
+            },
+          )}
+        >
+          Test stale OCR job
+        </button>
+        <button
+          type="button"
+          onClick={() => props.onApply(
+            { job: "corsair", slot: "top" },
+            {
+              mainFlat: "888",
+              subFlat: "888",
+              mainPercent: "88",
+              subPercent: "88",
+            },
+          )}
+        >
+          Test absent OCR slot
+        </button>
+      </>
+    ),
+  };
+});
+
+vi.mock("@/features/calculator/ocr/applyStatReplacement", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("@/features/calculator/ocr/applyStatReplacement")
+  >();
+  return {
+    ...actual,
+    applyStatReplacement: (
+      equipment: Parameters<typeof actual.applyStatReplacement>[0],
+      replacement: Parameters<typeof actual.applyStatReplacement>[1],
+    ) => {
+      mockedApplyStatReplacement(equipment, replacement);
+      return actual.applyStatReplacement(equipment, replacement);
+    },
   };
 });
 
@@ -89,6 +150,14 @@ afterEach(() => {
   document.body.style.removeProperty("color");
 });
 
+function captureCalculatorInput(): Array<{ id: string; value: string }> {
+  return Array.from(
+    document.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+      ".calculator-shell input, .calculator-shell select",
+    ),
+  ).map((element) => ({ id: element.id, value: element.value }));
+}
+
 describe("calculator app", () => {
   it("applies the reviewed OCR replacement only to the captured equipment card", async () => {
     const user = userEvent.setup();
@@ -103,8 +172,18 @@ describe("calculator app", () => {
     mockedTooltipRecognizer.recognize.mockResolvedValue(attachedTooltipText);
     render(<Page />);
 
+    await user.clear(screen.getByLabelText("레벨"));
+    await user.type(screen.getByLabelText("레벨"), "180");
+    await user.clear(screen.getByLabelText("타격당 평균 데미지 비율"));
+    await user.type(screen.getByLabelText("타격당 평균 데미지 비율"), "420");
     await user.clear(screen.getByLabelText("목걸이 DEX"));
     await user.type(screen.getByLabelText("목걸이 DEX"), "77");
+    await user.type(screen.getByLabelText("목걸이 STR"), "12");
+    await user.type(screen.getByLabelText("목걸이 DEX%"), "13");
+    await user.type(screen.getByLabelText("목걸이 STR%"), "14");
+    await user.type(screen.getByLabelText("목걸이 공격력"), "15");
+    await user.type(screen.getByLabelText("목걸이 공격력%"), "16");
+    await user.type(screen.getByLabelText("목걸이 요구 STR"), "17");
     await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
 
     await user.clear(screen.getByLabelText("한벌옷 DEX"));
@@ -140,10 +219,60 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(21);
     expect(screen.getByLabelText("한벌옷 STR%")).toHaveValue(null);
     expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
     expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
+    expect(screen.getByLabelText("레벨")).toHaveValue(180);
+    expect(screen.getByLabelText("타격당 평균 데미지 비율")).toHaveValue(420);
+
+    await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+    expect(screen.getByLabelText("일괄 입력 한벌옷 DEX")).toHaveValue(21);
+    expect(screen.getByLabelText("일괄 입력 한벌옷 STR")).toHaveValue(10);
+    expect(screen.getByLabelText("일괄 입력 한벌옷 DEX%")).toHaveValue(21);
+    expect(screen.getByLabelText("일괄 입력 한벌옷 STR%")).toHaveValue(null);
+
+    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
 
     await user.click(screen.getByRole("button", { name: "목걸이 편집" }));
     expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(77);
+    expect(screen.getByLabelText("목걸이 STR")).toHaveValue(12);
+    expect(screen.getByLabelText("목걸이 DEX%")).toHaveValue(13);
+    expect(screen.getByLabelText("목걸이 STR%")).toHaveValue(14);
+    expect(screen.getByLabelText("목걸이 공격력")).toHaveValue(15);
+    expect(screen.getByLabelText("목걸이 공격력%")).toHaveValue(16);
+    expect(screen.getByLabelText("목걸이 요구 STR")).toHaveValue(17);
+    expect(screen.getByRole("button", { name: "목걸이 편집" })).toHaveClass("is-complete");
+  });
+
+  it("ignores a captured OCR target from a different job", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.clear(screen.getByLabelText("레벨"));
+    await user.type(screen.getByLabelText("레벨"), "180");
+    await user.type(screen.getByLabelText("목걸이 DEX"), "44");
+    const before = captureCalculatorInput();
+    const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
+
+    await user.click(screen.getByRole("button", { name: "Test stale OCR job" }));
+
+    expect(captureCalculatorInput()).toEqual(before);
+    expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
+  });
+
+  it("ignores a captured OCR target whose slot is absent for the current job", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.clear(screen.getByLabelText("레벨"));
+    await user.type(screen.getByLabelText("레벨"), "175");
+    await user.type(screen.getByLabelText("목걸이 DEX"), "55");
+    const before = captureCalculatorInput();
+    const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
+
+    await user.click(screen.getByRole("button", { name: "Test absent OCR slot" }));
+
+    expect(captureCalculatorInput()).toEqual(before);
+    expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
   });
 
   it("publishes the Korean product metadata and document language", () => {
