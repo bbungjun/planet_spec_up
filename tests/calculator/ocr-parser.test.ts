@@ -18,7 +18,7 @@ const screenshotTooltipText = [
   "DEX : +21",
   "HP: +15",
   "DEX + 49%",
-  "DEX.446%",
+  "| DEX.446%",
   "DEX #6%",
 ].join("\n");
 

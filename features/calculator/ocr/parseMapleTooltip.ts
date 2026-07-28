@@ -27,7 +27,7 @@ function normalizeOcrNoise(line: string): string {
   // Tesseract can emit punctuation in place of `+` and duplicate a leading
   // digit on the one-digit potential values in this tooltip.
   const malformedPercent = line.match(
-    /^(STR|DEX|INT|LUK)\s*[.#]\s*\d*(\d)%$/,
+    /^\|?\s*(STR|DEX|INT|LUK)\s*[.#]\s*\d*(\d)%$/,
   );
   if (malformedPercent !== null) {
     return `${malformedPercent[1]} +${malformedPercent[2]}%`;
