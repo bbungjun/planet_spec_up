@@ -196,7 +196,9 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
     percentEligibleAttack: equipment.percentEligibleAttack,
     flatAttack: equipment.flatAttack,
     attackPercent: equipment.attackPercent,
-    bossAndTotalDamage: character.bossAndTotalDamage,
+    bossAndTotalDamage: character.bossAndTotalDamage + rule.visibleSlots.reduce(
+      (sum, slot) => sum + (normalized.value.equipment[slot]?.damagePercent ?? 0), 0,
+    ),
     monsterDefense: character.monsterDefense,
     ignoreDefense: character.ignoreDefense,
     criticalRate: character.criticalRate,

@@ -82,7 +82,7 @@ export function BulkEditor({
                             min={0}
                             max={max}
                             step={step}
-                            value={equipment[field]}
+                            value={equipment[field] ?? ""}
                             data-field-path={path}
                             aria-invalid={error === undefined ? undefined : true}
                             aria-describedby={

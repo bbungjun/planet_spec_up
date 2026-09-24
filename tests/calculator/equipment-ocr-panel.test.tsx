@@ -55,6 +55,39 @@ afterEach(() => {
 });
 
 describe("EquipmentOcrPanel", () => {
+  it("reviews attacks and damage dynamically and reparses corrected or new options", async () => {
+    const user = userEvent.setup();
+    const recognizer = createRecognizer(vi.fn().mockResolvedValue(
+      "STR +3\nDEX +7\n공격력 +106\n흑수정 강화 공격력 +2\n총 데미지 +9%\n총 데미지 +6%\n총 데미지 +6%\nREQ STR : 120\n명중률 +5",
+    ));
+    const onApply = vi.fn();
+    renderPanel(recognizer, onApply, {job: "corsair", slot: "weapon"});
+    await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["weapon"], "weapon.png", {type: "image/png"}));
+    expect(await screen.findByLabelText("OCR 공격력")).toHaveValue(106);
+    expect(screen.getByLabelText("OCR 보공·총데미지%")).toHaveValue(21);
+    expect(screen.getByLabelText("OCR 요구 STR")).toHaveValue(120);
+    expect(screen.getByText(/명중률: 5 — 참고용/)).toBeInTheDocument();
+    expect(screen.getByText(/흑수정 강화 공격력: 2 — 참고용/)).toBeInTheDocument();
+    expect(onApply).not.toHaveBeenCalled();
+    await user.click(screen.getByText("인식 텍스트 확인·수정 / 옵션 추가"));
+    fireEvent.change(screen.getByLabelText("인식 텍스트"), {target: {value: "STR +8\nDEX +19\n공격력 +143\n공격력 +9%\n총데미지 +30%\nREQ STR: 100"}});
+    expect(screen.getByLabelText("OCR 공격력")).toHaveValue(143);
+    expect(screen.getByLabelText("OCR 공격력%")).toHaveValue(9);
+    await user.click(screen.getByRole("button", {name: "인식값 적용"}));
+    expect(onApply).toHaveBeenCalledWith({job: "corsair", slot: "weapon"}, {
+      mainFlat: "19", subFlat: "8", mainPercent: "", subPercent: "",
+      attackFlat: "143", attackPercent: "9", damagePercent: "30", requiredSub: "100",
+    });
+  });
+
+  it("does not apply an empty or unrelated OCR result", async () => {
+    const user = userEvent.setup();
+    renderPanel(createRecognizer(vi.fn().mockResolvedValue("HP +300\n알 수 없는 글자")));
+    await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["unknown"], "unknown.png", {type: "image/png"}));
+    expect(await screen.findByRole("button", {name: "인식값 적용"})).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("계산에 적용할 옵션을 찾지 못했습니다");
+  });
+
   it("recognizes a selected screenshot and shows the editable stat proposal", async () => {
     const user = userEvent.setup();
     const recognizer = createRecognizer();

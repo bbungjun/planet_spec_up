@@ -150,6 +150,9 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
       requiredSub: readNumber(values.requiredSub, {
         path: `equipment.${slot}.requiredSub`, min: 0, max: 9999, integer: true,
       }, issues),
+      damagePercent: readNumber(values.damagePercent ?? "", {
+        path: `equipment.${slot}.damagePercent`, min: 0, max: 999,
+      }, issues),
     };
   }
 

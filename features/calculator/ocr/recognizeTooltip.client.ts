@@ -1,5 +1,8 @@
 "use client";
 
+import { enlargeTooltip } from "./enlargeTooltip.client";
+import { mergeRecognitionText } from "./mergeRecognitionText";
+
 export type TooltipRecognitionProgress = {
   status: "loading" | "recognizing";
   progress: number;
@@ -277,7 +280,12 @@ export const createBrowserTooltipRecognizer = (): TooltipRecognizer => {
         throw createAbortError();
       }
 
-      return result.data.text;
+      const enlarged = await enlargeTooltip(file);
+      if (signal.aborted) throw createAbortError();
+      if (!enlarged) return result.data.text;
+      const refined = await raceWithAbort(currentWorker.recognize(enlarged), signal);
+      if (signal.aborted) throw createAbortError();
+      return mergeRecognitionText(result.data.text, refined.data.text);
     } catch (error) {
       if (signal.aborted || isAbortError(error)) {
         await terminateCurrentWorker();

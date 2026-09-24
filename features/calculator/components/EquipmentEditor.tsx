@@ -40,6 +40,7 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
   { field: "attackFlat", suffix: () => "공격력", max: 9999, step: 1 },
   { field: "attackPercent", suffix: () => "공격력%", max: 999, step: "any" },
   { field: "requiredSub", suffix: (_main, sub) => `요구 ${sub}`, max: 9999, step: 1 },
+  { field: "damagePercent", suffix: () => "보공·총데미지%", max: 999, step: "any" },
 ];
 
 export function EquipmentEditor({
@@ -114,7 +115,7 @@ export function EquipmentEditor({
                 min={0}
                 max={max}
                 step={step}
-                value={equipment[field]}
+                value={equipment[field] ?? ""}
                 data-field-path={path}
                 ref={(element) => {
                   fieldRefs.current[fieldIndex] = element;

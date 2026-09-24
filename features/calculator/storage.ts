@@ -72,8 +72,9 @@ function isGuildSkillLevel(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 {
 
 function isEquipmentInput(value: unknown): value is EquipmentInput {
   return isRecord(value)
-    && hasOnlyKeys(value, equipmentKeys)
-    && equipmentKeys.every((key) => typeof value[key] === "string");
+    && Object.keys(value).every(key => key === "damagePercent" || equipmentKeys.some(known => key === known))
+    && equipmentKeys.every((key) => typeof value[key] === "string")
+    && (!Object.hasOwn(value, "damagePercent") || typeof value.damagePercent === "string");
 }
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {

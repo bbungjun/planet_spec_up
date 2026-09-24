@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createWorker = vi.hoisted(() => vi.fn());
+const enlargeTooltip = vi.hoisted(() => vi.fn());
 
 vi.mock("tesseract.js", () => ({ createWorker }));
+vi.mock("@/features/calculator/ocr/enlargeTooltip.client", () => ({enlargeTooltip}));
 
 import {
   MAX_TOOLTIP_IMAGE_BYTES,
@@ -14,6 +16,7 @@ import {
 describe("browser tooltip OCR adapter helpers", () => {
   beforeEach(() => {
     createWorker.mockReset();
+    enlargeTooltip.mockReset().mockResolvedValue(null);
   });
 
   it("accepts PNG images and rejects unsupported GIF images", () => {
@@ -27,6 +30,27 @@ describe("browser tooltip OCR adapter helpers", () => {
         new File(["x"], "item.gif", { type: "image/gif" }),
       ),
     ).toBe(false);
+  });
+
+  it("recognizes original and enlarged images on one worker without doubling potentials", async () => {
+    const enlarged = new File(["large"], "large.png", {type: "image/png"});
+    enlargeTooltip.mockResolvedValue(enlarged);
+    const worker = {
+      recognize: vi.fn()
+        .mockResolvedValueOnce({data: {text: "STR +3\n총데미지 +6%\n총데미지 +6%"}})
+        .mockResolvedValueOnce({data: {text: "DEX +7\n총데미지 +9%\n총데미지 +6%\n총데미지 +6%"}}),
+      terminate: vi.fn().mockResolvedValue(undefined),
+    };
+    createWorker.mockResolvedValue(worker);
+    const recognizer = createBrowserTooltipRecognizer();
+    const file = new File(["small"], "small.png", {type: "image/png"});
+    const result = await recognizer.recognize(file, {signal: new AbortController().signal, onProgress: vi.fn()});
+    expect(worker.recognize).toHaveBeenNthCalledWith(1, file);
+    expect(worker.recognize).toHaveBeenNthCalledWith(2, enlarged);
+    expect(result.match(/총데미지/g)).toHaveLength(3);
+    expect(result).toContain("STR +3");
+    expect(result).toContain("DEX +7");
+    expect(createWorker).toHaveBeenCalledTimes(1);
   });
 
   it("normalizes abort errors into a non-retryable cancellation", () => {

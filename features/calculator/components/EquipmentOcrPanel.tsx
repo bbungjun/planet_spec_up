@@ -114,6 +114,7 @@ export function EquipmentOcrPanel({
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [proposal, setProposal] = useState<StatReplacement | null>(null);
+  const [recognizedText, setRecognizedText] = useState("");
   const [capturedTarget, setCapturedTarget] = useState<OcrTarget | null>(null);
   const [lastFile, setLastFile] = useState<File | null>(null);
   const [error, setError] = useState<{
@@ -144,6 +145,7 @@ export function EquipmentOcrPanel({
     setLastFile(null);
     if (clearProposal) {
       setProposal(null);
+      setRecognizedText("");
       setCapturedTarget(null);
     }
   }, [clearPreview, recognizer]);
@@ -202,6 +204,7 @@ export function EquipmentOcrPanel({
           return;
         }
 
+        setRecognizedText(text);
         setProposal(mapRecognizedStats(parseMapleTooltip(text), captured.job));
         setCapturedTarget(captured);
         setStatus("ready");
@@ -289,7 +292,22 @@ export function EquipmentOcrPanel({
     { field: "subFlat", label: `OCR ${rule.subStat}`, max: 9999, step: 1 },
     { field: "mainPercent", label: `OCR ${rule.mainStat}%`, max: 999, step: "any" },
     { field: "subPercent", label: `OCR ${rule.subStat}%`, max: 999, step: "any" },
+    { field: "attackFlat", label: "OCR 공격력", max: 9999, step: 1 },
+    { field: "attackPercent", label: "OCR 공격력%", max: 999, step: "any" },
+    { field: "requiredSub", label: `OCR 요구 ${rule.subStat}`, max: 9999, step: 1 },
+    { field: "damagePercent", label: "OCR 보공·총데미지%", max: 999, step: "any" },
   ];
+  const parsed = parseMapleTooltip(recognizedText);
+  const hasApplicableOptions = parsed.options.some(option => {
+    const mapped = mapRecognizedStats(parseMapleTooltip(option.raw), target.job);
+    return Object.values(mapped).some(value => value !== "");
+  });
+  const proposalValid = fieldDefinitions.every(({field, max, step}) => {
+    const raw = proposal?.[field];
+    if (raw === undefined || raw === "") return true;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 && value <= max && (step === "any" || Number.isInteger(value));
+  });
 
   return (
     <section
@@ -304,7 +322,7 @@ export function EquipmentOcrPanel({
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
       <p className="equipment-ocr-description">
-        이미지를 선택하거나 붙여넣고, 인식된 네 가지 스탯을 확인한 뒤 적용하세요.
+        이미지를 붙여넣으면 스탯·공격력·잠재 옵션을 읽습니다. 인식값을 확인한 뒤 선택한 장비에 적용하세요.
       </p>
 
       <div className="equipment-ocr-upload">
@@ -383,8 +401,12 @@ export function EquipmentOcrPanel({
             <h4>인식값 검토</h4>
             <span>{capturedTarget?.slot === target.slot ? "현재 카드" : "이전 카드"}</span>
           </div>
+          <p>기본 스탯 4개는 교체합니다. 공격력·요구 스탯·보공·총데미지는 인식된 항목만 교체합니다.</p>
+          {parsed.options.some(option => option.label.replace(/\s/g, "") === "흑수정강화공격력") && (
+            <p>사진에 표시된 공격력 수치를 그대로 입력합니다. 흑수정 강화 공격력은 별도 표기로 목록에만 표시합니다.</p>
+          )}
           <div className="equipment-ocr-proposal-grid">
-            {fieldDefinitions.map(({ field, label, max, step }) => (
+            {fieldDefinitions.filter(({field}) => proposal[field] !== undefined).map(({ field, label, max, step }) => (
               <div className="field" key={field}>
                 <label htmlFor={`equipment-ocr-${field}`}>{label}</label>
                 <input
@@ -399,10 +421,33 @@ export function EquipmentOcrPanel({
               </div>
             ))}
           </div>
+          <details className="equipment-ocr-details" open>
+            <summary>인식한 전체 옵션 ({parsed.options.length})</summary>
+            <ul>
+              {parsed.options.map((option, index) => {
+                const supported = Object.values(mapRecognizedStats(parseMapleTooltip(option.raw), target.job)).some(value => value !== "");
+                return <li key={index}>{option.requirement ? "요구 " : ""}{option.label}: {option.value}{option.percent ? "%" : ""} — {supported ? "계산 반영" : "참고용 · 현재 계산식 미반영"}</li>;
+              })}
+            </ul>
+          </details>
+          <details className="equipment-ocr-details">
+            <summary>인식 텍스트 확인·수정 / 옵션 추가</summary>
+            <p>누락된 옵션은 한 줄씩 추가할 수 있습니다. 예: 공격력 +106, 총데미지 +9%, REQ STR: 120</p>
+            <label htmlFor="ocr-recognized-text">인식 텍스트</label>
+            <textarea id="ocr-recognized-text" rows={10} value={recognizedText} onChange={event => {
+              const text = event.currentTarget.value;
+              setRecognizedText(text);
+              setProposal(mapRecognizedStats(parseMapleTooltip(text), target.job));
+            }} />
+            <p>숫자나 옵션 이름이 잘못 읽힌 줄은 이미지와 대조해 수정하세요. 텍스트를 수정하면 위 검토값을 다시 계산합니다.</p>
+          </details>
+          {!hasApplicableOptions && <p role="alert">계산에 적용할 옵션을 찾지 못했습니다. 인식 텍스트를 확인하거나 다른 캡처를 넣어주세요.</p>}
+          {!proposalValid && <p role="alert">검토값의 범위를 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999입니다.</p>}
           <div className="equipment-ocr-actions">
             <button
               type="button"
               className="equipment-ocr-apply"
+              disabled={!hasApplicableOptions || !proposalValid}
               onClick={() => {
                 if (capturedTarget !== null) onApply(capturedTarget, proposal);
               }}

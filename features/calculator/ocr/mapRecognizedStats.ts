@@ -14,10 +14,21 @@ export function mapRecognizedStats(
   const main = parsed.stats[mainStat];
   const sub = parsed.stats[subStat];
 
-  return {
+  const result: StatReplacement = {
     mainFlat: asFieldValue(main.flat + parsed.allStat.flat),
     subFlat: asFieldValue(sub.flat + parsed.allStat.flat),
     mainPercent: asFieldValue(main.percent + parsed.allStat.percent),
     subPercent: asFieldValue(sub.percent + parsed.allStat.percent),
   };
+  for (const option of parsed.options) {
+    const field = option.requirement
+      ? option.label === subStat ? "requiredSub" : undefined
+      : option.label === "공격력" ? option.percent ? "attackPercent" : "attackFlat"
+      : ["총데미지", "보스데미지"].includes(option.label) && option.percent ? "damagePercent"
+      : undefined;
+    if (field) {
+      result[field] = String(option.requirement ? option.value : Number(result[field] ?? 0) + option.value);
+    }
+  }
+  return result;
 }

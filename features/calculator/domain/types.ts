@@ -19,6 +19,8 @@ export type EquipmentInput = {
   attackFlat: string;
   attackPercent: string;
   requiredSub: string;
+  /** Optional for compatibility with existing saved equipment. */
+  damagePercent?: string;
 };
 
 export type CharacterInput = {
