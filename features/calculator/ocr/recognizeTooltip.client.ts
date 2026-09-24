@@ -18,6 +18,8 @@ export type TooltipRecognizer = {
 
 export const MAX_TOOLTIP_IMAGE_BYTES = 12 * 1024 * 1024;
 
+const LOCAL_OCR_ASSET_PATH = "/ocr";
+
 const SUPPORTED_TOOLTIP_IMAGE_TYPES = new Set([
   "image/png",
   "image/jpeg",
@@ -209,6 +211,10 @@ export const createBrowserTooltipRecognizer = (): TooltipRecognizer => {
         ["kor", "eng"],
         1,
         {
+          workerPath: `${LOCAL_OCR_ASSET_PATH}/worker.min.js`,
+          corePath: `${LOCAL_OCR_ASSET_PATH}/tesseract-core-lstm.wasm.js`,
+          langPath: LOCAL_OCR_ASSET_PATH,
+          gzip: false,
           logger: (message) => reportWorkerProgress(generation, message),
           errorHandler: () => undefined,
         },

@@ -204,7 +204,13 @@ describe("browser tooltip OCR adapter helpers", () => {
     expect(createWorker).toHaveBeenCalledWith(
       ["kor", "eng"],
       1,
-      expect.objectContaining({ logger: expect.any(Function) }),
+      expect.objectContaining({
+        logger: expect.any(Function),
+        workerPath: "/ocr/worker.min.js",
+        corePath: "/ocr/tesseract-core-lstm.wasm.js",
+        langPath: "/ocr",
+        gzip: false,
+      }),
     );
     expect(worker.recognize).toHaveBeenCalledTimes(2);
     expect(onProgress).toHaveBeenNthCalledWith(1, {
