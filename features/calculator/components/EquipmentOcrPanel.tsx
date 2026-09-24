@@ -6,7 +6,6 @@ import {
   useState,
   useRef,
   type ChangeEvent,
-  type ClipboardEvent,
 } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import { EQUIPMENT_SLOT_LABELS } from "../labels";
@@ -49,7 +48,11 @@ const revokePreviewUrl = (url: string | null): void => {
   URL.revokeObjectURL(url);
 };
 
-const findClipboardImage = (event: ClipboardEvent<HTMLDivElement>): File | null => {
+type ClipboardDataEvent = {
+  clipboardData: DataTransfer | null;
+};
+
+const findClipboardImage = (event: ClipboardDataEvent): File | null => {
   const clipboard = event.clipboardData;
   if (clipboard === null) return null;
 
@@ -250,17 +253,22 @@ export function EquipmentOcrPanel({
     cancelCurrent();
   }, [cancelCurrent, target.job, target.slot]);
 
+  useEffect(() => {
+    const handleDocumentPaste = (event: ClipboardEvent) => {
+      const file = findClipboardImage(event);
+      if (file === null) return;
+      event.preventDefault();
+      processFile(file);
+    };
+
+    document.addEventListener("paste", handleDocumentPaste);
+    return () => document.removeEventListener("paste", handleDocumentPaste);
+  }, [processFile]);
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0] ?? null;
     event.currentTarget.value = "";
     if (file !== null) processFile(file);
-  };
-
-  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
-    const file = findClipboardImage(event);
-    if (file === null) return;
-    event.preventDefault();
-    processFile(file);
   };
 
   const updateProposal = (field: keyof StatReplacement, value: string) => {
@@ -321,9 +329,8 @@ export function EquipmentOcrPanel({
           tabIndex={0}
           role="group"
           aria-label="장비 스크린샷 붙여넣기"
-          onPaste={handlePaste}
         >
-          Ctrl+V로 붙여넣기
+          페이지 어디서든 Ctrl+V로 붙여넣기
         </div>
       </div>
 

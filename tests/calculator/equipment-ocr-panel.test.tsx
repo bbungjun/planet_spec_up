@@ -143,6 +143,30 @@ describe("EquipmentOcrPanel", () => {
     expect(textPreventDefault).not.toHaveBeenCalled();
   });
 
+  it("recognizes an image pasted anywhere on the current page", async () => {
+    const recognizer = createRecognizer();
+    renderPanel(recognizer);
+    const image = new File(["screenshot"], "snipping-tool.png", {
+      type: "image/png",
+    });
+    const paste = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, "clipboardData", {
+      value: {
+        items: [{ kind: "file", type: "image/png", getAsFile: () => image }],
+        files: [image],
+      },
+    });
+    const preventDefault = vi.spyOn(paste, "preventDefault");
+
+    document.body.dispatchEvent(paste);
+
+    await waitFor(() => expect(recognizer.recognize).toHaveBeenCalledWith(
+      image,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ));
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+  });
+
   it("aborts cancellation and ignores a stale recognition result", async () => {
     const user = userEvent.setup();
     const pending: Array<{
