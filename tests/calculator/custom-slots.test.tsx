@@ -83,3 +83,22 @@ it("creates an extra slot from a reviewed OCR category without overwriting the s
   await user.click(screen.getByRole("button", {name: "목걸이 편집"}));
   expect(screen.getByLabelText("목걸이 공격력", {exact: true})).toHaveValue(null);
 });
+
+it("imports a multi-image batch into a new slot and an empty existing slot in one update", async () => {
+  recognize.mockReset()
+    .mockResolvedValueOnce("장비분류: 어깨장식\n공격력 +5")
+    .mockResolvedValueOnce("장비분류: 망토\nDEX +8");
+  const user = userEvent.setup();
+  render(<CalculatorApp />);
+  await user.upload(screen.getByLabelText("장비 스크린샷 파일"), [
+    new File(["shoulder"], "shoulder.png", {type: "image/png"}),
+    new File(["cape"], "cape.png", {type: "image/png"}),
+  ]);
+  await screen.findByText("2/2장 인식 완료");
+  await user.click(screen.getByRole("button", {name: "검토한 2개 장비 적용"}));
+  await user.click(screen.getByRole("button", {name: "어깨장식 편집"}));
+  expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
+  await user.click(screen.getByRole("button", {name: "망토 편집"}));
+  expect(screen.getByLabelText("망토 DEX", {exact: true})).toHaveValue(8);
+  expect(screen.getAllByText("적용 완료")).toHaveLength(2);
+});

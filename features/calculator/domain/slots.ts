@@ -23,7 +23,8 @@ export function addEquipmentSlot(input: CalculatorInput, requestedLabel: string)
   const usedLabels = new Set(getVisibleEquipmentSlots(input).map(slot => getEquipmentSlotLabel(input, slot)));
   let displayLabel = label;
   for (let index = 2; usedLabels.has(displayLabel); index += 1) {
-    displayLabel = `${label} ${index}`;
+    const suffix = ` ${index}`;
+    displayLabel = `${label.slice(0, 30 - suffix.length)}${suffix}`;
   }
   const unique = globalThis.crypto?.randomUUID?.()
     ?? `${Date.now()}_${Math.random().toString(36).slice(2)}`;

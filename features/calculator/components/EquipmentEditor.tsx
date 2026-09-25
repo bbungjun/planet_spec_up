@@ -9,6 +9,7 @@ import type {
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
 import { EquipmentOcrPanel } from "./EquipmentOcrPanel";
 import type { OcrTarget, StatReplacement } from "../ocr/types";
+import type { ApplyOcrBatch } from "../ocr/batch";
 
 export type EquipmentChangeHandler = (
   slot: EquipmentSlot,
@@ -24,6 +25,7 @@ type EquipmentEditorProps = {
   onSelectSlot: (slot: EquipmentSlot) => void;
   onOcrApply: (target: OcrTarget, replacement: StatReplacement) => void;
   onOcrAddAsNew: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
+  onOcrBatchApply: ApplyOcrBatch;
 };
 
 export type EquipmentFieldDefinition = {
@@ -52,6 +54,7 @@ export function EquipmentEditor({
   onSelectSlot,
   onOcrApply,
   onOcrAddAsNew,
+  onOcrBatchApply,
 }: EquipmentEditorProps) {
   const equipment = input.equipment[selectedSlot];
   const rule = JOB_RULES[input.character.job];
@@ -104,6 +107,8 @@ export function EquipmentEditor({
         slotLabel={slotLabel}
         onApply={onOcrApply}
         onAddAsNew={onOcrAddAsNew}
+        onApplyBatch={onOcrBatchApply}
+        slotChoices={getVisibleEquipmentSlots(input).map(slot => ({slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot]!}))}
       />
 
       <div className="equipment-field-grid">

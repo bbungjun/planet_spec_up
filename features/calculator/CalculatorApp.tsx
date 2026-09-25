@@ -7,6 +7,7 @@ import { JOB_RULES } from "./domain/job-rules";
 import { addEquipmentSlot, getEquipmentSlotLabel, removeEquipmentSlot } from "./domain/slots";
 import { applyStatReplacement } from "./ocr/applyStatReplacement";
 import type { OcrTarget, StatReplacement } from "./ocr/types";
+import { applyOcrBatch, type ApplyOcrBatch } from "./ocr/batch";
 import type {
   CalculatorInput,
   CharacterInput,
@@ -146,6 +147,13 @@ export function CalculatorApp() {
     setSelectedSlot(added.slot);
     setInputMode("cards");
     return true;
+  };
+
+  const handleOcrBatchApply: ApplyOcrBatch = (job, entries) => {
+    const outcome = applyOcrBatch(input, job, entries);
+    if (outcome.error) return outcome.error;
+    if (outcome.input) setInput(outcome.input);
+    return null;
   };
 
   const handleRemoveSlot = (slot: EquipmentSlot) => {
@@ -294,6 +302,7 @@ export function CalculatorApp() {
                 onSelectSlot={setSelectedSlot}
                 onOcrApply={handleOcrApply}
                 onOcrAddAsNew={handleOcrAddAsNew}
+                onOcrBatchApply={handleOcrBatchApply}
               />
             ) : (
               <BulkEditor
