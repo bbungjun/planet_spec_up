@@ -91,6 +91,12 @@ it("keeps flat and percentage options independently when one OCR pass misses a l
   expect(parseMapleTooltip("총 데미지 +996").options).toEqual([]);
 });
 
+it("keeps the equipment category when only the original OCR pass read it", () => {
+  const merged = mergeRecognitionText("장비분류 : 어깨장식\n공격력 +5", "공격력 +5");
+  expect(parseMapleTooltip(merged).category).toBe("어깨장식");
+  expect(mapRecognizedStats(parseMapleTooltip(merged), "corsair").attackFlat).toBe("5");
+});
+
 it("stores equipment damage, recalculates it and never adds it twice on re-apply", () => {
   const input = createDefaultInput("corsair");
   input.character.bossAndTotalDamage = "10";

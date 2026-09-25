@@ -1,4 +1,4 @@
-import type { EquipmentSlot, JobId, StatName } from "./types";
+import type { BuiltinEquipmentSlot, JobId, StatName } from "./types";
 
 export type JobRule = {
   id: JobId;
@@ -12,14 +12,14 @@ export type JobRule = {
   baseCriticalRate: number;
   baseCriticalDamage: number;
   defaultSkillPercent: number;
-  visibleSlots: readonly EquipmentSlot[];
+  visibleSlots: readonly BuiltinEquipmentSlot[];
 };
 
 const COMMON = [
   "necklace", "cape", "earrings", "eye", "face", "hat", "shoes",
   "gloves", "weapon", "title", "ring_1", "ring_2", "ring_3", "ring_4",
   "projectile", "blessing_1", "blessing_2", "buff",
-] as const satisfies readonly EquipmentSlot[];
+] as const satisfies readonly BuiltinEquipmentSlot[];
 
 export const JOB_RULES: Record<JobId, JobRule> = {
   marksman: {

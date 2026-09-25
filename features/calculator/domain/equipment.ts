@@ -1,6 +1,6 @@
 import type { JobRule } from "./job-rules";
 import type { NormalizedEquipmentInput } from "./normalize";
-import type { EquipmentInput, EquipmentSlot, ValidationIssue } from "./types";
+import type { CustomEquipmentSlot, EquipmentInput, EquipmentSlot, ValidationIssue } from "./types";
 
 export type EquipmentRequirement = {
   slot: EquipmentSlot;
@@ -50,6 +50,7 @@ function asNumber(value: string | number): number {
 export function sumEquipment(
   equipment: Partial<Record<EquipmentSlot, EquipmentValues>>,
   job: JobRule,
+  customSlots: readonly CustomEquipmentSlot[] = [],
 ): EquipmentTotals {
   const totals: EquipmentTotals = {
     mainFlat: 0,
@@ -62,7 +63,7 @@ export function sumEquipment(
     requirements: [],
   };
 
-  for (const slot of job.visibleSlots) {
+  for (const slot of [...job.visibleSlots, ...customSlots]) {
     const item = equipment[slot];
     if (item === undefined) continue;
 

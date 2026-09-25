@@ -1,6 +1,6 @@
-import type { EquipmentSlot } from "./domain/types";
+import type { BuiltinEquipmentSlot } from "./domain/types";
 
-export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
+export const EQUIPMENT_SLOT_LABELS: Record<BuiltinEquipmentSlot, string> = {
   necklace: "목걸이",
   cape: "망토",
   earrings: "귀고리",

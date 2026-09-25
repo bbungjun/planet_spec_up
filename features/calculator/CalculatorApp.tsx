@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
 import { createDefaultInput } from "./domain/defaults";
 import { JOB_RULES } from "./domain/job-rules";
+import { addEquipmentSlot, getEquipmentSlotLabel, removeEquipmentSlot } from "./domain/slots";
 import { applyStatReplacement } from "./ocr/applyStatReplacement";
 import type { OcrTarget, StatReplacement } from "./ocr/types";
 import type {
@@ -29,7 +30,7 @@ import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { ResultsPanel } from "./components/ResultsPanel";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
-  return Object.values(input.equipment).some(
+  return (input.customSlots?.length ?? 0) > 0 || Object.values(input.equipment).some(
     (equipment) => equipment !== undefined
       && Object.values(equipment).some((value) => value.trim() !== ""),
   );
@@ -135,11 +136,44 @@ export function CalculatorApp() {
     });
   };
 
+  const handleAddSlot = (label: string): boolean => {
+    const added = addEquipmentSlot(input, label);
+    if (!added) return false;
+    setInput(added.input);
+    setSelectedSlot(added.slot);
+    setInputMode("cards");
+    return true;
+  };
+
+  const handleRemoveSlot = (slot: EquipmentSlot) => {
+    const equipment = input.equipment[slot];
+    if (!input.customSlots?.some(({ id }) => id === slot)) return;
+    if (equipment && Object.values(equipment).some(value => value.trim() !== "")
+      && !window.confirm(`${getEquipmentSlotLabel(input, slot)}의 입력값을 삭제할까요?`)) return;
+    setInput(removeEquipmentSlot(input, slot));
+    if (selectedSlot === slot) setSelectedSlot(firstSlot(input.character.job));
+  };
+
+  const handleOcrAddAsNew = (target: OcrTarget, label: string, replacement: StatReplacement) => {
+    if (target.job !== input.character.job || input.equipment[target.slot] === undefined) return;
+    const added = addEquipmentSlot(input, label);
+    if (!added) return;
+    setInput({
+      ...added.input,
+      equipment: {
+        ...added.input.equipment,
+        [added.slot]: applyStatReplacement(added.input.equipment[added.slot]!, replacement),
+      },
+    });
+    setSelectedSlot(added.slot);
+    setInputMode("cards");
+  };
+
   const handleJobChange = (job: JobId) => {
     if (job === input.character.job) return;
     if (
       hasEquipmentValues(input)
-      && !window.confirm("직업을 바꾸면 입력한 장비 값이 초기화됩니다. 계속할까요?")
+      && !window.confirm("직업을 바꾸면 장비 값과 추가한 부위가 초기화됩니다. 계속할까요?")
     ) {
       return;
     }
@@ -238,6 +272,8 @@ export function CalculatorApp() {
             input={input}
             selectedSlot={selectedSlot}
             onSelectSlot={setSelectedSlot}
+            onAddSlot={handleAddSlot}
+            onRemoveSlot={handleRemoveSlot}
           />
         </div>
         <div className="calculator-main">
@@ -250,6 +286,7 @@ export function CalculatorApp() {
                 onEquipmentChange={handleEquipmentChange}
                 onSelectSlot={setSelectedSlot}
                 onOcrApply={handleOcrApply}
+                onOcrAddAsNew={handleOcrAddAsNew}
               />
             ) : (
               <BulkEditor
@@ -261,6 +298,7 @@ export function CalculatorApp() {
           </div>
           <ResultsPanel
             job={input.character.job}
+            input={input}
             result={result}
             onNavigate={handleNavigate}
           />

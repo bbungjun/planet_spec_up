@@ -36,7 +36,10 @@ export function parseMapleTooltip(text: string): ParsedTooltipStats {
   const allStat = { flat: 0, percent: 0 };
   const options: TooltipOption[] = [];
   const unparsed: string[] = [];
+  let category: string | null = null;
   for (const raw of text.split(/\r?\n/)) {
+    const equipmentType = raw.normalize("NFKC").match(/장비\s*분류\s*[:：;]\s*([가-힣A-Za-z·]{1,30})/);
+    if (equipmentType) category = equipmentType[1];
     const option = parseTooltipOption(raw);
     if (!option) {
       if (raw.trim()) unparsed.push(raw);
@@ -48,5 +51,5 @@ export function parseMapleTooltip(text: string): ParsedTooltipStats {
       : Object.hasOwn(stats, option.label) ? stats[option.label as OcrStatName] : undefined;
     if (totals) totals[option.percent ? "percent" : "flat"] += option.value;
   }
-  return { stats, allStat, options, unparsed };
+  return { stats, allStat, options, unparsed, category };
 }

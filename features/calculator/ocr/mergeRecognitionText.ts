@@ -1,4 +1,4 @@
-import { parseTooltipOption } from "./parseMapleTooltip";
+import { parseMapleTooltip, parseTooltipOption } from "./parseMapleTooltip";
 
 /** Prefer the pass with more readable lines for each label; never add both
  * passes' copies of the same potential lines together or invent numeric values. */
@@ -22,5 +22,9 @@ export function mergeRecognitionText(original: string, enlarged: string): string
     lines.push(...(second.length >= first.length ? second : first));
   }
   const unread = enlarged.split(/\r?\n/).filter(line => !parseTooltipOption(line));
+  if (!parseMapleTooltip(unread.join("\n")).category) {
+    const originalCategory = original.split(/\r?\n/).find(line => /장비\s*분류\s*[:：;]/.test(line));
+    if (originalCategory) unread.push(originalCategory);
+  }
   return [...lines, ...unread].join("\n");
 }

@@ -3,7 +3,7 @@ import type {
   CalculatorInput,
   ValidationIssue,
 } from "../domain/types";
-import { EQUIPMENT_SLOT_LABELS } from "../labels";
+import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
 import {
   EQUIPMENT_FIELD_DEFINITIONS,
   type EquipmentChangeHandler,
@@ -48,10 +48,10 @@ export function BulkEditor({
             </tr>
           </thead>
           <tbody>
-            {rule.visibleSlots.map((slot) => {
+            {getVisibleEquipmentSlots(input).map((slot) => {
               const equipment = input.equipment[slot];
               if (equipment === undefined) return null;
-              const slotLabel = EQUIPMENT_SLOT_LABELS[slot];
+              const slotLabel = getEquipmentSlotLabel(input, slot);
 
               return (
                 <tr key={slot}>

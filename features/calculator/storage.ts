@@ -1,4 +1,5 @@
 import { JOB_RULES } from "./domain/job-rules";
+import { MAX_CUSTOM_SLOTS } from "./domain/slots";
 import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
@@ -77,14 +78,32 @@ function isEquipmentInput(value: unknown): value is EquipmentInput {
     && (!Object.hasOwn(value, "damagePercent") || typeof value.damagePercent === "string");
 }
 
+function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["customSlots"]> {
+  if (!Array.isArray(value) || value.length > MAX_CUSTOM_SLOTS) return false;
+  const seen = new Set<string>();
+  return value.every((entry) => {
+    if (!isRecord(entry) || !hasOnlyKeys(entry, ["id", "label"])) return false;
+    if (typeof entry.id !== "string" || !/^extra_[a-zA-Z0-9_-]+$/.test(entry.id)) return false;
+    if (typeof entry.label !== "string" || !entry.label.trim() || entry.label.length > 30) return false;
+    if (seen.has(entry.id)) return false;
+    seen.add(entry.id);
+    return true;
+  });
+}
+
 function isCalculatorInput(value: unknown): value is CalculatorInput {
-  if (!isRecord(value) || !hasOnlyKeys(value, ["character", "equipment"])) return false;
+  if (!isRecord(value) || (
+    !hasOnlyKeys(value, ["character", "equipment"])
+    && !hasOnlyKeys(value, ["character", "equipment", "customSlots"])
+  )) return false;
   const equipment = value.equipment;
   if (!isCharacterInput(value.character) || !isRecord(equipment)) return false;
+  if (value.customSlots !== undefined && !isCustomSlots(value.customSlots)) return false;
 
   const visibleSlots = JOB_RULES[value.character.job].visibleSlots;
-  return hasOnlyKeys(equipment, visibleSlots)
-    && visibleSlots.every((slot) => isEquipmentInput(equipment[slot]));
+  const allSlots = [...visibleSlots, ...((value.customSlots ?? []) as NonNullable<CalculatorInput["customSlots"]>).map(({ id }) => id)];
+  return hasOnlyKeys(equipment, allSlots)
+    && allSlots.every((slot) => isEquipmentInput(equipment[slot]));
 }
 
 export function serializeSetup(input: CalculatorInput, savedAt = new Date().toISOString()): string {

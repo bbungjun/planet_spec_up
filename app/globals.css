@@ -415,6 +415,36 @@ time,
   font-weight: 800;
 }
 
+.equipment-remove-slot {
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.equipment-add-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.equipment-add-form label { font-size: 0.8rem; font-weight: 750; }
+.equipment-add-form input,
+.equipment-add-form button {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  padding: 8px 10px;
+}
+.equipment-add-form button { color: var(--accent); }
+
 .primary-results {
   display: grid;
   gap: 10px;

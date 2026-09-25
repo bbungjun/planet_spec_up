@@ -5,11 +5,15 @@ export type SharpEyes = "none" | "usable" | "sharp_30";
 export type MapleWarrior = 0 | 20 | 30;
 export type GuildSkillLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
-export type EquipmentSlot =
+export type BuiltinEquipmentSlot =
   | "necklace" | "cape" | "earrings" | "eye" | "face"
   | "hat" | "shoes" | "gloves" | "overall" | "top" | "bottom"
   | "weapon" | "title" | "ring_1" | "ring_2" | "ring_3" | "ring_4"
   | "projectile" | "blessing_1" | "blessing_2" | "buff";
+
+export type CustomEquipmentSlot = `extra_${string}`;
+export type EquipmentSlot = BuiltinEquipmentSlot | CustomEquipmentSlot;
+export type CustomSlot = { id: CustomEquipmentSlot; label: string };
 
 export type EquipmentInput = {
   mainFlat: string;
@@ -44,6 +48,8 @@ export type CharacterInput = {
 export type CalculatorInput = {
   character: CharacterInput;
   equipment: Partial<Record<EquipmentSlot, EquipmentInput>>;
+  /** Older saved setups have no custom slots. */
+  customSlots?: CustomSlot[];
 };
 
 export type ValidationIssue = {

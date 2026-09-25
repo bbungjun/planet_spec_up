@@ -15,6 +15,7 @@ export type ParsedTooltipStats = {
   allStat: StatTotals;
   options: TooltipOption[];
   unparsed: string[];
+  category: string | null;
 };
 export type StatReplacement = Pick<
   EquipmentInput,

@@ -6,7 +6,7 @@ import type {
   EquipmentSlot,
   ValidationIssue,
 } from "../domain/types";
-import { EQUIPMENT_SLOT_LABELS } from "../labels";
+import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
 import { EquipmentOcrPanel } from "./EquipmentOcrPanel";
 import type { OcrTarget, StatReplacement } from "../ocr/types";
 
@@ -23,6 +23,7 @@ type EquipmentEditorProps = {
   onEquipmentChange: EquipmentChangeHandler;
   onSelectSlot: (slot: EquipmentSlot) => void;
   onOcrApply: (target: OcrTarget, replacement: StatReplacement) => void;
+  onOcrAddAsNew: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
 };
 
 export type EquipmentFieldDefinition = {
@@ -50,10 +51,11 @@ export function EquipmentEditor({
   onEquipmentChange,
   onSelectSlot,
   onOcrApply,
+  onOcrAddAsNew,
 }: EquipmentEditorProps) {
   const equipment = input.equipment[selectedSlot];
   const rule = JOB_RULES[input.character.job];
-  const slotLabel = EQUIPMENT_SLOT_LABELS[selectedSlot];
+  const slotLabel = getEquipmentSlotLabel(input, selectedSlot);
   const fieldRefs = useRef<(HTMLInputElement | null)[]>([]);
   const focusFirstFieldAfterSlotChange = useRef(false);
 
@@ -73,10 +75,11 @@ export function EquipmentEditor({
     event.preventDefault();
 
     if (event.ctrlKey) {
-      const currentIndex = rule.visibleSlots.indexOf(selectedSlot);
-      const nextIndex = (currentIndex + 1) % rule.visibleSlots.length;
+      const slots = getVisibleEquipmentSlots(input);
+      const currentIndex = slots.indexOf(selectedSlot);
+      const nextIndex = (currentIndex + 1) % slots.length;
       focusFirstFieldAfterSlotChange.current = true;
-      onSelectSlot(rule.visibleSlots[nextIndex]);
+      onSelectSlot(slots[nextIndex]);
       return;
     }
 
@@ -141,7 +144,9 @@ export function EquipmentEditor({
       </div>
       <EquipmentOcrPanel
         target={{ job: input.character.job, slot: selectedSlot }}
+        slotLabel={slotLabel}
         onApply={onOcrApply}
+        onAddAsNew={onOcrAddAsNew}
       />
     </section>
   );

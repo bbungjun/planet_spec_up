@@ -1,16 +1,18 @@
 import { JOB_RULES, type JobRule } from "../domain/job-rules";
 import type {
   CalculationResult,
+  CalculatorInput,
   CharacterInput,
   EquipmentInput,
   EquipmentSlot,
   JobId,
 } from "../domain/types";
-import { EQUIPMENT_SLOT_LABELS } from "../labels";
+import { getEquipmentSlotLabel } from "../domain/slots";
 import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
 
 type ResultsPanelProps = {
   job: JobId;
+  input: CalculatorInput;
   result: CalculationResult;
   onNavigate: (path: string) => void;
 };
@@ -39,7 +41,7 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   nightLordStrStat: "나이트로드 스탯창 STR",
 };
 
-function issueContext(path: string, rule: JobRule): string {
+function issueContext(path: string, rule: JobRule, input: CalculatorInput): string {
   const [group, candidate, fieldCandidate] = path.split(".");
 
   if (group === "equipment") {
@@ -48,7 +50,7 @@ function issueContext(path: string, rule: JobRule): string {
     const fieldDefinition = EQUIPMENT_FIELD_DEFINITIONS.find(
       (definition) => definition.field === field,
     );
-    const slotLabel = EQUIPMENT_SLOT_LABELS[slot];
+    const slotLabel = getEquipmentSlotLabel(input, slot);
     if (slotLabel !== undefined && fieldDefinition !== undefined) {
       return `${slotLabel} ${
         fieldDefinition.suffix(rule.mainStat, rule.subStat)
@@ -65,6 +67,7 @@ function issueContext(path: string, rule: JobRule): string {
 
 export function ResultsPanel({
   job,
+  input,
   result,
   onNavigate,
 }: ResultsPanelProps) {
@@ -152,7 +155,7 @@ export function ResultsPanel({
           <ul>
             {result.issues.map((issue, index) => {
               const severityLabel = issue.severity === "error" ? "오류" : "경고";
-              const context = issueContext(issue.path, rule);
+              const context = issueContext(issue.path, rule, input);
 
               return (
                 <li key={`${issue.path}-${issue.code}-${index}`}>

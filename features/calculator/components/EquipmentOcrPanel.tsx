@@ -22,7 +22,9 @@ import type { OcrTarget, StatReplacement } from "../ocr/types";
 
 export type EquipmentOcrPanelProps = {
   target: OcrTarget;
+  slotLabel?: string;
   onApply: (target: OcrTarget, replacement: StatReplacement) => void;
+  onAddAsNew?: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
   createRecognizer?: () => TooltipRecognizer;
 };
 
@@ -96,7 +98,9 @@ const progressMessage = (
 
 export function EquipmentOcrPanel({
   target,
+  slotLabel: providedSlotLabel,
   onApply,
+  onAddAsNew,
   createRecognizer,
 }: EquipmentOcrPanelProps) {
   const [recognizer] = useState<TooltipRecognizer>(() => (
@@ -281,7 +285,7 @@ export function EquipmentOcrPanel({
   };
 
   const rule = JOB_RULES[target.job];
-  const slotLabel = EQUIPMENT_SLOT_LABELS[target.slot];
+  const slotLabel = providedSlotLabel ?? EQUIPMENT_SLOT_LABELS[target.slot as keyof typeof EQUIPMENT_SLOT_LABELS] ?? "추가 장비";
   const fieldDefinitions: Array<{
     field: keyof StatReplacement;
     label: string;
@@ -444,6 +448,18 @@ export function EquipmentOcrPanel({
           {!hasApplicableOptions && <p role="alert">계산에 적용할 옵션을 찾지 못했습니다. 인식 텍스트를 확인하거나 다른 캡처를 넣어주세요.</p>}
           {!proposalValid && <p role="alert">검토값의 범위를 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999입니다.</p>}
           <div className="equipment-ocr-actions">
+            {parsed.category && onAddAsNew && (
+              <button
+                type="button"
+                className="equipment-ocr-apply"
+                disabled={!hasApplicableOptions || !proposalValid}
+                onClick={() => {
+                  if (capturedTarget) onAddAsNew(capturedTarget, parsed.category!, proposal);
+                }}
+              >
+                {parsed.category} 새 장비로 추가
+              </button>
+            )}
             <button
               type="button"
               className="equipment-ocr-apply"

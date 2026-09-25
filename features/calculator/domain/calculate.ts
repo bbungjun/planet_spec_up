@@ -10,6 +10,7 @@ import {
 } from "./formulas";
 import { JOB_RULES } from "./job-rules";
 import { normalizeInput } from "./normalize";
+import { getVisibleEquipmentSlots } from "./slots";
 import type {
   CalculatorInput,
   CalculationResult,
@@ -161,7 +162,11 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
   const normalized = normalizeInput(input);
   const character = normalized.value.character;
   const rule = JOB_RULES[character.job];
-  const equipment = sumEquipment(normalized.value.equipment, rule);
+  const equipment = sumEquipment(
+    normalized.value.equipment,
+    rule,
+    (input.customSlots ?? []).map(({ id }) => id),
+  );
   const isWeaponAttackMissing =
     (input.equipment.weapon?.attackFlat ?? "").trim() === "";
   const missingWeaponAttackIssues: ValidationIssue[] =
@@ -196,7 +201,7 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
     percentEligibleAttack: equipment.percentEligibleAttack,
     flatAttack: equipment.flatAttack,
     attackPercent: equipment.attackPercent,
-    bossAndTotalDamage: character.bossAndTotalDamage + rule.visibleSlots.reduce(
+    bossAndTotalDamage: character.bossAndTotalDamage + getVisibleEquipmentSlots(input).reduce(
       (sum, slot) => sum + (normalized.value.equipment[slot]?.damagePercent ?? 0), 0,
     ),
     monsterDefense: character.monsterDefense,
