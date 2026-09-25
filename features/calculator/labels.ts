@@ -19,8 +19,8 @@ export const EQUIPMENT_SLOT_LABELS: Record<BuiltinEquipmentSlot, string> = {
   ring_3: "반지 3",
   ring_4: "반지 4",
   projectile: "표창·불릿",
-  blessing_1: "축복 1",
-  blessing_2: "축복 2",
+  blessing_1: "정령의 축복",
+  blessing_2: "여제의 축복",
   buff: "버프",
 };
 

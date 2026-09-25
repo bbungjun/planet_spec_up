@@ -145,16 +145,6 @@ export function CharacterPanel({
           </select>
         </div>
 
-        <NumericField
-          label="타격당 평균 데미지 비율"
-          path="character.skillPercent"
-          value={character.skillPercent}
-          min={0}
-          max={10000}
-          issues={issues}
-          onChange={(value) => onChange("skillPercent", value)}
-        />
-
         <div className="field">
           <label htmlFor="character-sharp-eyes">샤프 아이즈</label>
           <select
@@ -187,9 +177,20 @@ export function CharacterPanel({
         </div>
       </dl>
 
+      <details className="character-advanced">
+        <summary>상세 전투·길드 설정</summary>
       <fieldset className="settings-group">
         <legend>전투 설정</legend>
         <div className="field-grid">
+          <NumericField
+            label="타격당 평균 데미지 비율"
+            path="character.skillPercent"
+            value={character.skillPercent}
+            min={0}
+            max={10000}
+            issues={issues}
+            onChange={(value) => onChange("skillPercent", value)}
+          />
           <NumericField
             label="몬스터 방어율"
             path="character.monsterDefense"
@@ -257,7 +258,6 @@ export function CharacterPanel({
           {([
             ["guildBossLevel", "길드 보스 데미지 스킬 레벨"],
             ["guildIgnoreLevel", "길드 방어율 무시 스킬 레벨"],
-            ["guildAttackLevel", "길드 공격력 스킬 레벨"],
           ] as const).map(([field, label]) => (
             <div className="field" key={field}>
               <label htmlFor={`character-${field}`}>{label}</label>
@@ -286,6 +286,7 @@ export function CharacterPanel({
           길드 액티브 보스 스킬 적용
         </label>
       </fieldset>
+      </details>
     </section>
   );
 }

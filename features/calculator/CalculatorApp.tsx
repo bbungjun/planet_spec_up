@@ -28,6 +28,7 @@ import {
 } from "./components/EquipmentEditor";
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { AttackSetupPanel } from "./components/AttackSetupPanel";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
   return (input.customSlots?.length ?? 0) > 0 || Object.values(input.equipment).some(
@@ -86,6 +87,8 @@ export function CalculatorApp() {
       `[data-field-path="${path}"]`,
     );
     if (target !== null) {
+      const details = target.closest("details");
+      if (details) details.open = true;
       target.focus();
       pendingFocusPath.current = null;
     }
@@ -260,14 +263,18 @@ export function CalculatorApp() {
         onLoad={handleLoad}
         onReset={handleReset}
       />
-      <div className="calculator-workspace">
-        <div className="calculator-left" aria-label="캐릭터 및 장비">
+      <div className="calculator-setup">
           <CharacterPanel
             character={input.character}
             issues={result.issues}
             onChange={handleCharacterChange}
             onJobChange={handleJobChange}
           />
+          <AttackSetupPanel input={input} issues={result.issues}
+            onEquipmentChange={handleEquipmentChange} onCharacterChange={handleCharacterChange} />
+      </div>
+      <div className="calculator-workspace">
+        <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
             input={input}
             selectedSlot={selectedSlot}

@@ -99,6 +99,13 @@ export function EquipmentEditor({
         빈칸은 0으로 계산되며 입력값은 다른 장비로 이동해도 유지됩니다.
       </p>
 
+      <EquipmentOcrPanel
+        target={{ job: input.character.job, slot: selectedSlot }}
+        slotLabel={slotLabel}
+        onApply={onOcrApply}
+        onAddAsNew={onOcrAddAsNew}
+      />
+
       <div className="equipment-field-grid">
         {EQUIPMENT_FIELD_DEFINITIONS.map(({ field, suffix, max, step }, fieldIndex) => {
           const path = `equipment.${selectedSlot}.${field}`;
@@ -142,12 +149,6 @@ export function EquipmentEditor({
           );
         })}
       </div>
-      <EquipmentOcrPanel
-        target={{ job: input.character.job, slot: selectedSlot }}
-        slotLabel={slotLabel}
-        onApply={onOcrApply}
-        onAddAsNew={onOcrAddAsNew}
-      />
     </section>
   );
 }

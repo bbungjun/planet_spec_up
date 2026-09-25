@@ -1,4 +1,11 @@
 import { JOB_RULES, type JobRule } from "../domain/job-rules";
+import { useMemo } from "react";
+import { calculateDamageResult } from "../domain/calculate";
+import { normalizeInput } from "../domain/normalize";
+import { sumEquipment } from "../domain/equipment";
+import { calculateTotalAttack } from "../domain/formulas";
+import { emptyEquipment } from "../domain/defaults";
+import { ATTACK_BUFF_PRESETS } from "./AttackSetupPanel";
 import type {
   CalculationResult,
   CalculatorInput,
@@ -73,6 +80,26 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   const rule = JOB_RULES[job];
   const extraStat = job === "night_lord" ? " + STR" : "";
+  const missingWeapon = result.issues.some(issue => issue.code === "MISSING_WEAPON_ATTACK");
+  const buffComparisons = useMemo(() => ATTACK_BUFF_PRESETS.filter(({attack}) => attack > 0).map(preset => ({
+    ...preset,
+    result: calculateDamageResult({
+      ...input,
+      equipment: {...input.equipment, buff: {...(input.equipment.buff ?? emptyEquipment()), attackFlat: String(preset.attack)}},
+    }),
+  })), [input]);
+  const attackSources = useMemo(() => {
+    const normalized = normalizeInput(input).value;
+    const totals = sumEquipment(normalized.equipment, JOB_RULES[input.character.job], (input.customSlots ?? []).map(({id}) => id));
+    return [
+      ["장비 (% 적용 후)", calculateTotalAttack(totals.percentEligibleAttack, 0, totals.attackPercent)],
+      ["불릿·표창", normalized.equipment.projectile?.attackFlat ?? 0],
+      ["정령의 축복", normalized.equipment.blessing_1?.attackFlat ?? 0],
+      ["여제의 축복", normalized.equipment.blessing_2?.attackFlat ?? 0],
+      ["공격력 버프", normalized.equipment.buff?.attackFlat ?? 0],
+      ["길드 공격력", normalized.character.guildAttackLevel],
+    ] as const;
+  }, [input]);
 
   return (
     <aside className="panel results-panel" aria-label="계산 결과">
@@ -86,18 +113,36 @@ export function ResultsPanel({
 
       <div className="primary-results">
         <div className="result-card is-primary">
+          <span>최대 스탯 공격력</span>
+          <output aria-label="스탯 공격력 결과">
+            {integerFormat.format(result.statAttack)}
+          </output>
+          <small>게임 스탯창 공격력의 오른쪽 값</small>
+        </div>
+        <div className="result-card">
           <span>환산 공격력</span>
           <output aria-label="환산 공격력 결과">
             {integerFormat.format(result.convertedAttack)}
           </output>
-        </div>
-        <div className="result-card">
-          <span>스탯 공격력</span>
-          <output aria-label="스탯 공격력 결과">
-            {integerFormat.format(result.statAttack)}
-          </output>
+          <small>보공·방무·크리 반영</small>
         </div>
       </div>
+
+      <section className="buff-comparison" aria-label="버프별 스탯공 비교">
+        <h3>버프별 최대 스탯공</h3>
+        {buffComparisons.map(({label, attack, result: comparison}) => (
+          <div key={label} className={Number(input.equipment.buff?.attackFlat) === attack ? "is-active" : ""}>
+            <span>{label} <small>+{attack}</small></span>
+            <output aria-label={`${label} 예상 스탯공`}>{missingWeapon ? "—" : integerFormat.format(comparison.statAttack)}</output>
+          </div>
+        ))}
+        <p>{missingWeapon ? "무기 공격력을 입력하면 비교값을 표시합니다." : "현재 장비에서 각 버프를 따로 적용한 값"}</p>
+      </section>
+
+      <details className="attack-breakdown">
+        <summary>공격력 합산 내역 <strong>{integerFormat.format(result.totalAttack)}</strong></summary>
+        <dl>{attackSources.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>+{integerFormat.format(value)}</dd></div>)}</dl>
+      </details>
 
       <section className="result-details" aria-labelledby="formula-heading">
         <h3 id="formula-heading">계산 근거</h3>
