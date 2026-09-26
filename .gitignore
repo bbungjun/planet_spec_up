@@ -5,3 +5,16 @@ node_modules/
 .env.local
 dist/
 .next/
+
+# Private equipment screenshots, credentials, and local tool output
+내장비/
+.env*
+*.pem
+.omo/
+.playwright-cli/
+output/
+outputs/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo

@@ -1,10 +1,12 @@
-# 플래닛 프로젝트 안내
+# 플래닛 프로젝트 안내 (이전 파일명)
 
 실제 React 앱과 상세 개발 지침은 다음 디렉터리에 있습니다.
 
 - 앱: `.worktrees/planet-damage-mvp`
 - 로컬 실행: `npm run dev -- --host 0.0.0.0`
 - 로컬 주소: `http://localhost:3000/`
-- 상세 지침: `.worktrees/planet-damage-mvp/agent.md`
+- 작업 안내: `AGENTS.md`
+- 상세 지침: `.worktrees/planet-damage-mvp/AGENTS.md`
+- 도메인 용어: `.worktrees/planet-damage-mvp/CONTEXT.md`
 
-핵심 방향은 React 기반 PC 우선 데미지 계산기입니다. MVP 직업은 신궁·캡틴·나이트로드이며, 입력 피로 감소·장비 입력·스탯공/환산공 계산·카드/일괄 입력·브라우저 저장 슬롯 1개를 우선합니다. OCR은 2단계, 플래닛 wiki/챗봇은 그 이후 단계입니다. 새 외부 배포는 사용자 승인 없이 진행하지 않으며, 최종 배포 방향은 Vercel입니다.
+최신 확정 정책은 `AGENTS.md`를 따릅니다. 현재 OCR과 무기 3종 프리셋이 구현돼 있으며, 실제 순수 스탯 고정 및 기존 장비를 보존하는 구매 후보·가성비 비교는 후속 구현 대상입니다. URL·검색으로 접근하는 공개 서비스를 목표로 하되 로그인 없는 브라우저 저장과 내부 OCR을 유지합니다. 문서 작성은 배포나 유료 API 연결 승인이 아닙니다.
