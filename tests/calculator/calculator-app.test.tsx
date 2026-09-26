@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import RootLayout, { PRODUCT_METADATA } from "@/app/layout";
 import Page from "@/app/page";
 import type { EquipmentOcrPanelProps } from "@/features/calculator/components/EquipmentOcrPanel";
@@ -171,6 +171,7 @@ describe("calculator app", () => {
     ].join("\n");
     mockedTooltipRecognizer.recognize.mockResolvedValue(attachedTooltipText);
     render(<Page />);
+    await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
     await user.type(screen.getByLabelText("레벨"), "180");
@@ -241,11 +242,12 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("목걸이 공격력%")).toHaveValue(16);
     expect(screen.getByLabelText("목걸이 요구 STR")).toHaveValue(17);
     expect(screen.getByRole("button", { name: "목걸이 편집" })).toHaveClass("is-complete");
-  });
+  }, 15000); // Full card → OCR → bulk flow performs dozens of user interactions.
 
   it("ignores a captured OCR target from a different job", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
     await user.type(screen.getByLabelText("레벨"), "180");
@@ -262,6 +264,7 @@ describe("calculator app", () => {
   it("ignores a captured OCR target whose slot is absent for the current job", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
     await user.type(screen.getByLabelText("레벨"), "175");
@@ -411,6 +414,7 @@ describe("calculator app", () => {
   it("exposes every character setting and keeps level editable from 1 to 200", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     const level = screen.getByLabelText("레벨");
     expect(level).toHaveAttribute("min", "1");
@@ -428,7 +432,8 @@ describe("calculator app", () => {
       "타격당 평균 데미지 비율",
       "샤프 아이즈",
       "몬스터 방어율",
-      "보스 공격력 및 총데미지",
+      "기타 보스공격력%",
+      "기타 총데미지%",
       "방어율 무시",
       "추가 크리티컬 확률",
       "순수 부스탯 수동값",
@@ -532,7 +537,7 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    await user.type(screen.getByLabelText("보스 공격력 및 총데미지"), "20");
+    await user.type(screen.getByLabelText("기타 보스공격력%"), "20");
     await user.selectOptions(
       screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
       "3",
@@ -550,7 +555,7 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    await user.type(screen.getByLabelText("보스 공격력 및 총데미지"), "20.5");
+    await user.type(screen.getByLabelText("기타 보스공격력%"), "20.5");
     await user.selectOptions(
       screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
       "3",

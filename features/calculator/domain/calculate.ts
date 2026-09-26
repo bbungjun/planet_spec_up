@@ -10,6 +10,7 @@ import {
 } from "./formulas";
 import { JOB_RULES } from "./job-rules";
 import { normalizeInput } from "./normalize";
+import { activeWeaponPreset } from "./weapon-presets";
 import { getVisibleEquipmentSlots } from "./slots";
 import type {
   CalculatorInput,
@@ -34,6 +35,8 @@ export type CalculationSnapshot = {
   flatAttack: number;
   attackPercent: number;
   bossAndTotalDamage: number;
+  totalDamagePercent?: number;
+  isBoss?: boolean;
   monsterDefense: number;
   ignoreDefense: number;
   criticalRate?: number;
@@ -71,9 +74,9 @@ export function calculateFromSnapshot(
     rule.baseCriticalDamage + sharpEyes.criticalDamage,
     snapshot.skillPercent,
   );
-  const bossAndTotalDamage = snapshot.bossAndTotalDamage
+  const bossAndTotalDamage = (snapshot.totalDamagePercent ?? 0) + (snapshot.isBoss === false ? 0 : snapshot.bossAndTotalDamage
     + snapshot.guildBossLevel
-    + (snapshot.guildActiveBoss ? 10 : 0);
+    + (snapshot.guildActiveBoss ? 10 : 0));
 
   if (snapshot.level < 1) {
     return {
@@ -161,6 +164,17 @@ export function calculateFromSnapshot(
 export function calculateDamageResult(input: CalculatorInput): CalculationResult {
   const normalized = normalizeInput(input);
   const character = normalized.value.character;
+  const sumOption = (field: "damagePercent" | "totalDamagePercent" | "bossDamagePercent" | "ignoreDefensePercent") =>
+    getVisibleEquipmentSlots(input).reduce((sum, slot) => sum + (normalized.value.equipment[slot]?.[field] ?? 0), 0);
+  const legacyIssues: ValidationIssue[] = [];
+  const legacyPaths = [
+    ...(character.bossAndTotalDamage > 0 ? ["character.bossAndTotalDamage"] : []),
+    ...getVisibleEquipmentSlots(input).filter(slot => (normalized.value.equipment[slot]?.damagePercent ?? 0) > 0).map(slot => `equipment.${slot}.damagePercent`),
+  ];
+  for (const path of legacyPaths) {
+    legacyIssues.push({ severity: "warning", code: "LEGACY_DAMAGE_SPLIT", path,
+      message: "기존 보공·총데미지 합산값은 보스전에만 적용됩니다. 정확한 사냥 계산을 위해 기존 값을 비우고 보공/총데미지를 분리 입력하세요." });
+  }
   const rule = JOB_RULES[character.job];
   const equipment = sumEquipment(
     normalized.value.equipment,
@@ -201,11 +215,11 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
     percentEligibleAttack: equipment.percentEligibleAttack,
     flatAttack: equipment.flatAttack,
     attackPercent: equipment.attackPercent,
-    bossAndTotalDamage: character.bossAndTotalDamage + getVisibleEquipmentSlots(input).reduce(
-      (sum, slot) => sum + (normalized.value.equipment[slot]?.damagePercent ?? 0), 0,
-    ),
+    bossAndTotalDamage: character.bossAndTotalDamage + character.bossDamagePercent + sumOption("damagePercent") + sumOption("bossDamagePercent"),
+    totalDamagePercent: character.totalDamagePercent + sumOption("totalDamagePercent"),
+    isBoss: activeWeaponPreset(input) !== "hunting",
     monsterDefense: character.monsterDefense,
-    ignoreDefense: character.ignoreDefense,
+    ignoreDefense: character.ignoreDefense + sumOption("ignoreDefensePercent"),
     criticalRate: character.criticalRate,
     skillPercent: character.skillPercent,
     sharpEyes: character.sharpEyes,
@@ -219,6 +233,7 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
       ...normalized.issues,
       ...allocation.issues,
       ...missingWeaponAttackIssues,
+      ...legacyIssues,
     ],
   });
 }

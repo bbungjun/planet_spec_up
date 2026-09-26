@@ -43,7 +43,10 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
   { field: "attackFlat", suffix: () => "공격력", max: 9999, step: 1 },
   { field: "attackPercent", suffix: () => "공격력%", max: 999, step: "any" },
   { field: "requiredSub", suffix: (_main, sub) => `요구 ${sub}`, max: 9999, step: 1 },
-  { field: "damagePercent", suffix: () => "보공·총데미지%", max: 999, step: "any" },
+  { field: "totalDamagePercent", suffix: () => "총데미지%", max: 999, step: "any" },
+  { field: "bossDamagePercent", suffix: () => "보스공격력%", max: 999, step: "any" },
+  { field: "ignoreDefensePercent", suffix: () => "방어율 무시%", max: 100, step: "any" },
+  { field: "damagePercent", suffix: () => "기존 합산값% (분리 후 비우기)", max: 999, step: "any" },
 ];
 
 export function EquipmentEditor({
@@ -103,6 +106,7 @@ export function EquipmentEditor({
       </p>
 
       <EquipmentOcrPanel
+        key={input.weaponPresets?.active ?? "boss"}
         target={{ job: input.character.job, slot: selectedSlot }}
         slotLabel={slotLabel}
         onApply={onOcrApply}
@@ -113,6 +117,7 @@ export function EquipmentEditor({
 
       <div className="equipment-field-grid">
         {EQUIPMENT_FIELD_DEFINITIONS.map(({ field, suffix, max, step }, fieldIndex) => {
+          if (field === "damagePercent" && !(equipment.damagePercent ?? "").trim()) return null;
           const path = `equipment.${selectedSlot}.${field}`;
           const id = path.replaceAll(".", "-");
           const label = `${slotLabel} ${suffix(rule.mainStat, rule.subStat)}`;

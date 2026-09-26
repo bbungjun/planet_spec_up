@@ -1,5 +1,6 @@
 import { JOB_RULES } from "./domain/job-rules";
 import { MAX_CUSTOM_SLOTS } from "./domain/slots";
+import { captureWeaponPreset } from "./domain/weapon-presets";
 import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
@@ -48,7 +49,10 @@ function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): b
 }
 
 function isCharacterInput(value: unknown): value is CharacterInput {
-  if (!isRecord(value) || !hasOnlyKeys(value, characterKeys)) return false;
+  if (!isRecord(value) || !hasOnlyKeys(
+    Object.fromEntries(Object.entries(value).filter(([key]) => !["totalDamagePercent", "bossDamagePercent"].includes(key))), characterKeys,
+  )) return false;
+  if (["totalDamagePercent", "bossDamagePercent"].some(key => Object.hasOwn(value, key) && typeof value[key] !== "string")) return false;
 
   return (value.job === "marksman" || value.job === "corsair" || value.job === "night_lord")
     && typeof value.level === "string"
@@ -72,10 +76,20 @@ function isGuildSkillLevel(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 {
 }
 
 function isEquipmentInput(value: unknown): value is EquipmentInput {
+  const optional = ["damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
   return isRecord(value)
-    && Object.keys(value).every(key => key === "damagePercent" || equipmentKeys.some(known => key === known))
+    && Object.keys(value).every(key => optional.includes(key) || equipmentKeys.some(known => key === known))
     && equipmentKeys.every((key) => typeof value[key] === "string")
-    && (!Object.hasOwn(value, "damagePercent") || typeof value.damagePercent === "string");
+    && optional.every(key => !Object.hasOwn(value, key) || typeof value[key] === "string");
+}
+
+function isWeaponPresets(value: unknown): boolean {
+  const ids = ["chaos", "boss", "hunting"];
+  return isRecord(value) && hasOnlyKeys(value, ["active", "entries"])
+    && typeof value.active === "string" && ids.includes(value.active)
+    && isRecord(value.entries) && Object.entries(value.entries).every(([id, entry]) =>
+      ids.includes(id) && isRecord(entry) && hasOnlyKeys(entry, ["weapon", "monsterDefense"])
+      && isEquipmentInput(entry.weapon) && typeof entry.monsterDefense === "string");
 }
 
 function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["customSlots"]> {
@@ -92,10 +106,9 @@ function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["cu
 }
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {
-  if (!isRecord(value) || (
-    !hasOnlyKeys(value, ["character", "equipment"])
-    && !hasOnlyKeys(value, ["character", "equipment", "customSlots"])
-  )) return false;
+  if (!isRecord(value) || !Object.hasOwn(value, "character") || !Object.hasOwn(value, "equipment")
+    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets"].includes(key))) return false;
+  if (Object.hasOwn(value, "weaponPresets") && !isWeaponPresets(value.weaponPresets)) return false;
   const equipment = value.equipment;
   if (!isCharacterInput(value.character) || !isRecord(equipment)) return false;
   if (value.customSlots !== undefined && !isCustomSlots(value.customSlots)) return false;
@@ -107,7 +120,8 @@ function isCalculatorInput(value: unknown): value is CalculatorInput {
 }
 
 export function serializeSetup(input: CalculatorInput, savedAt = new Date().toISOString()): string {
-  return JSON.stringify({ schemaVersion: 1, savedAt, input } satisfies SavedSetupV1);
+  // Keep old-format round trips intact until presets are first used.
+  return JSON.stringify({ schemaVersion: 1, savedAt, input: input.weaponPresets ? captureWeaponPreset(input) : input } satisfies SavedSetupV1);
 }
 
 export function deserializeSetup(raw: string):

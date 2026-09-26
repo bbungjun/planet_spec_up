@@ -1,0 +1,127 @@
+<style>
+  .compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:22px}
+  .compare-card{border:1px solid #28344a;border-radius:18px;background:#0e1726;overflow:hidden}
+  .compare-card.choice{cursor:pointer;transition:.2s ease}
+  .compare-card.choice:hover{transform:translateY(-3px);border-color:#68ddb0}
+  .compare-card.choice.selected{border-color:#68ddb0;box-shadow:0 0 0 2px rgba(104,221,176,.2)}
+  .mini{height:326px;padding:12px;background:#090f19;color:#dce7f4;font-size:9px}
+  .mini.planet{background:radial-gradient(circle at 12% 0,rgba(101,89,19,.2),transparent 28%),#0b0b08;color:#ded8c9}
+  .head{display:flex;align-items:center;justify-content:space-between;height:26px;margin-bottom:7px}
+  .logo{font-weight:900;font-size:11px}.gold{color:#ffc94f}.mint{color:#6ee7b7}.blue{color:#7aa7ff}
+  .tabs{display:flex;gap:4px;margin-bottom:7px}.tab{border-radius:99px;padding:5px 7px;background:#171a20;color:#8d94a2}
+  .planet .tab.on{background:#f0b93d;color:#16120a}.modern .tab.on{background:#18372d;color:#74e7b6}
+  .box{border:1px solid #27334a;border-radius:8px;padding:7px;background:#101927;margin-bottom:6px}
+  .planet .box{border-color:#3b382a;background:#211f15}
+  .save-row{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+  .save{height:31px;border:1px solid #323c50;border-radius:5px;padding:3px;color:#8996aa;background:#0b121e}
+  .planet .save{border-color:#494531;background:#15140f}
+  .controls{display:flex;gap:4px;margin:6px 0}.control{height:20px;flex:1;border-radius:4px;background:#0a121f;border:1px solid #28364c}
+  .planet .control{background:#13120d;border-color:#353224}
+  .table{display:grid;grid-template-columns:1.3fr repeat(5,1fr);gap:1px;margin-top:5px}
+  .cell{height:17px;padding:3px;background:#0b1422;color:#8493a8}.cell.h{font-weight:700;color:#bfc9d8}
+  .planet .cell{background:#17160f;color:#a6a08f}.planet .cell.h{color:#d7d0ba}
+  .result{display:flex;justify-content:space-between;align-items:center;border-radius:7px;padding:7px;margin-top:6px;background:#12251f;color:#72e3b3}
+  .column-layout{display:grid;grid-template-columns:56px 1fr 80px;gap:5px}
+  .side{border:1px solid #29364b;border-radius:7px;padding:5px;background:#101927}
+  .side div{padding:6px 4px;border-radius:5px;color:#8190a6}.side .on{background:#17372c;color:#72e1b2;font-weight:800}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.slot{height:35px;padding:5px;border-radius:5px;background:#0a1320;border:1px solid #27364b;color:#8998ad}
+  .metric{display:flex;justify-content:space-between;border-bottom:1px solid #27344a;padding:6px 0}.metric b{color:#72e1b2}
+  .wizard-step{display:flex;gap:6px;align-items:center;padding:7px;border-left:2px solid #29364c;color:#7d8da4}.wizard-step.on{border-color:#7aa7ff;color:#edf4ff;background:#111d30}
+  .body{padding:15px}.body h3{margin:0 0 7px;color:#f0f5fd;font-size:17px}.body p{margin:0;color:#91a0b5;font-size:13px;line-height:1.55}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.badge{padding:4px 7px;border-radius:99px;font-size:11px;background:#18253a;color:#92a6c1}
+  .badge.good{background:#173629;color:#74e5b2}.badge.warn{background:#3b2b18;color:#f2c375}
+  .verdict{margin-top:22px;padding:16px 18px;border:1px solid #2a3950;border-radius:14px;background:#101a2a;color:#a9b8cc;line-height:1.65}
+  .verdict strong{color:#eef5ff}
+  @media(max-width:900px){.compare-grid{grid-template-columns:1fr}.mini{height:auto;min-height:300px}}
+</style>
+
+<h2>행성.com과 비교하면 이렇게 나뉩니다</h2>
+<p class="subtitle">행성.com은 기능이 풍부하지만, 모든 입력과 결과가 한 세로 페이지에 이어져 있어 처음에는 길고 복잡하게 느껴질 수 있습니다. 아래 두 변경 방향은 계산 항목과 결과를 하나도 빼지 않는다는 전제입니다.</p>
+
+<div class="compare-grid">
+  <div class="compare-card">
+    <div class="mini planet">
+      <div class="head"><span class="logo"><span class="gold">알티 플래닛 계산기</span></span><span>● ● ●</span></div>
+      <div class="tabs"><span class="tab on">데미지 계산</span><span class="tab">주문서 최적화</span><span class="tab">큐브 기대값</span></div>
+      <div class="box">
+        <div style="margin-bottom:5px">💾 내 설정 저장 (5칸)</div>
+        <div class="save-row"><div class="save">슬롯 1<br>저장</div><div class="save">슬롯 2<br>저장</div><div class="save">슬롯 3</div><div class="save">슬롯 4</div><div class="save">슬롯 5</div></div>
+        <div class="controls"><div class="control"></div><div class="control"></div><div class="control"></div></div>
+        <b class="gold">1. 장비별 옵션 입력</b>
+        <div class="table">
+          <div class="cell h">부위</div><div class="cell h">DEX</div><div class="cell h">STR</div><div class="cell h">DEX%</div><div class="cell h">STR%</div><div class="cell h">공격력</div>
+          <div class="cell">목걸이</div><div class="cell">22</div><div class="cell">38</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">망토</div><div class="cell">0</div><div class="cell">16</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">귀고리</div><div class="cell">8</div><div class="cell">10</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">눈장식</div><div class="cell">0</div><div class="cell">0</div><div class="cell">28</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">모자</div><div class="cell">36</div><div class="cell">16</div><div class="cell">18</div><div class="cell">4</div><div class="cell">0</div>
+        </div>
+      </div>
+      <div class="box"><b class="gold">2. 입력 · 스탯 추정</b><div class="result"><span>환산 공격력</span><b>20,942</b></div></div>
+    </div>
+    <div class="body">
+      <h3>현재: 행성.com</h3>
+      <p>기능 발견은 쉽지만 저장 슬롯, 기본 설정, 장비표, 잠재, 길드 스킬, 결과가 모두 위에서 아래로 이어집니다.</p>
+      <div class="badges"><span class="badge good">빠른 일괄 입력</span><span class="badge good">모든 수치 노출</span><span class="badge warn">긴 스크롤</span><span class="badge warn">모바일 부담</span></div>
+    </div>
+  </div>
+
+  <div class="compare-card choice" data-choice="skin-only" onclick="toggleSelect(this)">
+    <div class="mini modern">
+      <div class="head"><span class="logo">PLANET <span class="mint">LAB</span></span><span>캡틴 · Lv.160</span></div>
+      <div class="tabs"><span class="tab on">데미지</span><span class="tab">주문서</span><span class="tab">큐브</span><span class="tab">혼돈</span></div>
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><b>저장된 세팅</b><span class="mint">+ 새 세팅</span></div>
+        <div class="save-row"><div class="save">혼테일</div><div class="save">일반 사냥</div><div class="save">비어 있음</div><div class="save">비어 있음</div><div class="save">비어 있음</div></div>
+        <div class="controls"><div class="control"></div><div class="control"></div><div class="control"></div></div>
+        <b class="mint">장비별 옵션 입력</b>
+        <div class="table">
+          <div class="cell h">부위</div><div class="cell h">DEX</div><div class="cell h">STR</div><div class="cell h">DEX%</div><div class="cell h">STR%</div><div class="cell h">공격력</div>
+          <div class="cell">목걸이</div><div class="cell">22</div><div class="cell">38</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">망토</div><div class="cell">0</div><div class="cell">16</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">귀고리</div><div class="cell">8</div><div class="cell">10</div><div class="cell">18</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">눈장식</div><div class="cell">0</div><div class="cell">0</div><div class="cell">28</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="cell">모자</div><div class="cell">36</div><div class="cell">16</div><div class="cell">18</div><div class="cell">4</div><div class="cell">0</div>
+        </div>
+      </div>
+      <div class="result"><span>실시간 환산 공격력</span><b>20,942</b></div>
+    </div>
+    <div class="body">
+      <h3>1. 구조 유지 + 새 스킨</h3>
+      <p>행성.com의 순서와 표 구조는 그대로 두고 컬러, 타이포, 간격, 버튼과 저장 경험만 현대화합니다.</p>
+      <div class="badges"><span class="badge good">로직 대조 가장 쉬움</span><span class="badge good">구현 위험 낮음</span><span class="badge warn">긴 화면 유지</span></div>
+    </div>
+  </div>
+
+  <div class="compare-card choice" data-choice="hybrid-restructure" onclick="toggleSelect(this)">
+    <div class="mini modern">
+      <div class="head"><span class="logo">PLANET <span class="mint">LAB</span></span><span>혼테일 세팅</span></div>
+      <div class="column-layout">
+        <div class="side"><div class="on">계산기</div><div>세팅</div><div>위키</div><div>챗봇</div></div>
+        <div>
+          <div class="box"><b>내 장비</b><div class="slots" style="margin-top:6px"><div class="slot">목걸이 ✓</div><div class="slot">망토 ✓</div><div class="slot">귀고리 ✓</div><div class="slot">눈장식 ✓</div><div class="slot">모자 ✓</div><div class="slot">장갑</div></div></div>
+          <div class="box"><b>선택: 목걸이</b><div class="controls"><div class="control"></div><div class="control"></div></div><div class="controls"><div class="control"></div><div class="control"></div></div><span class="mint">고급 옵션 펼치기</span></div>
+          <div class="box"><b>무기 잠재 · 길드 스킬 · 기타 설정</b><div class="muted" style="margin-top:5px">필요한 묶음만 펼쳐서 편집</div></div>
+        </div>
+        <div class="side">
+          <b>실시간 결과</b>
+          <div class="metric"><span>스탯공</span><b>19.2K</b></div><div class="metric"><span>환산공</span><b>20.9K</b></div><div class="metric"><span>방무</span><b>30%</b></div>
+          <div style="height:46px;margin-top:9px;border-radius:6px;background:linear-gradient(135deg,#6ee7b7,#6e9cff)"></div>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <h3>2. 기능 유지 + 구조 개선</h3>
+      <p>계산 항목은 동일하지만 장비 카드, 펼침 영역, 고정 결과 패널로 재배치합니다. 이후 OCR과 챗봇을 붙이기 가장 자연스럽습니다.</p>
+      <div class="badges"><span class="badge good">확장성 최고</span><span class="badge good">입력 피로 감소</span><span class="badge warn">대조 테스트 더 필요</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="verdict">
+  <strong>비교 결론:</strong> 행성.com을 먼저 “동일 계산기”로 재현하는 게 최우선이면 <strong>1번</strong>이 가장 안전합니다.
+  OCR·위키·챗봇까지 포함한 최종 제품의 뼈대를 지금부터 만들고 싶다면 <strong>2번</strong>이 더 맞습니다.
+  두 안 모두 계산 항목, 저장 슬롯, 프리셋, 무기 잠재, 길드 스킬, 스탯 추정, 잠재 비교, 추가 스펙 시뮬레이터는 유지합니다.
+</div>
+
+<p style="margin-top:16px;color:#7e90aa;font-size:13px">가운데 1번 또는 오른쪽 2번을 클릭해 선택해주세요.</p>

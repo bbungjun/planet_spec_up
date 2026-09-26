@@ -7,6 +7,9 @@ const aliases: Record<string, string> = {
   총데미지: "총데미지", 총대미지: "총데미지", 데미지: "총데미지", 대미지: "총데미지",
   TOTALDAMAGE: "총데미지", DAMAGE: "총데미지",
   보스공격력: "보스데미지", 보스데미지: "보스데미지", 보스대미지: "보스데미지",
+  보스공격시데미지: "보스데미지", 보스공격시대미지: "보스데미지",
+  보스몬스터공격시데미지: "보스데미지", 보스몬스터공격시대미지: "보스데미지",
+  방어율무시: "방어율무시", 방어력무시: "방어율무시", 몬스터방어율무시: "방어율무시", 몬스터방어력무시: "방어율무시",
 };
 
 export function parseTooltipOption(raw: string): TooltipOption | null {
@@ -24,7 +27,7 @@ export function parseTooltipOption(raw: string): TooltipOption | null {
   const label = Object.hasOwn(aliases, compact) ? aliases[compact] : match[1].trim();
   // A missing percent glyph is ambiguous: retain the raw line for review,
   // instead of treating e.g. an OCR `996` as either 996 damage or 9%.
-  if (["총데미지", "보스데미지"].includes(label) && match[3] !== "%") return null;
+  if (["총데미지", "보스데미지", "방어율무시"].includes(label) && match[3] !== "%") return null;
   return {
     label,
     value: Number(match[2]), percent: match[3] === "%", requirement: false, raw,

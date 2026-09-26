@@ -3,6 +3,18 @@
 # Local Codex planning and isolated worktrees
 .superpowers/
 .worktrees/
+.omo/
+.playwright-cli/
+
+# Private equipment screenshots and local verification output
+내장비/
+/output/
+/test-results/
+/playwright-report/
+
+# Tesseract's root-level cache; public/ocr assets are required by the app
+/*.traineddata
+*.tsbuildinfo
 
 # dependencies
 /node_modules

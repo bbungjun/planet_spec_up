@@ -21,6 +21,8 @@ export function BulkEditor({
   onEquipmentChange,
 }: BulkEditorProps) {
   const rule = JOB_RULES[input.character.job];
+  const fields = EQUIPMENT_FIELD_DEFINITIONS.filter(definition => definition.field !== "damagePercent"
+    || Object.values(input.equipment).some(equipment => equipment?.damagePercent?.trim()));
 
   return (
     <section className="panel bulk-editor" aria-labelledby="bulk-editor-heading">
@@ -40,7 +42,7 @@ export function BulkEditor({
           <thead>
             <tr>
               <th scope="col">부위</th>
-              {EQUIPMENT_FIELD_DEFINITIONS.map(({ field, suffix }) => (
+              {fields.map(({ field, suffix }) => (
                 <th scope="col" key={field}>
                   {suffix(rule.mainStat, rule.subStat)}
                 </th>
@@ -56,7 +58,7 @@ export function BulkEditor({
               return (
                 <tr key={slot}>
                   <th scope="row">{slotLabel}</th>
-                  {EQUIPMENT_FIELD_DEFINITIONS.map(({
+                  {fields.map(({
                     field,
                     suffix,
                     max,

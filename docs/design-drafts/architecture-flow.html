@@ -1,0 +1,76 @@
+<style>
+  .flow{display:grid;grid-template-columns:1fr 42px 1fr 42px 1fr;align-items:stretch;gap:8px;margin-top:28px}
+  .box{border:1px solid #2b3b54;border-radius:16px;background:#101a2a;padding:18px;min-height:155px}
+  .box.primary{border-color:#397a62;background:linear-gradient(145deg,#10281f,#101a2a)}
+  .box.future{border-style:dashed;opacity:.8}
+  .eyebrow{font-size:11px;color:#6ee7b7;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+  .box h3{margin:8px 0;color:#eff6ff}.box p{margin:0;color:#91a2b9;font-size:13px;line-height:1.55}
+  .arrow{display:grid;place-items:center;color:#5d7392;font-size:28px}
+  .engine{margin-top:18px;border:1px solid #2c3b52;border-radius:16px;background:#0d1625;padding:18px}
+  .engine-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  .engine-step{position:relative;border-radius:11px;padding:13px;background:#141f31;color:#9aacc2;font-size:12px}
+  .engine-step b{display:block;color:#edf5ff;margin-bottom:5px}
+  .engine-step:after{content:'›';position:absolute;right:-8px;top:25px;color:#527093;font-size:20px}
+  .engine-step:last-child:after{display:none}
+  .contract{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .contract>div{border:1px solid #27364d;border-radius:12px;padding:14px;background:#101927}
+  .contract h4{margin:0 0 8px;color:#e9f2ff}.contract ul{margin:0;padding-left:18px;color:#91a2b8;font-size:13px;line-height:1.65}
+  .note{margin-top:18px;padding:14px 16px;border-left:3px solid #6ee7b7;background:#10221d;color:#a9cabb;border-radius:0 10px 10px 0}
+  @media(max-width:900px){.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.engine-grid,.contract{grid-template-columns:1fr}.engine-step:after{display:none}}
+</style>
+
+<h2>MVP 구조와 데이터 흐름</h2>
+<p class="subtitle">화면과 공식을 분리해 이번에는 수동 입력을 받고, 2단계에서는 입력 출처만 OCR로 추가합니다.</p>
+
+<div class="flow">
+  <div class="box primary">
+    <div class="eyebrow">현재 MVP</div>
+    <h3>PC 계산 화면</h3>
+    <p>직업 선택, 장비 슬롯 편집, 기타 세팅, 저장 슬롯 1개를 담당합니다. 입력이 바뀌면 즉시 표준 데이터로 변환합니다.</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box primary">
+    <div class="eyebrow">공용 핵심</div>
+    <h3>독립 계산 엔진</h3>
+    <p>React 화면을 전혀 모르는 순수 계산 모듈입니다. 신궁·캡틴·나이트로드 규칙과 행성.com 대응 공식을 실행합니다.</p>
+  </div>
+  <div class="arrow">→</div>
+  <div class="box primary">
+    <div class="eyebrow">실시간 출력</div>
+    <h3>결과 패널</h3>
+    <p>최종 스탯, 스탯 공격력, 환산 공격력과 계산 근거를 표시합니다. 입력 오류가 있으면 결과 대신 수정할 위치를 안내합니다.</p>
+  </div>
+</div>
+
+<div class="engine">
+  <div class="eyebrow">계산 엔진 내부</div>
+  <div class="engine-grid">
+    <div class="engine-step"><b>1. 입력 정규화</b>빈칸은 0으로 처리하고 수치 범위를 검증</div>
+    <div class="engine-step"><b>2. 장비 합산</b>부위별 고정 스탯·% 스탯·공격력을 합산</div>
+    <div class="engine-step"><b>3. 직업 규칙</b>주/부스탯, 무기 상수, 레벨·버프를 적용</div>
+    <div class="engine-step"><b>4. 결과 계산</b>스탯공과 방어율·보공 등을 포함한 환산공 산출</div>
+  </div>
+</div>
+
+<div class="contract">
+  <div>
+    <h4>이번 MVP에 포함</h4>
+    <ul>
+      <li>신궁 · 캡틴 · 나이트로드</li>
+      <li>수동 장비 입력과 실시간 계산</li>
+      <li>브라우저 개인 저장 슬롯 1개</li>
+      <li>행성.com 기준 결과 대조 테스트</li>
+    </ul>
+  </div>
+  <div>
+    <h4>2단계에서 연결</h4>
+    <ul>
+      <li>아이템 스크린샷 업로드</li>
+      <li>OCR 옵션 인식과 사용자 검수</li>
+      <li>검수된 값을 같은 계산 엔진에 전달</li>
+      <li>위키·챗봇은 별도 서비스로 연결</li>
+    </ul>
+  </div>
+</div>
+
+<div class="note"><strong>핵심 원칙:</strong> OCR은 계산을 하지 않고 입력값만 만들어냅니다. 계산의 정답은 언제나 하나의 공용 엔진이 담당합니다.</div>

@@ -19,12 +19,20 @@ export function mapRecognizedStats(
     subFlat: asFieldValue(sub.flat + parsed.allStat.flat),
     mainPercent: asFieldValue(main.percent + parsed.allStat.percent),
     subPercent: asFieldValue(sub.percent + parsed.allStat.percent),
+    // A reviewed screenshot replaces these options; omitted lines must not
+    // retain the previous weapon's boss damage or ignore-defense.
+    damagePercent: "",
+    totalDamagePercent: "",
+    bossDamagePercent: "",
+    ignoreDefensePercent: "",
   };
   for (const option of parsed.options) {
     const field = option.requirement
       ? option.label === subStat ? "requiredSub" : undefined
       : option.label === "공격력" ? option.percent ? "attackPercent" : "attackFlat"
-      : ["총데미지", "보스데미지"].includes(option.label) && option.percent ? "damagePercent"
+      : option.label === "총데미지" && option.percent ? "totalDamagePercent"
+      : option.label === "보스데미지" && option.percent ? "bossDamagePercent"
+      : option.label === "방어율무시" && option.percent ? "ignoreDefensePercent"
       : undefined;
     if (field) {
       result[field] = String(option.requirement ? option.value : Number(result[field] ?? 0) + option.value);

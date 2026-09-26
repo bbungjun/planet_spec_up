@@ -22,6 +22,8 @@ export type NormalizedCharacterInput = {
   sharpEyes: CalculatorInput["character"]["sharpEyes"];
   monsterDefense: number;
   bossAndTotalDamage: number;
+  totalDamagePercent: number;
+  bossDamagePercent: number;
   ignoreDefense: number;
   criticalRate: number;
   manualPureSub: number | null;
@@ -108,6 +110,12 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     bossAndTotalDamage: readNumber(input.character.bossAndTotalDamage, {
       path: "character.bossAndTotalDamage", min: 0, max: 999,
     }, issues),
+    totalDamagePercent: readNumber(input.character.totalDamagePercent ?? "", {
+      path: "character.totalDamagePercent", min: 0, max: 999,
+    }, issues),
+    bossDamagePercent: readNumber(input.character.bossDamagePercent ?? "", {
+      path: "character.bossDamagePercent", min: 0, max: 999,
+    }, issues),
     ignoreDefense: readNumber(input.character.ignoreDefense, {
       path: "character.ignoreDefense", min: 0, max: 100,
     }, issues),
@@ -152,6 +160,15 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
       }, issues),
       damagePercent: readNumber(values.damagePercent ?? "", {
         path: `equipment.${slot}.damagePercent`, min: 0, max: 999,
+      }, issues),
+      totalDamagePercent: readNumber(values.totalDamagePercent ?? "", {
+        path: `equipment.${slot}.totalDamagePercent`, min: 0, max: 999,
+      }, issues),
+      bossDamagePercent: readNumber(values.bossDamagePercent ?? "", {
+        path: `equipment.${slot}.bossDamagePercent`, min: 0, max: 999,
+      }, issues),
+      ignoreDefensePercent: readNumber(values.ignoreDefensePercent ?? "", {
+        path: `equipment.${slot}.ignoreDefensePercent`, min: 0, max: 100,
       }, issues),
     };
   }

@@ -8,6 +8,8 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { calculateDamageResult } from "@/features/calculator/domain/calculate";
 import { deserializeSetup, serializeSetup } from "@/features/calculator/storage";
 
+const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
+
 const attachedTooltipText = [
   "STR +10",
   "DEX +21",
@@ -29,6 +31,7 @@ const screenshotTooltipText = [
 it("does not invent values from ambiguous OCR digits or force a known screenshot result", () => {
   expect(mapRecognizedStats(parseMapleTooltip(screenshotTooltipText), "corsair"))
     .toEqual({
+      ...clearedDamage,
       mainFlat: "21",
       subFlat: "",
       mainPercent: "49",
@@ -46,8 +49,9 @@ const weaponText = [
 it("recognizes weapon options, requirements and repeated potential lines independently", () => {
   const parsed = parseMapleTooltip(weaponText);
   expect(mapRecognizedStats(parsed, "corsair")).toEqual({
+    ...clearedDamage,
     mainFlat: "7", subFlat: "3", mainPercent: "", subPercent: "",
-    attackFlat: "106", requiredSub: "120", damagePercent: "21",
+    attackFlat: "106", requiredSub: "120", totalDamagePercent: "21",
   });
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "명중률", value: 5}));
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "흑수정 강화 공격력", value: 2}));
@@ -65,8 +69,9 @@ it("supports arbitrary numbers, percentages, all-stat and unknown option names",
   const text = "INT +28\nLUK +32\nDEX +12%\nALL STAT +4.5%\nATK +177\n공격력 +12%\n보스 데미지 +35%\n이동속도 +14\nHP +300";
   const parsed = parseMapleTooltip(text);
   expect(mapRecognizedStats(parsed, "night_lord")).toEqual({
+    ...clearedDamage,
     mainFlat: "32", subFlat: "", mainPercent: "4.5", subPercent: "16.5",
-    attackFlat: "177", attackPercent: "12", damagePercent: "35",
+    attackFlat: "177", attackPercent: "12", bossDamagePercent: "35",
   });
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "INT", value: 28}));
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "이동속도", value: 14}));
@@ -80,8 +85,9 @@ it("combines readable options across OCR passes without double counting potentia
     "578 1+3\nDEX +7\n공격력 +106\n총 데미지 +9%\n총 데미지 +6%\n총 데미지 +6%",
   );
   expect(mapRecognizedStats(parseMapleTooltip(text), "corsair")).toEqual({
+    ...clearedDamage,
     mainFlat: "7", subFlat: "3", mainPercent: "", subPercent: "",
-    attackFlat: "106", damagePercent: "21",
+    attackFlat: "106", totalDamagePercent: "21",
   });
 });
 
@@ -108,7 +114,7 @@ it("stores equipment damage, recalculates it and never adds it twice on re-apply
   input.equipment.weapon = applyStatReplacement(input.equipment.weapon, replacement);
   expect(calculateDamageResult(input)).toEqual(first);
   const saved = deserializeSetup(serializeSetup(input));
-  expect(saved).toMatchObject({ok: true, value: {input: {equipment: {weapon: {damagePercent: "21"}}}}});
+  expect(saved).toMatchObject({ok: true, value: {input: {equipment: {weapon: {totalDamagePercent: "21"}}}}});
   const legacy = createDefaultInput("corsair");
   expect(deserializeSetup(serializeSetup(legacy))).toMatchObject({ok: true});
 });
@@ -116,6 +122,7 @@ it("stores equipment damage, recalculates it and never adds it twice on re-apply
 it("maps attached tooltip stats to the corsair main and substat fields", () => {
   expect(mapRecognizedStats(parseMapleTooltip(attachedTooltipText), "corsair"))
     .toEqual({
+      ...clearedDamage,
       mainFlat: "21",
       subFlat: "10",
       mainPercent: "21",
@@ -128,6 +135,7 @@ it("fans out flat and percent all-stat totals for the night lord", () => {
     parseMapleTooltip("올스탯 +5\nALL STAT +3%\nLUK +7%"),
     "night_lord",
   )).toEqual({
+    ...clearedDamage,
     mainFlat: "5",
     subFlat: "5",
     mainPercent: "10",

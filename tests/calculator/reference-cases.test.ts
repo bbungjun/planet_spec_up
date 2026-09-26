@@ -86,7 +86,7 @@ it.each([
 
 it("orchestrates normalized equipment and AP allocation", () => {
   const input = createDefaultInput("marksman");
-  input.character.bossAndTotalDamage = "20";
+  input.character.bossDamagePercent = "20";
   input.character.monsterDefense = "60";
   input.character.ignoreDefense = "30";
   input.equipment.weapon!.mainFlat = "100";

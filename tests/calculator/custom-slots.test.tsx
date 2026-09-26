@@ -74,6 +74,7 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
 it("creates an extra slot from a reviewed OCR category without overwriting the selected card", async () => {
   const user = userEvent.setup();
   render(<CalculatorApp />);
+  await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["image"], "shoulder.png", {type: "image/png"}));
   expect(await screen.findByRole("button", {name: "어깨장식 새 장비로 추가"})).toBeInTheDocument();
   await user.click(screen.getByRole("button", {name: "어깨장식 새 장비로 추가"}));
@@ -90,6 +91,7 @@ it("imports a multi-image batch into a new slot and an empty existing slot in on
     .mockResolvedValueOnce("장비분류: 망토\nDEX +8");
   const user = userEvent.setup();
   render(<CalculatorApp />);
+  await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), [
     new File(["shoulder"], "shoulder.png", {type: "image/png"}),
     new File(["cape"], "cape.png", {type: "image/png"}),

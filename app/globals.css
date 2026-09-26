@@ -1010,3 +1010,15 @@ time,
     transition-duration: 0.01ms !important;
   }
 }
+.weapon-presets { margin-bottom: 24px; }
+.calculator-content { display: contents; }
+.weapon-preset-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.weapon-preset-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface-raised); }
+.weapon-preset-card.is-active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.weapon-preset-select { display: grid; gap: 6px; width: 100%; min-height: 88px; text-align: left; background: transparent; color: inherit; border: 0; cursor: pointer; }
+.weapon-preset-select strong { font-size: 17px; }
+.weapon-preset-select small { color: var(--muted); }
+.weapon-preset-card dl { margin: 12px 0; }
+.weapon-preset-card dl div { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; }
+.weapon-preset-card dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 760px) { .weapon-preset-grid { grid-template-columns: 1fr; } }

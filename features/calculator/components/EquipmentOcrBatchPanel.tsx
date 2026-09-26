@@ -8,13 +8,15 @@ import { mapRecognizedStats } from "../ocr/mapRecognizedStats";
 import { createBrowserTooltipRecognizer, isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, type TooltipRecognizer } from "../ocr/recognizeTooltip.client";
 import { existingDuplicate, imageFingerprint, matchingSlots, occupied, tooltipIdentity, validReplacement, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
 import type { StatReplacement } from "../ocr/types";
+import type { OcrDestination } from "../ocr/batch";
+import { WEAPON_PRESETS } from "../domain/weapon-presets";
 
 type Row = {
   file: File;
   state: "waiting" | "working" | "ready" | "error" | "applied";
   text: string;
   replacement: StatReplacement | null;
-  destination: EquipmentSlot | "new";
+  destination: OcrDestination;
   label: string;
   included: boolean;
   allowDuplicate: boolean;
@@ -86,8 +88,11 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
             continue;
           }
           const candidate = matchingSlots(parsed.category, initialChoices.current).find(choice => !occupied(choice.equipment) && !reserved.has(choice.slot));
-          const destination = !warning && candidate ? candidate.slot : "new";
-          if (destination !== "new") reserved.add(destination);
+          const isWeapon = ["건", "석궁", "아대", "무기"].includes(parsed.category ?? "");
+          const destination: OcrDestination = isWeapon
+            ? `preset:${Number(replacement.ignoreDefensePercent) > 0 ? "chaos" : Number(replacement.bossDamagePercent) > 0 ? "boss" : "hunting"}`
+            : !warning && candidate ? candidate.slot : "new";
+          if (destination !== "new" && !destination.startsWith("preset:")) reserved.add(destination as EquipmentSlot);
           update(index, {state: "ready", text, replacement, destination, label: parsed.category ?? "추가 장비", warning, included: !warning});
           if (hash) seenImages.set(hash, {text, name: file.name});
           if (identity.signature && !earlier) seenEquipment.set(identity.signature, file.name);
@@ -109,12 +114,14 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
   const {mainStat, subStat} = JOB_RULES[job];
   const fields: [keyof StatReplacement, string][] = [
     ["mainFlat", mainStat], ["subFlat", subStat], ["mainPercent", `${mainStat}%`], ["subPercent", `${subStat}%`],
-    ["attackFlat", "공격력"], ["attackPercent", "공격력%"], ["requiredSub", `요구 ${subStat}`], ["damagePercent", "보공·총데미지%"],
+    ["attackFlat", "공격력"], ["attackPercent", "공격력%"], ["requiredSub", `요구 ${subStat}`],
+    ["totalDamagePercent", "총데미지%"], ["bossDamagePercent", "보스공격력%"], ["ignoreDefensePercent", "방어율 무시%"],
   ];
 
   return <section className="ocr-batch" aria-label="여러 장비 인식 목록">
     <div className="equipment-ocr-review-heading"><h4>여러 장비 검토</h4><span role="status">{completed}/{rows.length}장 인식 완료</span></div>
     <p>중복 의심 항목은 기본 제외합니다. 같은 옵션의 실제 별도 장비라면 포함을 선택하세요. 다른 파일을 선택하면 현재 목록을 새로 시작합니다.</p>
+    <p>무기는 방무·보공 옵션으로 프리셋을 추천합니다. 적용 위치를 확인하세요. 기존 프리셋을 선택하면 해당 무기 값을 교체합니다. 총데미지·보공·방무의 빈칸은 0으로 교체되므로 누락된 옵션을 확인하세요.</p>
     <ol className="ocr-batch-list">
       {rows.map((row, index) => {
         const identity = row.text ? tooltipIdentity(row.text) : null;
@@ -131,6 +138,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
               <select id={`batch-destination-${index}`} value={row.destination} disabled={row.state === "applied"}
                 onChange={event => edit(index, {destination: event.currentTarget.value as Row["destination"]})}>
                 <option value="new">새 장비 부위로 추가</option>
+                {WEAPON_PRESETS.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.label} 무기 프리셋 (교체)</option>)}
                 {choices.map(choice => <option key={choice.slot} value={choice.slot}>{choice.label}{occupied(choice.equipment) ? " (기존 값 교체)" : " (빈칸)"}</option>)}
               </select>
             </div>
@@ -138,12 +146,12 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
               <input id={`batch-label-${index}`} maxLength={30} value={row.label} disabled={row.state === "applied"} onChange={event => edit(index, {label: event.currentTarget.value})} />
             </div>}
             <p className="ocr-batch-stats">{fields.filter(([key]) => row.replacement![key] !== undefined && row.replacement![key] !== "").map(([key, label]) => `${label} ${row.replacement![key]}`).join(" · ")}</p>
-            {!validReplacement(row.replacement) && <p role="alert">{index + 1}번 인식값을 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999이며, 적용할 값이 필요합니다.</p>}
+            {!validReplacement(row.replacement) && <p role="alert">{index + 1}번 인식값을 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999, 방무는 0~100이며, 적용할 값이 필요합니다.</p>}
             <details><summary>{index + 1}번 이미지·인식값 확인 및 수정</summary>
               <ImagePreview file={row.file} />
               <div className="equipment-ocr-proposal-grid">{fields.filter(([key]) => row.replacement![key] !== undefined).map(([key, label]) => <div className="field" key={key}>
                 <label htmlFor={`batch-${index}-${key}`}>{index + 1}번 OCR {label}</label>
-                <input id={`batch-${index}-${key}`} type="number" min={0} max={key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
+                <input id={`batch-${index}-${key}`} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
                   value={row.replacement![key]} disabled={row.state === "applied"} onChange={event => edit(index, {replacement: {...row.replacement!, [key]: event.currentTarget.value}})} />
               </div>)}</div>
               <label htmlFor={`batch-text-${index}`}>{index + 1}번 인식 텍스트</label>

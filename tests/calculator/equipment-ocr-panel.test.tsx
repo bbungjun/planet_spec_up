@@ -55,6 +55,7 @@ afterEach(() => {
 });
 
 describe("EquipmentOcrPanel", () => {
+  const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
   it("reviews attacks and damage dynamically and reparses corrected or new options", async () => {
     const user = userEvent.setup();
     const recognizer = createRecognizer(vi.fn().mockResolvedValue(
@@ -64,7 +65,7 @@ describe("EquipmentOcrPanel", () => {
     renderPanel(recognizer, onApply, {job: "corsair", slot: "weapon"});
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["weapon"], "weapon.png", {type: "image/png"}));
     expect(await screen.findByLabelText("OCR 공격력")).toHaveValue(106);
-    expect(screen.getByLabelText("OCR 보공·총데미지%")).toHaveValue(21);
+    expect(screen.getByLabelText("OCR 총데미지%")).toHaveValue(21);
     expect(screen.getByLabelText("OCR 요구 STR")).toHaveValue(120);
     expect(screen.getByText(/명중률: 5 — 참고용/)).toBeInTheDocument();
     expect(screen.getByText(/흑수정 강화 공격력: 2 — 참고용/)).toBeInTheDocument();
@@ -75,8 +76,9 @@ describe("EquipmentOcrPanel", () => {
     expect(screen.getByLabelText("OCR 공격력%")).toHaveValue(9);
     await user.click(screen.getByRole("button", {name: "인식값 적용"}));
     expect(onApply).toHaveBeenCalledWith({job: "corsair", slot: "weapon"}, {
+      ...clearedDamage,
       mainFlat: "19", subFlat: "8", mainPercent: "", subPercent: "",
-      attackFlat: "143", attackPercent: "9", damagePercent: "30", requiredSub: "100",
+      attackFlat: "143", attackPercent: "9", totalDamagePercent: "30", requiredSub: "100",
     });
   });
 
@@ -132,6 +134,7 @@ describe("EquipmentOcrPanel", () => {
 
     expect(onApply).toHaveBeenCalledTimes(1);
     expect(onApply).toHaveBeenCalledWith(target, {
+      ...clearedDamage,
       mainFlat: "21",
       subFlat: "10",
       mainPercent: "21",
@@ -276,6 +279,7 @@ describe("EquipmentOcrPanel", () => {
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
 
     expect(onApply).toHaveBeenCalledWith(target, {
+      ...clearedDamage,
       mainFlat: "30",
       subFlat: "4",
       mainPercent: "12",
@@ -446,6 +450,7 @@ describe("EquipmentOcrPanel", () => {
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
 
     expect(onApply).toHaveBeenCalledWith(target, {
+      ...clearedDamage,
       mainFlat: "99",
       subFlat: "10",
       mainPercent: "21",

@@ -16,6 +16,7 @@ import type {
 } from "../domain/types";
 import { getEquipmentSlotLabel } from "../domain/slots";
 import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
+import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 
 type ResultsPanelProps = {
   job: JobId;
@@ -42,6 +43,8 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   skillPercent: "타격당 평균 데미지 비율",
   monsterDefense: "몬스터 방어율",
   bossAndTotalDamage: "보스 공격력 및 총데미지",
+  totalDamagePercent: "기타 총데미지%",
+  bossDamagePercent: "기타 보스공격력%",
   ignoreDefense: "방어율 무시",
   criticalRate: "추가 크리티컬 확률",
   manualPureSub: "순수 부스탯 수동값",
@@ -124,7 +127,7 @@ export function ResultsPanel({
           <output aria-label="환산 공격력 결과">
             {integerFormat.format(result.convertedAttack)}
           </output>
-          <small>보공·방무·크리 반영</small>
+          <small>{WEAPON_PRESETS.find(preset => preset.id === activeWeaponPreset(input))!.label} · {activeWeaponPreset(input) === "hunting" ? "보공 제외" : "보공 포함"} · 방무·크리 반영</small>
         </div>
       </div>
 

@@ -1,0 +1,122 @@
+<style>
+  .app{margin-top:24px;border:1px solid #29374d;border-radius:20px;background:#09111d;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+  .appbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #223047;background:#0d1726}
+  .logo{font-weight:900;font-size:16px;color:#f4f8ff}.logo i{font-style:normal;color:#68e0af}
+  .top-actions{display:flex;gap:8px;align-items:center}.chip{padding:7px 10px;border-radius:8px;background:#152238;color:#91a5c0;font-size:11px}
+  .chip.save{background:#19372d;color:#71e0b1}
+  .workspace{display:grid;grid-template-columns:230px minmax(420px,1fr) 270px;min-height:570px}
+  .left,.right{padding:16px;background:#0b1422}.left{border-right:1px solid #223047}.right{border-left:1px solid #223047}
+  .center{padding:18px;background:#0a121f}
+  .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#647a98;font-weight:800;margin-bottom:8px}
+  .profile{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px}
+  .select{height:34px;padding:8px;border-radius:8px;background:#101c2e;border:1px solid #293a55;color:#dbe7f5;font-size:11px}
+  .gear-progress{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#d8e5f4;font-size:12px}
+  .gear-progress b{color:#6fe2b2}.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .slot{height:43px;padding:8px;border-radius:9px;border:1px solid #26364e;background:#101a2a;color:#8295ae;font-size:10px;display:flex;align-items:center;justify-content:space-between}
+  .slot.done{color:#bdd0e4}.slot.done span{color:#68dfaF}.slot.active{border-color:#68dfaf;background:#112a22;color:#f0f8f5;box-shadow:inset 3px 0 #68dfaf}
+  .mini-note{margin-top:11px;padding:9px;border-radius:8px;background:#111d2e;color:#7186a2;font-size:10px;line-height:1.5}
+  .edit-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}.edit-head h3{margin:0;color:#f0f5fb;font-size:18px}
+  .stepper{display:flex;gap:6px}.small-button{padding:7px 10px;border-radius:7px;background:#142238;color:#8fa2bc;font-size:10px}.small-button.primary{background:#68dfaf;color:#07130f;font-weight:800}
+  .item-summary{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid #2b3b53;border-radius:12px;background:#101a2a;margin-bottom:13px}
+  .item-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(145deg,#3f5f7e,#172639);display:grid;place-items:center;font-size:19px}
+  .item-summary b{display:block;color:#eaf2fb;font-size:12px}.item-summary span{color:#7890ad;font-size:10px}
+  .field-section{border:1px solid #26364e;border-radius:12px;background:#0e1827;padding:14px;margin-bottom:11px}
+  .field-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#dce8f5;font-size:12px}.field-title span{color:#6f849f;font-size:10px}
+  .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.field label{display:block;color:#758aa5;font-size:9px;margin-bottom:5px}.input{height:34px;border-radius:7px;border:1px solid #293a54;background:#08111e;color:#edf5ff;padding:8px;font-weight:700}.input.filled{border-color:#355e52;background:#0d201b}
+  .accordion{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #25344a;border-radius:10px;background:#0e1827;color:#91a3ba;font-size:11px;margin-top:8px}
+  .keyboard{margin-top:10px;color:#647993;font-size:10px;text-align:right}
+  .result-title{display:flex;justify-content:space-between;color:#eff6ff;font-size:13px;margin-bottom:12px}.live{color:#6ee0b0;font-size:10px}
+  .hero-result{padding:15px;border-radius:13px;background:linear-gradient(145deg,#173629,#11241d);border:1px solid #2f6e57;margin-bottom:10px}
+  .hero-result span{display:block;color:#8fb7a7;font-size:10px}.hero-result strong{display:block;color:#74e9b7;font-size:25px;margin-top:4px}.hero-result em{font-style:normal;color:#769b8c;font-size:9px}
+  .result-card{border:1px solid #26364e;border-radius:11px;background:#0f1928;padding:12px;margin-bottom:9px}
+  .metric{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #223148;color:#8296af;font-size:10px}.metric:last-child{border:0}.metric b{color:#dce7f5}
+  .formula{font-size:9px;line-height:1.5;color:#637994;margin-top:7px}
+  .warning{padding:10px;border-radius:9px;background:#2e2415;color:#e8bf76;font-size:10px;line-height:1.45}
+  .principles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+  .principle{border:1px solid #29384f;border-radius:12px;background:#101a2a;padding:13px;color:#91a3b9;font-size:12px;line-height:1.55}
+  .principle b{display:block;color:#e9f2fc;margin-bottom:5px}
+  @media(max-width:1000px){.workspace{grid-template-columns:190px 1fr}.right{grid-column:1/-1;border-left:0;border-top:1px solid #223047}.principles{grid-template-columns:1fr 1fr}}
+</style>
+
+<h2>입력 피로 감소형 계산 화면</h2>
+<p class="subtitle">모든 장비를 거대한 표에 펼치지 않고, 왼쪽에서 부위를 고르면 중앙 입력칸만 바뀝니다. 계산 결과는 오른쪽에 항상 고정됩니다.</p>
+
+<div class="app">
+  <div class="appbar">
+    <div class="logo">PLANET <i>LAB</i> <span style="font-size:10px;color:#647995;font-weight:500">/ 데미지 계산기</span></div>
+    <div class="top-actions"><span class="chip">초기화</span><span class="chip">일괄 입력 보기</span><span class="chip save">● 내 세팅 저장됨</span></div>
+  </div>
+  <div class="workspace">
+    <aside class="left">
+      <div class="label">캐릭터</div>
+      <div class="profile"><div class="select">해적</div><div class="select">캡틴⌄</div><div class="select">Lv. 160</div><div class="select">건</div></div>
+      <div class="gear-progress"><span>장비 입력</span><b>8 / 16</b></div>
+      <div class="slots">
+        <div class="slot active">목걸이 <span>편집 중</span></div><div class="slot done">망토 <span>✓</span></div>
+        <div class="slot done">귀고리 <span>✓</span></div><div class="slot done">눈장식 <span>✓</span></div>
+        <div class="slot">얼굴장식 <span>＋</span></div><div class="slot done">모자 <span>✓</span></div>
+        <div class="slot done">신발 <span>✓</span></div><div class="slot done">장갑 <span>✓</span></div>
+        <div class="slot done">전신 <span>✓</span></div><div class="slot">무기 <span>＋</span></div>
+        <div class="slot">칭호 <span>＋</span></div><div class="slot">반지 1 <span>＋</span></div>
+        <div class="slot">반지 2 <span>＋</span></div><div class="slot">반지 3 <span>＋</span></div>
+        <div class="slot">반지 4 <span>＋</span></div><div class="slot">기타 <span>＋</span></div>
+      </div>
+      <div class="mini-note">값이 하나라도 있으면 ✓로 표시됩니다. 비어 있는 장비는 모두 0으로 계산되므로 불필요한 칸을 채울 필요가 없습니다.</div>
+    </aside>
+
+    <main class="center">
+      <div class="edit-head">
+        <h3>목걸이 옵션</h3>
+        <div class="stepper"><span class="small-button">‹ 이전 장비</span><span class="small-button primary">다음 장비 ›</span></div>
+      </div>
+      <div class="item-summary">
+        <div class="item-icon">◇</div>
+        <div><b>목걸이</b><span>필요한 값만 입력하세요 · 빈칸은 0</span></div>
+      </div>
+      <div class="field-section">
+        <div class="field-title"><b>기본 스탯</b><span>아이템 자체 옵션 + 주문서 수치</span></div>
+        <div class="fields">
+          <div class="field"><label>DEX</label><div class="input filled">22</div></div>
+          <div class="field"><label>STR</label><div class="input filled">38</div></div>
+          <div class="field"><label>공격력</label><div class="input"></div></div>
+        </div>
+      </div>
+      <div class="field-section">
+        <div class="field-title"><b>잠재능력 합계</b><span>올스탯%는 해당 스탯%에 합산</span></div>
+        <div class="fields">
+          <div class="field"><label>DEX %</label><div class="input filled">18</div></div>
+          <div class="field"><label>STR %</label><div class="input"></div></div>
+          <div class="field"><label>공격력 %</label><div class="input"></div></div>
+        </div>
+      </div>
+      <div class="accordion"><span>착용 요구 스탯 · 고급 옵션</span><b>펼치기⌄</b></div>
+      <div class="accordion"><span>버프 · 길드 스킬 · 보스 방어율</span><b>현재 3개 적용⌄</b></div>
+      <div class="keyboard">Enter: 다음 칸 · Ctrl+Enter: 다음 장비 · ↑↓: 값 조절</div>
+    </main>
+
+    <aside class="right">
+      <div class="result-title"><b>계산 결과</b><span class="live">● 실시간</span></div>
+      <div class="hero-result"><span>환산 공격력</span><strong>20,942</strong><em>현재 입력 기준</em></div>
+      <div class="result-card">
+        <div class="metric"><span>스탯 공격력</span><b>19,213</b></div>
+        <div class="metric"><span>주스탯 DEX</span><b>2,678</b></div>
+        <div class="metric"><span>부스탯 STR</span><b>112</b></div>
+        <div class="metric"><span>공격력</span><b>197</b></div>
+        <div class="formula">⌊(DEX × 무기상수 3.6 + STR) × 공격력 ÷ 100⌋</div>
+      </div>
+      <div class="result-card">
+        <div class="metric"><span>보공·총뎀</span><b>9%</b></div>
+        <div class="metric"><span>방어율 배율</span><b>1.000</b></div>
+        <div class="metric"><span>크리 배율</span><b>1.000</b></div>
+      </div>
+      <div class="warning">확인이 필요한 값 1개<br><b>무기 공격력이 비어 있습니다.</b></div>
+    </aside>
+  </div>
+</div>
+
+<div class="principles">
+  <div class="principle"><b>필요한 값만 입력</b>빈칸은 0으로 처리하고 사용하지 않는 옵션은 건너뜁니다.</div>
+  <div class="principle"><b>자동 다음 이동</b>키보드만으로 한 장비의 입력을 끝내고 다음 부위로 이동합니다.</div>
+  <div class="principle"><b>결과 항상 고정</b>스크롤하거나 장비를 바꿔도 핵심 결과는 오른쪽에 남습니다.</div>
+  <div class="principle"><b>숙련자용 일괄 입력</b>원하면 행성.com과 비슷한 표 모드로 전체 장비를 빠르게 수정합니다.</div>
+</div>

@@ -1,0 +1,167 @@
+<style>
+  .direction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 24px;
+  }
+  .direction {
+    border: 1px solid #263247;
+    border-radius: 18px;
+    background: #0d1524;
+    overflow: hidden;
+    cursor: pointer;
+    transition: .2s ease;
+  }
+  .direction:hover { transform: translateY(-3px); border-color: #65d5a8; }
+  .direction.selected { border-color: #65d5a8; box-shadow: 0 0 0 2px rgba(101,213,168,.2); }
+  .preview {
+    height: 310px;
+    padding: 12px;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(89,209,161,.14), transparent 30%),
+      #08101c;
+    color: #dce8f7;
+    font-size: 10px;
+  }
+  .mini-top {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:10px; padding:2px 3px;
+  }
+  .brand { color:#fff; font-weight:800; letter-spacing:-.3px; }
+  .brand i { color:#65d5a8; font-style:normal; }
+  .pill { padding:4px 7px; border-radius:999px; background:#15233a; color:#91a4bd; }
+  .panel {
+    border:1px solid #203049; background:rgba(16,26,43,.88);
+    border-radius:10px; padding:9px;
+  }
+  .panel-title { font-weight:700; color:#f4f8ff; margin-bottom:7px; }
+  .muted { color:#71849e; }
+  .row { display:flex; gap:6px; margin-top:6px; }
+  .field { height:22px; flex:1; border-radius:5px; background:#09111e; border:1px solid #263650; }
+  .accent { background:#65d5a8; color:#07120e; font-weight:800; padding:5px 8px; border-radius:6px; }
+  .nav-stack { display:flex; flex-direction:column; gap:5px; }
+  .nav-item { padding:7px; border-radius:6px; color:#7e92ad; }
+  .nav-item.on { background:#163228; color:#7af0bd; font-weight:700; }
+  .metric { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1e2c42; }
+  .metric strong { color:#7af0bd; }
+  .dense-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+  .slot { height:34px; padding:5px; border-radius:6px; background:#0b1422; border:1px solid #22324b; color:#8da0b8; }
+  .step { display:flex; gap:8px; align-items:center; padding:7px 0; color:#8396b0; }
+  .step b { width:18px; height:18px; display:grid; place-items:center; border-radius:50%; background:#18263b; }
+  .step.on { color:#eaf4ff; } .step.on b { background:#65d5a8; color:#06120d; }
+  .direction-copy { padding:16px; }
+  .direction-copy h3 { margin:0 0 7px; font-size:17px; color:#f1f6ff; }
+  .direction-copy p { margin:0; font-size:13px; color:#91a0b5; line-height:1.55; }
+  .tag { display:inline-flex; margin-top:10px; padding:4px 8px; border-radius:999px; background:#17263b; color:#8ba1bb; font-size:11px; }
+  .tag.recommended { background:#16372b; color:#79e9b8; }
+  @media (max-width: 900px) { .direction-grid { grid-template-columns:1fr; } }
+</style>
+
+<h2>계산기 화면은 어떤 방식이 좋을까요?</h2>
+<p class="subtitle">계산 공식과 항목은 유지하고, 길드원이 더 빠르게 입력·비교할 수 있도록 정보 구조만 새로 설계한 세 가지 방향입니다.</p>
+
+<div class="direction-grid">
+  <div class="direction" data-choice="a-command-center" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="mini-top"><span class="brand">PLANET <i>LAB</i></span><span class="pill">캡틴 · Lv.160</span></div>
+      <div style="display:grid;grid-template-columns:70px 1fr;gap:8px">
+        <div class="panel">
+          <div class="nav-stack">
+            <div class="nav-item on">계산</div><div class="nav-item">장비</div>
+            <div class="nav-item">잠재</div><div class="nav-item">시뮬</div><div class="nav-item">저장</div>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <div class="panel-title">장비 옵션</div>
+            <div class="dense-grid">
+              <div class="slot">목걸이<br><b>DEX 22</b></div><div class="slot">망토<br><b>DEX% 18</b></div>
+              <div class="slot">귀고리<br><b>DEX 8</b></div><div class="slot">눈장식<br><b>DEX% 28</b></div>
+              <div class="slot">모자<br><b>DEX 36</b></div><div class="slot">신발<br><b>DEX% 12</b></div>
+              <div class="slot">장갑<br><b>공격력 10</b></div><div class="slot">전신<br><b>DEX 28</b></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:8px">
+            <div class="metric"><span>스탯 공격력</span><strong>19,213</strong></div>
+            <div class="metric"><span>환산 공격력</span><strong>20,942</strong></div>
+            <div class="row"><span class="accent">현재 세팅 저장</span><span class="pill">비교하기</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-copy">
+      <h3>A. 컴팩트 관제실</h3>
+      <p>모든 항목을 한 화면에 밀도 높게 배치합니다. 기존 계산기에 익숙한 고급 사용자가 가장 빠르게 다룰 수 있습니다.</p>
+      <span class="tag">PC 중심 · 정보 밀도 높음</span>
+    </div>
+  </div>
+
+  <div class="direction" data-choice="b-guided-flow" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="mini-top"><span class="brand">PLANET <i>LAB</i></span><span class="pill">자동 저장됨</span></div>
+      <div class="panel">
+        <div class="step"><b>1</b><span>직업과 레벨</span></div>
+        <div class="step on"><b>2</b><span>장비 옵션 입력</span></div>
+        <div class="step"><b>3</b><span>버프와 보스 설정</span></div>
+        <div class="step"><b>4</b><span>계산 결과</span></div>
+      </div>
+      <div class="panel" style="margin-top:8px">
+        <div class="panel-title">목걸이 옵션을 입력하세요</div>
+        <div class="muted">기본 스탯과 잠재 옵션을 나눠 입력합니다.</div>
+        <div class="row"><div class="field"></div><div class="field"></div></div>
+        <div class="row"><div class="field"></div><div class="field"></div></div>
+        <div style="height:64px;margin-top:8px;border:1px dashed #37506f;border-radius:8px;display:grid;place-items:center;color:#6f829b">아이템 이미지 영역 — OCR 확장 예정</div>
+        <div class="row" style="justify-content:flex-end"><span class="pill">이전</span><span class="accent">다음 장비</span></div>
+      </div>
+    </div>
+    <div class="direction-copy">
+      <h3>B. 단계별 가이드</h3>
+      <p>직업 → 장비 → 버프 → 결과 순서로 안내합니다. 처음 쓰는 길드원에게 편하지만 여러 장비를 빠르게 수정할 때는 단계가 늘어납니다.</p>
+      <span class="tag">초보자 친화 · 모바일 유리</span>
+    </div>
+  </div>
+
+  <div class="direction" data-choice="c-hybrid-workspace" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="mini-top"><span class="brand">PLANET <i>LAB</i></span><span class="pill">혼테일 세팅</span></div>
+      <div style="display:grid;grid-template-columns:64px 1fr 92px;gap:7px">
+        <div class="panel">
+          <div class="nav-stack">
+            <div class="nav-item on">계산기</div><div class="nav-item">세팅</div>
+            <div class="nav-item">위키</div><div class="nav-item">챗봇</div>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between"><span class="panel-title">내 장비</span><span class="muted">8 / 16 입력</span></div>
+            <div class="dense-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="slot">목걸이 ✓</div><div class="slot">망토 ✓</div><div class="slot">귀고리 ✓</div>
+              <div class="slot">눈장식 ✓</div><div class="slot">얼굴장식</div><div class="slot">모자 ✓</div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:7px">
+            <div class="panel-title">선택: 목걸이</div>
+            <div class="row"><div class="field"></div><div class="field"></div><span class="accent">적용</span></div>
+            <div class="muted" style="margin-top:7px">고급 옵션은 필요할 때 펼쳐서 입력</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">실시간 결과</div>
+          <div class="metric"><span>스탯공</span><strong>19.2K</strong></div>
+          <div class="metric"><span>환산공</span><strong>20.9K</strong></div>
+          <div class="metric"><span>방무</span><strong>30%</strong></div>
+          <div style="margin-top:9px;height:38px;border-radius:7px;background:linear-gradient(135deg,#65d5a8,#5f91ff);opacity:.8"></div>
+          <div class="muted" style="margin-top:6px">변경 즉시 반영</div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-copy">
+      <h3>C. 하이브리드 워크스페이스</h3>
+      <p>장비 목록과 선택한 항목만 크게 보여주고 결과는 오른쪽에 고정합니다. 지금은 계산기에 집중하면서 이후 OCR·위키·챗봇을 자연스럽게 확장할 수 있습니다.</p>
+      <span class="tag recommended">권장 · 기능 확장에 유리</span>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:18px;color:#7789a3;font-size:13px">카드를 클릭해 선택한 뒤, 채팅에서 “A/B/C 중 선택” 또는 섞고 싶은 요소를 말씀해주세요.</p>

@@ -30,9 +30,13 @@ import {
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
+import { WeaponPresetsPanel } from "./components/WeaponPresetsPanel";
+import { activeWeaponPreset, captureWeaponPreset, getWeaponPreset, switchWeaponPreset } from "./domain/weapon-presets";
+import type { WeaponPresetId } from "./domain/types";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
-  return (input.customSlots?.length ?? 0) > 0 || Object.values(input.equipment).some(
+  return Object.values(input.weaponPresets?.entries ?? {}).some(preset => Object.values(preset.weapon).some(value => value.trim() !== ""))
+    || (input.customSlots?.length ?? 0) > 0 || Object.values(input.equipment).some(
     (equipment) => equipment !== undefined
       && Object.values(equipment).some((value) => value.trim() !== ""),
   );
@@ -53,6 +57,7 @@ export function CalculatorApp() {
   const [inputMode, setInputMode] = useState<InputMode>("cards");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const pendingFocusPath = useRef<string | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const result = useMemo(() => calculateDamageResult(input), [input]);
@@ -74,6 +79,8 @@ export function CalculatorApp() {
         setStorageError(null);
       } catch {
         setStorageError("저장 데이터를 불러올 수 없습니다.");
+      } finally {
+        setInitialLoading(false);
       }
     }, 0);
 
@@ -184,7 +191,7 @@ export function CalculatorApp() {
     if (job === input.character.job) return;
     if (
       hasEquipmentValues(input)
-      && !window.confirm("직업을 바꾸면 장비 값과 추가한 부위가 초기화됩니다. 계속할까요?")
+      && !window.confirm("직업을 바꾸면 장비 값·무기 프리셋 3개·추가한 부위가 초기화됩니다. 계속할까요?")
     ) {
       return;
     }
@@ -210,7 +217,7 @@ export function CalculatorApp() {
 
   const handleSave = () => {
     try {
-      save(input);
+      save(captureWeaponPreset(input));
       const saved = load();
       if (!saved.ok) {
         setStorageError("세팅을 저장할 수 없습니다.");
@@ -221,6 +228,25 @@ export function CalculatorApp() {
     } catch {
       setStorageError("세팅을 저장할 수 없습니다.");
     }
+  };
+
+  const handlePresetSelect = (id: WeaponPresetId) => {
+    setInput(current => switchWeaponPreset(current, id));
+    setSelectedSlot("weapon");
+    setInputMode("cards");
+  };
+
+  const handlePresetCopy = (id: WeaponPresetId) => {
+    if (id === activeWeaponPreset(input)) return;
+    const existing = getWeaponPreset(input, id);
+    if (existing && Object.values(existing.weapon).some(value => value.trim() !== "")
+      && !window.confirm("해당 프리셋의 무기를 현재 무기로 교체할까요?")) return;
+    setInput(current => {
+      const destination = switchWeaponPreset(current, id);
+      return { ...destination, equipment: { ...destination.equipment, weapon: { ...current.equipment.weapon! } } };
+    });
+    setSelectedSlot("weapon");
+    setInputMode("cards");
   };
 
   const handleLoad = () => {
@@ -259,7 +285,8 @@ export function CalculatorApp() {
   };
 
   return (
-    <main className="calculator-shell">
+    <main className="calculator-shell" aria-busy={initialLoading}>
+      <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
         inputMode={inputMode}
         savedAt={savedAt}
@@ -281,6 +308,7 @@ export function CalculatorApp() {
           <AttackSetupPanel input={input} issues={result.issues}
             onEquipmentChange={handleEquipmentChange} onCharacterChange={handleCharacterChange} />
       </div>
+      <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onCopy={handlePresetCopy} onSave={handleSave} />
       <div className="calculator-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
@@ -320,6 +348,7 @@ export function CalculatorApp() {
           />
         </div>
       </div>
+      </fieldset>
     </main>
   );
 }

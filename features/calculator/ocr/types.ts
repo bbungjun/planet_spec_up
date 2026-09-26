@@ -20,5 +20,5 @@ export type ParsedTooltipStats = {
 export type StatReplacement = Pick<
   EquipmentInput,
   "mainFlat" | "subFlat" | "mainPercent" | "subPercent"
-> & Partial<Pick<EquipmentInput, "attackFlat" | "attackPercent" | "requiredSub" | "damagePercent">>;
+> & Partial<Pick<EquipmentInput, "attackFlat" | "attackPercent" | "requiredSub" | "damagePercent" | "totalDamagePercent" | "bossDamagePercent" | "ignoreDefensePercent">>;
 export type OcrTarget = { job: JobId; slot: EquipmentSlot };

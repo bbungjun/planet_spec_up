@@ -1,4 +1,6 @@
-import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId } from "../domain/types";
+import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId } from "../domain/types";
+import { activeWeaponPreset, captureWeaponPreset, getWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
+import { emptyEquipment } from "../domain/defaults";
 import { addEquipmentSlot, getVisibleEquipmentSlots } from "../domain/slots";
 import { applyStatReplacement } from "./applyStatReplacement";
 import { mapRecognizedStats } from "./mapRecognizedStats";
@@ -6,7 +8,8 @@ import { parseMapleTooltip } from "./parseMapleTooltip";
 import type { ParsedTooltipStats, StatReplacement } from "./types";
 
 export type OcrSlotChoice = { slot: EquipmentSlot; label: string; equipment: EquipmentInput };
-export type OcrBatchEntry = { replacement: StatReplacement; destination: EquipmentSlot | "new"; label: string };
+export type OcrDestination = EquipmentSlot | `preset:${WeaponPresetId}` | "new";
+export type OcrBatchEntry = { replacement: StatReplacement; destination: OcrDestination; label: string };
 export type ApplyOcrBatch = (job: JobId, entries: OcrBatchEntry[]) => string | null;
 export const MAX_BATCH_FILES = 50;
 export const MAX_BATCH_BYTES = 120 * 1024 * 1024;
@@ -66,18 +69,34 @@ export function validReplacement(value: StatReplacement): boolean {
     if (raw === "") return true;
     const number = Number(raw);
     const percent = key.endsWith("Percent");
-    return Number.isFinite(number) && number >= 0 && number <= (percent ? 999 : 9999) && (percent || Number.isInteger(number));
+    return Number.isFinite(number) && number >= 0 && number <= (key === "ignoreDefensePercent" ? 100 : percent ? 999 : 9999) && (percent || Number.isInteger(number));
   });
 }
 
 /** Validate the whole import first, then replace records in one immutable update. */
 export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBatchEntry[]): {input: CalculatorInput; error: null} | {input: null; error: string} {
   if (input.character.job !== job) return {input: null, error: "직업이 바뀌었습니다. 이미지를 다시 선택하세요."};
-  const seen = new Set<EquipmentSlot>();
+  const seen = new Set<string>();
   const visible = new Set(getVisibleEquipmentSlots(input));
   let next = input;
   for (const entry of entries) {
     if (!validReplacement(entry.replacement)) return {input: null, error: "인식값의 숫자 범위를 확인하세요."};
+    if (entry.destination.startsWith("preset:")) {
+      const id = entry.destination.slice(7) as WeaponPresetId;
+      const preset = WEAPON_PRESETS.find(preset => preset.id === id);
+      if (!preset) return { input: null, error: "무기 프리셋을 다시 선택하세요." };
+      const destinationKey = id === activeWeaponPreset(next) ? "weapon" : entry.destination;
+      if (seen.has(destinationKey)) return {input: null, error: "여러 이미지의 적용 위치가 같습니다. 각각 다른 무기 프리셋을 선택하세요."};
+      seen.add(destinationKey);
+      const saved = getWeaponPreset(next, id);
+      const weapon = applyStatReplacement(saved?.weapon ?? emptyEquipment(), entry.replacement);
+      next = captureWeaponPreset(next);
+      next = { ...next, weaponPresets: { ...next.weaponPresets!, entries: { ...next.weaponPresets!.entries,
+        [id]: { weapon, monsterDefense: saved?.monsterDefense ?? preset.defense },
+      } } };
+      if (id === activeWeaponPreset(next)) next = { ...next, equipment: { ...next.equipment, weapon } };
+      continue;
+    }
     let slot: EquipmentSlot;
     if (entry.destination === "new") {
       const added = addEquipmentSlot(next, entry.label);
@@ -85,7 +104,7 @@ export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBa
       next = added.input;
       slot = added.slot;
     } else {
-      slot = entry.destination;
+      slot = entry.destination as EquipmentSlot;
       if (!visible.has(slot) || !next.equipment[slot]) return {input: null, error: "적용할 장비가 없어졌습니다. 적용 위치를 다시 선택하세요."};
       if (seen.has(slot)) return {input: null, error: "여러 이미지의 적용 위치가 같습니다. 각각 다른 부위나 새 장비를 선택하세요."};
       seen.add(slot);

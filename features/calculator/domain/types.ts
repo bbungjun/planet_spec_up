@@ -25,6 +25,9 @@ export type EquipmentInput = {
   requiredSub: string;
   /** Optional for compatibility with existing saved equipment. */
   damagePercent?: string;
+  totalDamagePercent?: string;
+  bossDamagePercent?: string;
+  ignoreDefensePercent?: string;
 };
 
 export type CharacterInput = {
@@ -35,6 +38,8 @@ export type CharacterInput = {
   sharpEyes: SharpEyes;
   monsterDefense: string;
   bossAndTotalDamage: string;
+  totalDamagePercent?: string;
+  bossDamagePercent?: string;
   ignoreDefense: string;
   criticalRate: string;
   manualPureSub: string;
@@ -50,7 +55,14 @@ export type CalculatorInput = {
   equipment: Partial<Record<EquipmentSlot, EquipmentInput>>;
   /** Older saved setups have no custom slots. */
   customSlots?: CustomSlot[];
+  weaponPresets?: {
+    active: WeaponPresetId;
+    entries: Partial<Record<WeaponPresetId, WeaponPreset>>;
+  };
 };
+
+export type WeaponPresetId = "chaos" | "boss" | "hunting";
+export type WeaponPreset = { weapon: EquipmentInput; monsterDefense: string };
 
 export type ValidationIssue = {
   severity: "error" | "warning";

@@ -322,7 +322,9 @@ export function EquipmentOcrPanel({
     { field: "attackFlat", label: "OCR 공격력", max: 9999, step: 1 },
     { field: "attackPercent", label: "OCR 공격력%", max: 999, step: "any" },
     { field: "requiredSub", label: `OCR 요구 ${rule.subStat}`, max: 9999, step: 1 },
-    { field: "damagePercent", label: "OCR 보공·총데미지%", max: 999, step: "any" },
+    { field: "totalDamagePercent", label: "OCR 총데미지%", max: 999, step: "any" },
+    { field: "bossDamagePercent", label: "OCR 보스공격력%", max: 999, step: "any" },
+    { field: "ignoreDefensePercent", label: "OCR 방어율 무시%", max: 100, step: "any" },
   ];
   const parsed = parseMapleTooltip(recognizedText);
   const duplicate = existingDuplicate(parsed, target.job, slotChoices);
@@ -436,7 +438,7 @@ export function EquipmentOcrPanel({
             <h4>인식값 검토</h4>
             <span>{capturedTarget?.slot === target.slot ? "현재 카드" : "이전 카드"}</span>
           </div>
-          <p>기본 스탯 4개는 교체합니다. 공격력·요구 스탯·보공·총데미지는 인식된 항목만 교체합니다.</p>
+          <p>기본 스탯과 총데미지·보공·방무는 검토값으로 교체하며 빈칸은 0입니다. 누락된 잠재 옵션을 확인하세요. 공격력·요구 스탯은 인식된 항목만 교체합니다.</p>
           {duplicate && <div className="ocr-duplicate-message" role="alert">
             <p>{duplicate} 같은 옵션의 실제 별도 장비인지 확인하세요.</p>
             <label className="check-field"><input type="checkbox" checked={allowDuplicate} onChange={event => setAllowDuplicate(event.currentTarget.checked)} />중복 확인 후 적용 허용</label>

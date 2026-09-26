@@ -200,15 +200,19 @@ export function CharacterPanel({
             issues={issues}
             onChange={(value) => onChange("monsterDefense", value)}
           />
-          <NumericField
-            label="보스 공격력 및 총데미지"
+          {([ ["totalDamagePercent", "기타 총데미지%"], ["bossDamagePercent", "기타 보스공격력%"] ] as const).map(([field, label]) => (
+            <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""}
+              min={0} max={999} issues={issues} onChange={value => onChange(field, value)} />
+          ))}
+          {character.bossAndTotalDamage.trim() !== "" && <NumericField
+            label="기존 보공·총데미지 합산값 (분리 후 비우기)"
             path="character.bossAndTotalDamage"
             value={character.bossAndTotalDamage}
             min={0}
             max={999}
             issues={issues}
             onChange={(value) => onChange("bossAndTotalDamage", value)}
-          />
+          />}
           <NumericField
             label="방어율 무시"
             path="character.ignoreDefense"
@@ -251,6 +255,8 @@ export function CharacterPanel({
           ) : null}
         </div>
       </fieldset>
+
+      <p className="panel-description">기타 데미지·방무에는 장비 옵션과 길드 스킬을 제외한 값만 입력하세요. 장비·길드 값은 별도 합산됩니다.</p>
 
       <fieldset className="settings-group">
         <legend>길드 스킬</legend>
