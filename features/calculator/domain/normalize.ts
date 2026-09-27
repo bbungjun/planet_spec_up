@@ -13,7 +13,7 @@ export type NumberRule = {
   integer?: boolean;
 };
 
-export type NormalizedEquipmentInput = Record<keyof EquipmentInput, number>;
+export type NormalizedEquipmentInput = Record<Exclude<keyof EquipmentInput, "pendantId">, number>;
 
 export type NormalizedCharacterInput = {
   job: CalculatorInput["character"]["job"];

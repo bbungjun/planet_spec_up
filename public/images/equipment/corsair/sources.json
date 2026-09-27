@@ -1,0 +1,151 @@
+{
+  "provider": "MapleStory.io",
+  "providerUrl": "https://maplestory.io/",
+  "region": "GMS",
+  "version": "83",
+  "retrievedAt": "2026-09-27T15:45:03.5677932+00:00",
+  "copyright": "MapleStory game artwork © NEXON",
+  "purpose": "Representative icons for Corsair equipment slots; not OCR item identification or MaplePlanet equipment stats.",
+  "assets": [
+    {
+      "id": 1002649,
+      "name": "Canopus Hat",
+      "file": "1002649.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1002649/icon",
+      "bytes": 1082,
+      "sha256": "73f6f2ec87897245e07801fd76e2c98a4a3ce3d7d07e9608c36faaba4efb94db",
+      "width": 31,
+      "height": 31
+    },
+    {
+      "id": 1012106,
+      "name": "Rat Mouth",
+      "file": "1012106.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1012106/icon",
+      "bytes": 792,
+      "sha256": "d776b8f2de83de312e40f409084ef38b15976deb9f09ebb72da15f335aa38637",
+      "width": 31,
+      "height": 21
+    },
+    {
+      "id": 1022082,
+      "name": "Spectrum Goggles",
+      "file": "1022082.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1022082/icon",
+      "bytes": 989,
+      "sha256": "958269c5459a33b964276ea329144acc3b30f753b1c7845be1ff0706177a221b",
+      "width": 34,
+      "height": 24
+    },
+    {
+      "id": 1032015,
+      "name": "Metal Silver Earrings",
+      "file": "1032015.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1032015/icon",
+      "bytes": 1069,
+      "sha256": "53a1257f8358c08a58ff1e20f0586d4e8bf089e5ac2ee411ad8bc9c0a327abe2",
+      "width": 32,
+      "height": 31
+    },
+    {
+      "id": 1052134,
+      "name": "Canopus Suit",
+      "file": "1052134.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1052134/icon",
+      "bytes": 1123,
+      "sha256": "24fdbafbf2aae033cfbfdb1b13734fad279e49773e663ab232ed68c343c1852b",
+      "width": 27,
+      "height": 32
+    },
+    {
+      "id": 1072321,
+      "name": "Canopus Boots",
+      "file": "1072321.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1072321/icon",
+      "bytes": 931,
+      "sha256": "ce90868936d22c04045f7a6c24857e99eaeeebd629044e7b672546306b5e088c",
+      "width": 26,
+      "height": 31
+    },
+    {
+      "id": 1082216,
+      "name": "Canopus Glove",
+      "file": "1082216.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1082216/icon",
+      "bytes": 1046,
+      "sha256": "dca8b7f27231e663516689d056316682e8689225da056d1608f0ea33cfe18c22",
+      "width": 26,
+      "height": 28
+    },
+    {
+      "id": 1102041,
+      "name": "Pink Adventurer Cape",
+      "file": "1102041.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1102041/icon",
+      "bytes": 1170,
+      "sha256": "697f0b85c7bceda6316e2646555ed1b60d0730f4a2f9c636120d374e3d52f839",
+      "width": 30,
+      "height": 32
+    },
+    {
+      "id": 1112408,
+      "name": "Circle of Ancient Strength",
+      "file": "1112408.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1112408/icon",
+      "bytes": 1139,
+      "sha256": "23f3554d207f0c7084e3bd669ff5cf7926a10b120434b438ae23afd23e95c9cc",
+      "width": 26,
+      "height": 29
+    },
+    {
+      "id": 1122000,
+      "name": "Horntail Necklace",
+      "file": "1122000.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1122000/icon",
+      "bytes": 1350,
+      "sha256": "f3304233aec0d947d2000a0926a1dc4a75d044348785c9a553ad1f03bbcc3527",
+      "width": 30,
+      "height": 32
+    },
+    {
+      "id": 1132004,
+      "name": "Black Belt",
+      "file": "1132004.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1132004/icon",
+      "bytes": 1102,
+      "sha256": "06fb6cd75269206ad110f75134bae5f9b49ca787fcb19cde670a0659b6e8763f",
+      "width": 28,
+      "height": 30
+    },
+    {
+      "id": 1142013,
+      "name": "King Pirate Medal",
+      "file": "1142013.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1142013/icon",
+      "bytes": 1032,
+      "sha256": "f23bb26c221b58bdd9a8f096265c01b7d22fd1a287042b76cd0810ef8c55596c",
+      "width": 26,
+      "height": 31
+    },
+    {
+      "id": 1492013,
+      "name": "Dragonfire Revolver",
+      "file": "1492013.png",
+      "source": "https://maplestory.io/api/GMS/83/item/1492013/icon",
+      "bytes": 1079,
+      "sha256": "518b4c12c9ebf04086191e45379075a43e8e85295ccae03340bb63e4f8c1b6af",
+      "width": 34,
+      "height": 30
+    },
+    {
+      "id": 2330005,
+      "name": "Eternal Bullet",
+      "file": "2330005.png",
+      "source": "https://maplestory.io/api/GMS/83/item/2330005/icon",
+      "bytes": 1028,
+      "sha256": "be07615e0ee944c5e93f66e045097fb6d745749d11b540af3eeadda32ffb7c1b",
+      "width": 32,
+      "height": 32
+    }
+  ]
+}

@@ -16,7 +16,7 @@ export type JobRule = {
 };
 
 const COMMON = [
-  "necklace", "cape", "earrings", "eye", "face", "hat", "shoes",
+  "necklace", "pendant_2", "cape", "earrings", "eye", "face", "hat", "shoes",
   "gloves", "weapon", "title", "ring_1", "ring_2", "ring_3", "ring_4",
   "projectile", "blessing_1", "blessing_2", "buff",
 ] as const satisfies readonly BuiltinEquipmentSlot[];

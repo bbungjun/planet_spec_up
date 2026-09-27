@@ -2,6 +2,8 @@ import { calculateDamageResult } from "./calculate";
 import { emptyEquipment } from "./defaults";
 import { getVisibleEquipmentSlots, getEquipmentSlotLabel, matchingSlots } from "./slots";
 import { activeWeaponPreset, switchWeaponPreset, WEAPON_PRESETS } from "./weapon-presets";
+import { isPendantCategory, occupiedPendantSlots } from "./pendants";
+import { isWearBlocked } from "./requirements";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId, CalculationResult } from "./types";
 
 export type PurchaseCandidate = { id: string; name: string; job: JobId; slot: EquipmentSlot; category: string|null; equipment: EquipmentInput; price: string; image?: File; previewImage?: File };
@@ -25,7 +27,7 @@ export function candidatePriceEfficiency(comparison: CandidateComparison, rawPri
   const efficiency = gain / price;
   return Number.isFinite(efficiency) ? efficiency : null;
 }
-const hasItem = (item: EquipmentInput|undefined) => item && Object.entries(item).some(([key,value])=>!key.startsWith("required") && typeof value==="string" && value.trim()!=="");
+const hasItem = (item: EquipmentInput|undefined) => item && Object.entries(item).some(([key,value])=>key !== "pendantId" && !key.startsWith("required") && typeof value==="string" && value.trim()!=="");
 const change=(before:number,after:number,allowed:boolean):MetricChange=>({before,after,difference:after-before,percent:allowed&&before>0?(after/before-1)*100:null});
 export function compareCandidate(input: CalculatorInput, candidate: PurchaseCandidate, preset=activeWeaponPreset(input)): CandidateComparison {
   const fail=(...reasons:string[]):CandidateComparison=>({preset,status:"blocked",reasons});
@@ -41,13 +43,18 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   const baseline=switchWeaponPreset(input,preset);
   if(!hasItem(baseline.equipment[candidate.slot]))return fail("비교할 현재 장비를 먼저 등록해주세요.");
   const before=calculateDamageResult(baseline);
-  const next={...baseline,equipment:{...baseline.equipment,[candidate.slot]:{...candidate.equipment}}};
+  const next: CalculatorInput={...baseline,equipment:{...baseline.equipment,[candidate.slot]:{...candidate.equipment}}};
   const after=calculateDamageResult(next);
   const all=[...before.issues,...after.issues];
-  const invalid=all.filter(issue=>issue.severity==="error" || ["MISSING_WEAPON_ATTACK","UNMET_LEVEL_REQUIREMENT","UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code));
+  const invalid=all.filter(issue=>issue.severity==="error" || issue.code === "MISSING_WEAPON_ATTACK" || isWearBlocked(issue));
   if(invalid.length)return {...fail(...new Set(invalid.map(i=>i.message))),before,after};
   const pending=all.filter(issue=>issue.code === "LEGACY_DAMAGE_SPLIT");
   const reasons=[...new Set(pending.map(i=>i.message))];
+  const pendants = occupiedPendantSlots(next);
+  // Request kind verification only when this image's OCR category is pendant.
+  // A manually selected destination does not establish the image's category.
+  // Proven duplicate/over-limit loadouts still fail through isWearBlocked above.
+  if (isPendantCategory(candidate.category) && pendants.some(slot => !next.equipment[slot]?.pendantId)) reasons.push("펜던트 종류를 확인해주세요. 고유 아이템 중복 착용 여부를 확인해야 합니다.");
   if(!candidate.equipment.requiredLevel?.trim())reasons.push("후보 사진의 REQ LEV 인식값이 없습니다. 원본의 요구 레벨을 확인해주세요.");
   if(!candidate.equipment.requiredSub.trim())reasons.push("후보 사진의 요구 스탯 인식값이 없습니다. OCR 검토값을 확인해주세요.");
   if(before.statAttack<=0 || before.convertedAttack<=0)reasons.push("현재 공격력이 0인 항목은 상승률을 계산할 수 없습니다.");

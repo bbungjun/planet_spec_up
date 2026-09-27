@@ -1,6 +1,8 @@
 import { JOB_RULES } from "./job-rules";
 import type { CalculatorInput, EquipmentInput, JobId } from "./types";
 
+export const DEFAULT_PROJECTILE_ATTACK = "20";
+
 export function emptyEquipment(): EquipmentInput {
   return {
     mainFlat: "",
@@ -39,7 +41,10 @@ export function createDefaultInput(job: JobId): CalculatorInput {
       guildAttackFlat: "5",
     },
     equipment: Object.fromEntries(
-      rule.visibleSlots.map((slot) => [slot, emptyEquipment()]),
+      rule.visibleSlots.map((slot) => [slot, {
+        ...emptyEquipment(),
+        ...(slot === "projectile" ? { attackFlat: DEFAULT_PROJECTILE_ATTACK } : {}),
+      }]),
     ),
   };
 }

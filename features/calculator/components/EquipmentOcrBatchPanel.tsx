@@ -15,6 +15,8 @@ import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import type { OcrDestination } from "../ocr/batch";
 import { WEAPON_PRESETS } from "../domain/weapon-presets";
 import { RING_SLOTS } from "../domain/slots";
+import { isPendantCategory, pendantFromName, PENDANT_SLOTS } from "../domain/pendants";
+import { PendantSelect } from "./PendantSelect";
 
 type Row = {
   file: File;
@@ -29,6 +31,7 @@ type Row = {
   needsDestination: boolean;
   label: string;
   category: string | null;
+  pendantChoice?: string;
   included: boolean;
   allowDuplicate: boolean;
   warning: string | null;
@@ -111,7 +114,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
           : !warning && candidate ? candidate.slot : "new";
         if (destination !== "new" && !destination.startsWith("preset:")) reserved.add(destination as EquipmentSlot);
         update(index, {state: "ready", text, preview, replacement, review: result.review ?? null, destination,
-          needsDestination: parsed.category === null || (parsed.category === "반지" && destination === "new"),
+          needsDestination: parsed.category === null || ((parsed.category === "반지" || isPendantCategory(parsed.category)) && destination === "new"),
           category: parsed.category, label: parsed.category ?? "추가 장비", warning, included: !warning});
         if (identity.signature && !earlier) seenEquipment.set(identity.signature, file.name);
       }
@@ -195,8 +198,8 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
         const weapon = ["건", "석궁", "아대", "무기"].includes(parsed.category ?? "");
         const destination: OcrDestination = weapon ? `preset:${Number(replacement.ignoreDefensePercent) > 0 ? "chaos" : Number(replacement.bossDamagePercent) > 0 ? "boss" : "hunting"}` : !warning && candidate ? candidate.slot : "new";
         return current.map((row, i) => i !== index ? row : { ...row, state: "ready", progress: 1, text, preview, replacement, review: review ?? null,
-          warning, included: !warning, allowDuplicate: false, destination, category: parsed.category, label: parsed.category ?? "추가 장비",
-          needsDestination: parsed.category === null || (parsed.category === "반지" && destination === "new") });
+          warning, included: !warning, allowDuplicate: false, pendantChoice: undefined, destination, category: parsed.category, label: parsed.category ?? "추가 장비",
+          needsDestination: parsed.category === null || ((parsed.category === "반지" || isPendantCategory(parsed.category)) && destination === "new") });
       });
     } catch (error) {
       if (!controller.signal.aborted) edit(index, { state: "error", included: false, error: recognitionErrorMessage(error) });
@@ -229,6 +232,8 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
     <ol className="ocr-batch-list">
       {rows.map((row, index) => {
         const identity = row.text ? tooltipIdentity(row.text) : null;
+        const pendant = isPendantCategory(row.category) || PENDANT_SLOTS.includes(row.destination as EquipmentSlot);
+        const limitedSlots = row.category === "반지" ? RING_SLOTS : pendant ? PENDANT_SLOTS : null;
         const duplicate = duplicateFor(row);
         const questions = row.review ? Number(reviewBlocked(row.review, job)) : 0;
         if (attentionOnly && row.state !== "error" && !row.needsDestination && !questions && !duplicate && row.state !== "working" && row.state !== "waiting") return null;
@@ -255,15 +260,16 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
                 aria-invalid={row.needsDestination || undefined}
                 onChange={event => edit(index, {destination: event.currentTarget.value as Row["destination"], needsDestination: false})}>
                 <option value="" disabled>{row.category === "반지" ? "적용할 반지 칸을 선택하세요" : "장비 부위를 선택하세요"}</option>
-                {row.category !== "반지" && <option value="new">새 장비 부위로 추가</option>}
-                {row.category !== "반지" && WEAPON_PRESETS.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.label} 무기 프리셋 (교체)</option>)}
-                {choices.filter(choice => row.category !== "반지" || RING_SLOTS.includes(choice.slot)).map(choice => <option key={choice.slot} value={choice.slot}>{choice.label}{occupied(choice.equipment) ? " (기존 값 교체)" : " (빈칸)"}</option>)}
+                {!limitedSlots && <option value="new">새 장비 부위로 추가</option>}
+                {!limitedSlots && WEAPON_PRESETS.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.label} 무기 프리셋 (교체)</option>)}
+                {choices.filter(choice => !limitedSlots || limitedSlots.includes(choice.slot)).map(choice => <option key={choice.slot} value={choice.slot}>{choice.label}{occupied(choice.equipment) ? " (기존 값 교체)" : " (빈칸)"}</option>)}
               </select>
             </div>
-            {row.needsDestination && <p className="ocr-duplicate-message">{row.category === "반지" ? "반지는 최대 4개입니다. 적용할 반지 칸을 선택하거나 이 사진을 제외하세요." : "장비 부위를 읽지 못했습니다. 원본을 보고 적용 위치를 선택하세요."}</p>}
-            {row.destination === "new" && row.category !== "반지" && <div className="field"><label htmlFor={`${id}-batch-label-${index}`}>{index + 1}번 새 장비 이름</label>
+            {row.needsDestination && <p className="ocr-duplicate-message">{row.category === "반지" ? "반지는 최대 4개입니다. 적용할 반지 칸을 선택하거나 이 사진을 제외하세요." : pendant ? "펜던트는 최대 2개입니다. 적용할 펜던트 칸을 선택하거나 이 사진을 제외하세요." : "장비 부위를 읽지 못했습니다. 원본을 보고 적용 위치를 선택하세요."}</p>}
+            {row.destination === "new" && !limitedSlots && <div className="field"><label htmlFor={`${id}-batch-label-${index}`}>{index + 1}번 새 장비 이름</label>
               <input id={`${id}-batch-label-${index}`} maxLength={30} value={row.label} disabled={row.state === "applied"} onChange={event => edit(index, {label: event.currentTarget.value})} />
             </div>}
+            {pendant && <PendantSelect label={`${index + 1}번 펜던트 종류`} value={row.pendantChoice ?? pendantFromName(identity?.name)} disabled={row.state === "applied"} onChange={value => edit(index, { pendantChoice: value })} />}
             <p className="ocr-batch-stats">{fields.filter(([key]) => row.replacement![key] !== undefined && row.replacement![key] !== "").map(([key, label]) => `${label} ${row.replacement![key]}`).join(" · ") || "아직 확정할 수 있는 옵션이 없어요."}</p>
             {row.review && row.state !== "applied" && <OcrReviewIssues key={row.attempt} review={row.review} job={job} image={row.preview} onChange={review => setReview(index, review)} />}
             {!validReplacement(row.replacement) && <p role="alert">{index + 1}번 인식값을 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999, 방무는 0~100이며, 적용할 값이 필요합니다.</p>}
@@ -293,7 +299,8 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
         applicationLock.current = true;
         try {
           const error = onApply(job, selected.map(row => ({replacement: row.replacement!, destination: row.destination, label: row.label,
-            ...(row.category === "반지" ? { category: row.category } : {})})));
+            ...(row.category === "반지" || isPendantCategory(row.category) ? { category: row.category } : {}),
+            ...(isPendantCategory(row.category) || PENDANT_SLOTS.includes(row.destination as EquipmentSlot) ? { pendantId: row.pendantChoice ?? pendantFromName(tooltipIdentity(row.text).name) } : {})})));
           setApplyError(error);
           if (!error) setRows(current => current.map(row => selected.includes(row) ? {...row, state: "applied", included: false} : row));
         } finally { applicationLock.current = false; }

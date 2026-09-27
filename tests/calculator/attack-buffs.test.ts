@@ -9,7 +9,7 @@ it.each(["corsair", "marksman", "night_lord"] as const)("starts %s with the requ
   expect(input.character).toMatchObject({ guildBossPercent: "5", guildIgnorePercent: "10", guildAccuracyFlat: "30", guildAttackFlat: "5" });
   input.equipment.weapon!.attackFlat = "100";
   const result = calculateDamageResult(input);
-  expect(result.totalAttack).toBe(105);
+  expect(result.totalAttack).toBe(125); // weapon 100 + guild 5 + projectile 20
   expect(result.windowStats).toMatchObject({ bossDamagePercent: 5, ignoreDefensePercent: 10 });
 });
 
@@ -21,7 +21,7 @@ it.each([0, 10, 30, 35, 40, 42])("adds independent buffs once, outside attack pe
   for (const sprinkling of [false, true]) for (const rage of [false, true]) {
     input.attackBuffs = { sprinkling, rage };
     const result = calculateDamageResult(input);
-    expect(result.totalAttack).toBe(111 + 5 + attack + (sprinkling ? 20 : 0) + (rage ? 12 : 0));
+    expect(result.totalAttack).toBe(111 + 5 + 20 + attack + (sprinkling ? 30 : 0) + (rage ? 12 : 0));
     expect(result.pureMain).toBe(800);
     expect(result.pureSub).toBe(22);
     expect(calculateDamageResult(input)).toEqual(result);
@@ -38,13 +38,14 @@ it("retains stacking buffs across all weapon presets and storage", () => {
     const loaded = deserializeSetup(serializeSetup(input));
     if (!loaded.ok) throw new Error(loaded.message);
     input = loaded.value.input;
-    expect(calculateDamageResult(input).totalAttack).toBe(147);
+    expect(calculateDamageResult(input).totalAttack).toBe(177);
     expect(input.attackBuffs).toEqual({ sprinkling: true, rage: true });
   }
 });
 
 it("keeps old guild and manual buff values without adding new defaults on restore", () => {
   const legacy = createDefaultInput("corsair");
+  legacy.equipment.projectile!.attackFlat = ""; // The legacy fixture had no ammunition bonus.
   delete legacy.character.guildBossPercent;
   delete legacy.character.guildIgnorePercent;
   delete legacy.character.guildAccuracyFlat;

@@ -1,7 +1,8 @@
 import type { BuiltinEquipmentSlot } from "./domain/types";
 
 export const EQUIPMENT_SLOT_LABELS: Record<BuiltinEquipmentSlot, string> = {
-  necklace: "목걸이",
+  necklace: "펜던트 1",
+  pendant_2: "펜던트 2",
   cape: "망토",
   earrings: "귀고리",
   eye: "눈장식",

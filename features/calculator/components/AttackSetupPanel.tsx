@@ -1,6 +1,7 @@
 import type { CalculatorInput, ValidationIssue } from "../domain/types";
 import type { EquipmentChangeHandler } from "./EquipmentEditor";
-import { ATTACK_BUFF_PRESETS, STACKABLE_ATTACK_BUFFS, type StackableAttackBuffId } from "../domain/attack-buffs";
+import { ATTACK_BUFF_PRESETS, type StackableAttackBuffId } from "../domain/attack-buffs";
+import { StackableBuffControls } from "./StackableBuffControls";
 
 type Props = {
   input: CalculatorInput;
@@ -29,14 +30,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
         ))}
       </div>
       <p className="attack-setup-hint">사이다·혼테일·핑크빈·요괴대사 중 하나만 적용</p>
-      <div className="buff-presets stackable-buffs" role="group" aria-label="중첩 가능한 공격력 버프">
-        {STACKABLE_ATTACK_BUFFS.map(({id, label, attack}) => (
-          <button type="button" key={id} aria-label={`${label} +${attack}`} aria-pressed={input.attackBuffs?.[id] ?? false}
-            onClick={() => onStackableBuffChange(id, !input.attackBuffs?.[id])}>
-            <span>{label}</span><strong>+{attack}</strong>
-          </button>
-        ))}
-      </div>
+      <StackableBuffControls buffs={input.attackBuffs} onChange={onStackableBuffChange} />
       <p className="attack-setup-hint">뿌리기·분노는 다른 버프와 중첩 가능</p>
       <div className="attack-source-fields">
         {([
@@ -52,6 +46,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
               <label htmlFor={`attack-source-${slot}`}>{label}</label>
               <input id={`attack-source-${slot}`} type="number" min={0} max={9999} step={1}
                 value={input.equipment[slot]?.attackFlat ?? ""}
+                data-field-path={slot === "projectile" ? path : undefined}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `attack-source-${slot}-error` : undefined}
                 onChange={event => onEquipmentChange(slot, "attackFlat", event.currentTarget.value)} />

@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { createDefaultInput, emptyEquipment } from "@/features/calculator/domain/defaults";
 import { candidateEquipment, compareCandidate, compareCandidatePresets, parseCandidatePrice, type PurchaseCandidate } from "@/features/calculator/domain/candidates";
-const baseline=()=>{const input=createDefaultInput("corsair");Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",bossDamagePercent:"50",requiredLevel:"0",requiredSub:"0"});Object.assign(input.equipment.cape!,{mainFlat:"10",requiredLevel:"0",requiredSub:"0"});input.weaponPresets={active:"boss" as const,entries:{chaos:{weapon:{...input.equipment.weapon!,attackFlat:"200"},monsterDefense:"80"},hunting:{weapon:{...input.equipment.weapon!},monsterDefense:"0"}}};return input;};
+const baseline=()=>{const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",bossDamagePercent:"50",requiredLevel:"0",requiredSub:"0"});Object.assign(input.equipment.cape!,{mainFlat:"10",requiredLevel:"0",requiredSub:"0"});input.weaponPresets={active:"boss" as const,entries:{chaos:{weapon:{...input.equipment.weapon!,attackFlat:"200"},monsterDefense:"80"},hunting:{weapon:{...input.equipment.weapon!},monsterDefense:"0"}}};return input;};
 const candidate=(patch:Partial<PurchaseCandidate>={}):PurchaseCandidate=>({id:"test",name:"후보",job:"corsair",slot:"weapon",category:"건",equipment:{...emptyEquipment(),attackFlat:"110",requiredLevel:"0",requiredSub:"0"},price:"0.3",...patch});
 it("replaces one item, does not inherit missing boss stats, and preserves all source state",()=>{
  const input=baseline(),original=JSON.stringify(input),other=candidate();const result=compareCandidate(input,other);
@@ -15,6 +15,20 @@ it("compares each candidate independently across the three preset targets",()=>{
  expect(one.map(r=>r.status)).toEqual(["ready","ready","ready"]);expect(one[0].after!.totalAttack).toBe(200);expect(one[1].after!.totalAttack).toBe(100);
  expect(one[1].after!.formulaInputs.bossAndTotalDamage).toBe(50);expect(one[2].after!.formulaInputs.bossAndTotalDamage).toBe(0);
  const two=compareCandidate(input,candidate({equipment:{...candidate().equipment,attackFlat:"120"}}));expect(two.before!.totalAttack).toBe(100);expect(two.after!.totalAttack).toBe(120);
+});
+it("compares three glove candidates when unchanged legacy pendants have no kind metadata",()=>{
+ const input=baseline();
+ Object.assign(input.equipment.necklace!,{mainFlat:"10",requiredLevel:"0",requiredSub:"0"});
+ Object.assign(input.equipment.pendant_2!,{mainFlat:"15",requiredLevel:"0",requiredSub:"0"});
+ Object.assign(input.equipment.gloves!,{mainFlat:"5",requiredLevel:"0",requiredSub:"0"});
+ const original=JSON.stringify(input);
+ for(const [index,mainFlat] of ["10","15","20"].entries()){
+  const glove=candidate({id:`glove-${index}`,slot:"gloves",category:"장갑",equipment:{...emptyEquipment(),mainFlat,requiredLevel:"0",requiredSub:"0"}});
+  const comparisons=compareCandidatePresets(input,glove);
+  expect(comparisons.map(result=>result.status)).toEqual(["ready","ready","ready"]);
+  for(const result of comparisons){expect(result.reasons).toEqual([]);expect(result.converted!.percent).toBeGreaterThan(0);}
+ }
+ expect(JSON.stringify(input)).toBe(original);
 });
 it("rejects unfixed base stats, wrong categories, removed slots and missing current equipment",()=>{
  const input=baseline();delete input.character.pureMain;expect(compareCandidate(input,candidate()).status).toBe("blocked");

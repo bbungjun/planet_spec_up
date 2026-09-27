@@ -15,6 +15,10 @@ export function PresetStatWindow({input,result,buffSummary}:Props) {
   return <section className="preset-stat-window" aria-label="선택 프리셋 스탯창">
     <header className="preset-stat-heading"><div><h2>프리셋 스탯창</h2><span>{rule.label} · Lv. {input.character.level || "—"}</span></div><strong>{preset.label}</strong></header>
     <div className="preset-stat-sheet">
+      <div className="preset-damage-results">
+        <div className="preset-primary-result"><span>최대 스탯 공격력</span><output aria-label="스탯 공격력 결과">{number(result.statAttack)}</output></div>
+        <div><span>환산 공격력</span><output aria-label="환산 공격력 결과">{number(result.convertedAttack)}</output></div>
+      </div>
       <dl className="preset-base-stats">
         {([[rule.mainStat,result.mainStat,result.pureMain],[rule.subStat,result.subStat,result.pureSub]] as const).map(([stat,total,pure])=><div key={stat}>
           <dt>{stat}</dt><dd><strong>{number(total)}</strong><small aria-label={`${stat} 순수 및 추가 스탯`}>순수 {number(pure)} + 추가 {number(total-pure)}</small></dd>
@@ -30,10 +34,6 @@ export function PresetStatWindow({input,result,buffSummary}:Props) {
         <div><dt>보공·총뎀 적용값</dt><dd><strong>{number(result.formulaInputs.bossAndTotalDamage)}%</strong></dd></div>
         <div><dt>방어율 배율</dt><dd><strong>×{result.defenseMultiplier.toFixed(3)}</strong></dd></div>
       </dl>
-      <div className="preset-damage-results">
-        <div><span>최대 스탯 공격력</span><output aria-label="스탯 공격력 결과">{number(result.statAttack)}</output></div>
-        <div className="preset-converted-result"><span>환산 공격력</span><output aria-label="환산 공격력 결과">{number(result.convertedAttack)}</output></div>
-      </div>
       {(invalid||missingWeapon)&&<p className="preset-stat-input-notice" role="status">{invalid?"입력값 확인 필요":"무기 공격력 입력 필요"}</p>}
     </div>
   </section>;

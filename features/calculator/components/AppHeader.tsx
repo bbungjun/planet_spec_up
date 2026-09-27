@@ -1,5 +1,6 @@
 import type { InputMode } from "../domain/types";
 import { ThemeToggle } from "./ThemeToggle";
+import { GameIcon } from "./GameVisuals";
 
 type AppHeaderProps = {
   inputMode: InputMode;
@@ -24,8 +25,8 @@ export function AppHeader({
     <header className="app-header" id="page-top">
       <div className="app-topbar">
         <a className="app-brand" href="#page-top" aria-label="플래닛 계산기 처음으로">
-          <span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="8" stroke="currentColor" strokeWidth="2"/><ellipse cx="16" cy="16" rx="15" ry="5" transform="rotate(-30 16 16)" stroke="currentColor" strokeWidth="2"/></svg></span>
-          <span>플래닛<span className="brand-secondary">장비 계산기</span></span>
+          <span className="brand-symbol"><GameIcon name="leaf" /></span>
+          <span>플래닛<span className="brand-secondary">EQUIPMENT LAB</span></span>
           <span className="beta-badge">BETA</span>
         </a>
         <ThemeToggle />
@@ -33,7 +34,10 @@ export function AppHeader({
       <div className="app-toolbar">
         <nav className="app-nav" aria-label="계산기 바로가기">
           <a href="#setup-import-heading">스크린샷 등록</a>
-          <a href="#character-settings">캐릭터·버프</a>
+          <a href="#character-settings" onClick={() => {
+            const settings = document.getElementById("character-settings");
+            if (settings instanceof HTMLDetailsElement) settings.open = true;
+          }}>캐릭터·버프</a>
           <a href="#weapon-presets-heading">무기 프리셋</a>
           <a href="#equipment-workspace">장비 계산</a>
           <a href="#candidate-comparison">후보 비교</a>

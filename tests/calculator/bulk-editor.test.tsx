@@ -27,13 +27,13 @@ it("shares raw string values between card and bulk modes in both directions", as
   const user = userEvent.setup();
   render(<Page />);
 
-  const cardAttackPercent = screen.getByLabelText("목걸이 공격력%") as HTMLInputElement;
+  const cardAttackPercent = screen.getByLabelText("펜던트 1 공격력%") as HTMLInputElement;
   await user.type(cardAttackPercent, "22.5");
   expect(cardAttackPercent.value).toBe("22.5");
 
   await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
   const bulkAttackPercent = screen.getByLabelText(
-    "일괄 입력 목걸이 공격력%",
+    "일괄 입력 펜던트 1 공격력%",
   ) as HTMLInputElement;
   expect(bulkAttackPercent.value).toBe("22.5");
 
@@ -41,7 +41,7 @@ it("shares raw string values between card and bulk modes in both directions", as
   await user.type(bulkAttackPercent, "31.25");
   await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
 
-  expect((screen.getByLabelText("목걸이 공격력%") as HTMLInputElement).value)
+  expect((screen.getByLabelText("펜던트 1 공격력%") as HTMLInputElement).value)
     .toBe("31.25");
 });
 
@@ -59,9 +59,9 @@ it("renders only the current job slots and stat columns", async () => {
   expect(screen.queryByLabelText("일괄 입력 한벌옷 DEX")).not.toBeInTheDocument();
 
   await user.selectOptions(screen.getByLabelText("직업"), "night_lord");
-  expect(screen.getByLabelText("일괄 입력 목걸이 LUK")).toBeInTheDocument();
-  expect(screen.getByLabelText("일괄 입력 목걸이 DEX")).toBeInTheDocument();
-  expect(screen.queryByLabelText("일괄 입력 목걸이 STR")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("일괄 입력 펜던트 1 LUK")).toBeInTheDocument();
+  expect(screen.getByLabelText("일괄 입력 펜던트 1 DEX")).toBeInTheDocument();
+  expect(screen.queryByLabelText("일괄 입력 펜던트 1 STR")).not.toBeInTheDocument();
 });
 
 it("overwrites one saved slot, loads it, and restores it on a fresh mount", async () => {
@@ -69,7 +69,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
   vi.spyOn(Date.prototype, "toISOString").mockReturnValue(savedAt);
   const user = userEvent.setup();
   const firstRender = render(<Page />);
-  const necklace = screen.getByLabelText("목걸이 DEX");
+  const necklace = screen.getByLabelText("펜던트 1 DEX");
 
   await user.type(necklace, "11");
   await user.click(screen.getByRole("button", { name: "저장" }));
@@ -93,12 +93,12 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
   await user.clear(necklace);
   await user.type(necklace, "33");
   await user.click(screen.getByRole("button", { name: "불러오기" }));
-  expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(22);
+  expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(22);
 
   firstRender.unmount();
   render(<Page />);
   await waitFor(() => {
-    expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(22);
+    expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(22);
   });
   expect(screen.getByRole("status", { name: "저장 상태" }).querySelector("time")).toHaveAttribute("datetime", savedAt);
 });
@@ -106,7 +106,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
 it("reports corrupt storage once without changing the current input", async () => {
   const user = userEvent.setup();
   render(<Page />);
-  const necklace = screen.getByLabelText("목걸이 DEX");
+  const necklace = screen.getByLabelText("펜던트 1 DEX");
   await user.type(necklace, "44");
   window.localStorage.setItem(STORAGE_KEY, "{bad");
 
@@ -123,7 +123,7 @@ it("reports corrupt storage once without changing the current input", async () =
 it("rejects an incomplete saved setup without replacing the Page state", async () => {
   const user = userEvent.setup();
   render(<Page />);
-  await user.type(screen.getByLabelText("목걸이 DEX"), "44");
+  await user.type(screen.getByLabelText("펜던트 1 DEX"), "44");
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
     schemaVersion: 1,
     savedAt: "2026-07-27T00:00:00.000Z",
@@ -135,7 +135,7 @@ it("rejects an incomplete saved setup without replacing the Page state", async (
 
   await user.click(screen.getByRole("button", { name: "불러오기" }));
 
-  expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(44);
+  expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(44);
   expect(screen.getByRole("alert")).toHaveTextContent("불러올 수 없습니다");
 });
 
@@ -143,7 +143,7 @@ it("requires confirmation before reset and clears the persisted slot only when c
   const user = userEvent.setup();
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   render(<Page />);
-  const necklace = screen.getByLabelText("목걸이 DEX");
+  const necklace = screen.getByLabelText("펜던트 1 DEX");
   await user.type(necklace, "22");
   await user.click(screen.getByRole("button", { name: "저장" }));
 

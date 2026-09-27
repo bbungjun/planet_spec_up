@@ -8,7 +8,7 @@ import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client"
 import type { StatRecognition } from "@/features/calculator/ocr/parseStatWindow";
 const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
-function seed(){const input=createDefaultInput("corsair");Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
+function seed(){const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
 const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
 beforeEach(()=>{localStorage.clear();recognize.mockReset().mockResolvedValue("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");vi.spyOn(recognition,"createBrowserTooltipRecognizer").mockImplementation(()=>({recognize,terminate:vi.fn().mockResolvedValue(undefined)}));});
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});
@@ -234,13 +234,13 @@ it("requires a manual destination only when the photo category is unreadable",as
   expect(screen.getByRole("article",{name:"후보 1 비교 결과"})).toHaveTextContent("무기 교체 후");
 });
 
-it("resolves custom categories and asks for a choice when two necklaces match",async()=>{
-  const input=seed();input.customSlots=[{id:"extra_pendant",label:"펜던트"}];input.equipment.extra_pendant={...input.equipment.necklace!,attackFlat:"1"};
+it("asks which of the two pendant slots to replace",async()=>{
+  const input=seed();input.equipment.pendant_2={...input.equipment.necklace!,attackFlat:"1",pendantId:"horntail"};
   localStorage.setItem(STORAGE_KEY,serializeSetup(input));render(<CalculatorApp/>);
   const {user,area}=await importPhoto(`장비분류: 펜던트\n${options}`);
   const select=area.getByLabelText("교체할 장비 부위");expect(within(select).getAllByRole("option")).toHaveLength(3);
-  await user.selectOptions(select,"extra_pendant");await user.click(area.getByRole("button",{name:"후보로 비교"}));
-  expect(screen.getByRole("article",{name:"후보 1 비교 결과"})).toHaveTextContent("펜던트 교체 후");
+  await user.selectOptions(select,"pendant_2");await user.click(area.getByRole("button",{name:"후보로 비교"}));
+  expect(screen.getByRole("article",{name:"후보 1 비교 결과"})).toHaveTextContent("펜던트 2 교체 후");
 });
 
 it("clears a manual ring choice when another photo replaces the draft, while keeping the price",async()=>{

@@ -122,7 +122,7 @@ it("ignores pending recognition after changing the job", async () => {
   expect(recognize.mock.calls[0][1].signal.aborted).toBe(true);
   finish("장비분류: 건\n공격력 +200");
   await Promise.resolve();
-  const registration = screen.getByRole("region", { name: /장비 스크린샷을/ });
+  const registration = screen.getByRole("region", { name: /나의 장비 작업실/ });
   expect(within(registration).queryByRole("region", { name: "여러 장비 인식 목록" })).not.toBeInTheDocument();
   expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 });

@@ -4,6 +4,8 @@ import type {
   ValidationIssue,
 } from "../domain/types";
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
+import { isPendantSlot } from "../domain/pendants";
+import { PendantSelect } from "./PendantSelect";
 import {
   EQUIPMENT_FIELD_DEFINITIONS,
   type EquipmentChangeHandler,
@@ -57,7 +59,8 @@ export function BulkEditor({
 
               return (
                 <tr key={slot}>
-                  <th scope="row">{slotLabel}</th>
+                  <th scope="row">{slotLabel}{isPendantSlot(input, slot) && <PendantSelect label={`일괄 입력 ${slotLabel} 종류`} value={equipment.pendantId}
+                    path={`equipment.${slot}.pendantId`} onChange={value => onEquipmentChange(slot, "pendantId", value)} />}</th>
                   {fields.map(({
                     field,
                     suffix,

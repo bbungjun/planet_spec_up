@@ -2,11 +2,14 @@ import { JOB_RULES } from "./job-rules";
 import { levelAchievementBonus } from "./level";
 import { calculateTotalStat, mapleWarriorRate } from "./formulas";
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "./slots";
+import { checkPendantRequirements } from "./pendants";
 import type { NormalizedCalculatorInput } from "./normalize";
 import type { CalculatorInput, EquipmentSlot, ValidationIssue } from "./types";
 
 const nonEquipment = new Set(["projectile", "blessing_1", "blessing_2", "buff"]);
 const known = (raw: string | undefined) => raw !== undefined && raw.trim() !== "" && Number.isInteger(Number(raw)) && Number(raw) >= 0 && Number(raw) <= 9999;
+
+export const isWearBlocked = (issue: ValidationIssue) => ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT", "DUPLICATE_PENDANT", "PENDANT_LIMIT"].includes(issue.code);
 
 /** Emit only proven deficits. Unknown requirements are not failures or persisted zeroes.
  * For a deficit proof, give unknown support gear every benefit of the doubt. If even
@@ -14,7 +17,8 @@ const known = (raw: string | undefined) => raw !== undefined && raw.trim() !== "
  * Known locked items cannot lend their own flat/% stats or unlock a cycle. */
 export function checkEquipmentRequirements(input: CalculatorInput, normalized: NormalizedCalculatorInput): ValidationIssue[] {
   const character = normalized.character, sub = JOB_RULES[character.job].subStat;
-  if (!Number.isInteger(character.level) || character.level < 1) return [];
+  const pendantIssues = checkPendantRequirements(input);
+  if (!Number.isInteger(character.level) || character.level < 1) return pendantIssues;
   const slots = getVisibleEquipmentSlots(input).filter(slot => !nonEquipment.has(slot) && Object.values(input.equipment[slot] ?? {}).some(value => value?.trim()));
   const rawPureSub = character.pureSub !== null ? input.character.pureSub : input.character.manualPureSub;
   const pureSub = character.pureSub ?? character.manualPureSub;
@@ -37,12 +41,12 @@ export function checkEquipmentRequirements(input: CalculatorInput, normalized: N
     }
   }
   const availableSub = available();
-  return slots.flatMap((slot): ValidationIssue[] => {
+  return [...pendantIssues, ...slots.flatMap((slot): ValidationIssue[] => {
     const gear = normalized.equipment[slot]!, label = getEquipmentSlotLabel(input, slot);
     if (!levelPasses(slot)) return [{ severity: "warning", path: `equipment.${slot}.requiredLevel`, code: "UNMET_LEVEL_REQUIREMENT",
       message: `${label} 착용 불가: 요구 레벨 ${gear.requiredLevel}, 현재 ${character.level} (레벨 ${gear.requiredLevel - character.level} 부족).` }];
     if (!hasPureSub || !known(input.equipment[slot]?.requiredSub) || gear.requiredSub === 0 || worn.has(slot)) return [];
     return [{ severity: "warning", path: `equipment.${slot}.requiredSub`, code: "UNMET_SUBSTAT_REQUIREMENT",
       message: `${label} 착용 불가: 요구 ${sub} ${gear.requiredSub}, 장비 제외 ${sub} ${availableSub} (${gear.requiredSub - availableSub} 부족).` }];
-  });
+  })];
 }

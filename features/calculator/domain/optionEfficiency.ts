@@ -1,3 +1,4 @@
+import { isWearBlocked } from "./requirements";
 import { calculateFromSnapshot, createCalculationSnapshot, type CalculationSnapshot } from "./calculate";
 import type { CalculatorInput } from "./types";
 
@@ -28,7 +29,7 @@ export function calculateOptionEfficiency(input: CalculatorInput): OptionEfficie
     ? "입력값을 확인하면 옵션 효율을 계산합니다."
     : current.issues.some(issue => issue.code === "MISSING_WEAPON_ATTACK")
       ? "무기 공격력을 입력하면 옵션 효율을 계산합니다."
-      : current.issues.some(issue => ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code))
+      : current.issues.some(issue => isWearBlocked(issue))
         ? "착용 불가 장비의 요구 조건을 확인해주세요."
         : !Number.isFinite(current.convertedAttack) || current.convertedAttack <= 0
           ? "현재 환산공이 0이라 상승률을 계산할 수 없습니다."

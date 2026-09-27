@@ -18,8 +18,9 @@ export type ParsedTooltipStats = {
   category: string | null;
 };
 /** Absent keys are unrecognized, never an instruction to clear saved gear. */
-export type StatReplacement = Partial<EquipmentInput>;
+export type StatReplacement = Partial<Omit<EquipmentInput, "pendantId">>;
 export type OcrTarget = { job: JobId; slot: EquipmentSlot };
+export type OcrSource = { category: string | null; name: string | null; file: File | null; previewFile?: File | null; pendantId?: string };
 
 export type OcrBounds = { x: number; y: number; width: number; height: number };
 export type OcrReading = { text: string; confidence?: number; bounds?: OcrBounds; pass: number };

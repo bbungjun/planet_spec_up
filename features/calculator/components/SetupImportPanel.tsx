@@ -6,6 +6,7 @@ import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots
 import { MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch } from "../ocr/batch";
 import { clipboardImages } from "../ocr/clipboard";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
+import { GameIcon } from "./GameVisuals";
 
 type Props = {
   input: CalculatorInput;
@@ -13,9 +14,10 @@ type Props = {
   savedAt: string | null;
   onApplyAndSave: ApplyOcrBatch;
   children: ReactNode;
+  onOpenCharacter?: () => void;
 };
 
-export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: Props) {
+export function SetupImportPanel({ input, disabled, onApplyAndSave, children, onOpenCharacter }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const successMessage = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<File[] | null>(null);
@@ -58,24 +60,16 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: 
     <div className="setup-import-start">
       <div className="setup-import-intro">
 
-        <h2 id="setup-import-heading">장비 스크린샷을<br />한 번에 넣어주세요</h2>
-
-        {children}
+        <p className="workshop-eyebrow">◆ MY EQUIPMENT ROOM</p>
+        <h1 id="setup-import-heading">나의 장비 작업실 <span aria-hidden="true">✦</span></h1>
 
       </div>
       <div className={`setup-import-dropzone${dragging ? " is-dragging" : ""}`}
         onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }}
         onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
         onDrop={event => { event.preventDefault(); setDragging(false); acceptFiles(Array.from(event.dataTransfer.files)); }}>
-        <svg className="setup-import-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <rect x="8" y="15" width="37" height="39" rx="6" stroke="currentColor" strokeWidth="2" opacity=".35" />
-          <rect x="19" y="7" width="37" height="39" rx="6" fill="var(--surface)" stroke="currentColor" strokeWidth="2" />
-          <path d="m24 37 9-10 7 6 5-5 6 9M37 13v10m-5-5h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <strong>{files ? `${files.length}장 확인 중` : "사진을 끌어놓거나 Ctrl+V"}</strong>
-
-        <button type="button" className="setup-import-button" disabled={disabled || files !== null} onClick={() => fileInput.current?.click()}>
-          장비 스크린샷 한 번에 선택
+        <button type="button" className="setup-import-button" aria-label="장비 스크린샷 한 번에 선택" disabled={disabled || files !== null} onClick={() => fileInput.current?.click()}>
+          <GameIcon name="upload" /> {files ? `${files.length}장 확인 중` : "스크린샷으로 장비 등록"}<kbd>Ctrl V</kbd>
         </button>
         <input ref={fileInput} className="equipment-ocr-file-input" type="file" multiple
           accept="image/png,image/jpeg,image/webp" aria-label="프리셋 등록 스크린샷" tabIndex={-1}
@@ -83,8 +77,13 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: 
             acceptFiles(Array.from(event.currentTarget.files ?? []));
             event.currentTarget.value = "";
           }} />
-        <small>설명창 전체가 보이게 캡처<br />PNG, JPG, WebP · 이미지당 12MB · 최대 50장 / 합계 120MB</small>
+        <small>설명창 전체·마지막 옵션까지, 가려진 글자 없이 · Ctrl+V / 여러 장 끌어놓기</small>
       </div>
+    </div>
+    <div className="workshop-character-bar">
+      <span className="workshop-character-icon"><GameIcon name="hat" /></span>
+      {children}
+      {onOpenCharacter && <button type="button" className="secondary-button character-photo-shortcut" onClick={onOpenCharacter}><GameIcon name="camera" />능력창 사진</button>}
     </div>
     {error && <p role="alert" className="setup-import-error">{error}</p>}
     {files && <EquipmentOcrBatchPanel files={files} job={input.character.job}
@@ -102,6 +101,5 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: 
       <div><strong>{savedCount}개 장비와 프리셋 저장 완료</strong></div>
       <a href="#weapon-presets-heading">프리셋 확인 →</a>
     </div>}
-    <p className="setup-import-privacy">이 브라우저에만 저장 · 이미지 외부 전송 없음</p>
   </section>;
 }

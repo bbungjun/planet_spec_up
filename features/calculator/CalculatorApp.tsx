@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
-import { createDefaultInput } from "./domain/defaults";
+import { createDefaultInput, DEFAULT_PROJECTILE_ATTACK } from "./domain/defaults";
+import type { StackableAttackBuffId } from "./domain/attack-buffs";
 import { JOB_RULES } from "./domain/job-rules";
 import { addEquipmentSlot, getEquipmentSlotLabel, removeEquipmentSlot } from "./domain/slots";
 import { applyStatReplacement } from "./ocr/applyStatReplacement";
-import type { OcrTarget, StatReplacement } from "./ocr/types";
+import type { OcrTarget, OcrSource, StatReplacement } from "./ocr/types";
+import { isPendantSlot } from "./domain/pendants";
 import { applyOcrBatch, type ApplyOcrBatch } from "./ocr/batch";
 import type {
   CalculatorInput,
@@ -18,6 +20,7 @@ import type {
 } from "./domain/types";
 import { useSavedSetup } from "./hooks/useSavedSetup";
 import { AppHeader } from "./components/AppHeader";
+import { MapleBackdrop } from "./components/GameVisuals";
 import { BulkEditor } from "./components/BulkEditor";
 import {
   CharacterPanel,
@@ -43,9 +46,10 @@ import type { WeaponPresetId } from "./domain/types";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
   return Object.values(input.weaponPresets?.entries ?? {}).some(preset => Object.values(preset.weapon).some(value => value.trim() !== ""))
-    || (input.customSlots?.length ?? 0) > 0 || Object.values(input.equipment).some(
-    (equipment) => equipment !== undefined
-      && Object.values(equipment).some((value) => value.trim() !== ""),
+    || (input.customSlots?.length ?? 0) > 0 || Object.entries(input.equipment).some(
+    ([slot, equipment]) => equipment !== undefined
+      && Object.entries(equipment).some(([field, value]) => value.trim() !== ""
+        && !(slot === "projectile" && field === "attackFlat" && value === DEFAULT_PROJECTILE_ATTACK)),
   );
 }
 
@@ -68,7 +72,15 @@ export function CalculatorApp() {
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
+  const settingsPanel = useRef<HTMLDetailsElement>(null);
   const result = useMemo(() => calculateDamageResult(input), [input]);
+
+  const handleStackableBuffChange = (buff: StackableAttackBuffId, enabled: boolean) => {
+    setInput(current => ({
+      ...current,
+      attackBuffs: { sprinkling: false, rage: false, ...current.attackBuffs, [buff]: enabled },
+    }));
+  };
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -103,8 +115,11 @@ export function CalculatorApp() {
       `[data-field-path="${path}"]`,
     );
     if (target !== null) {
-      const details = target.closest("details");
-      if (details) details.open = true;
+      let ancestor = target.parentElement;
+      while (ancestor) {
+        if (ancestor instanceof HTMLDetailsElement) ancestor.open = true;
+        ancestor = ancestor.parentElement;
+      }
       target.focus();
       pendingFocusPath.current = null;
     }
@@ -138,7 +153,7 @@ export function CalculatorApp() {
     });
   };
 
-  const handleOcrApply = (target: OcrTarget, replacement: StatReplacement) => {
+  const handleOcrApply = (target: OcrTarget, replacement: StatReplacement, source?: OcrSource) => {
     setInput((current) => {
       if (current.character.job !== target.job) return current;
 
@@ -149,7 +164,7 @@ export function CalculatorApp() {
         ...current,
         equipment: {
           ...current.equipment,
-          [target.slot]: applyStatReplacement(equipment, replacement),
+          [target.slot]: { ...applyStatReplacement(equipment, replacement), ...(isPendantSlot(current, target.slot) && source?.pendantId !== undefined ? { pendantId: source.pendantId } : {}) },
         },
       };
     });
@@ -315,7 +330,7 @@ export function CalculatorApp() {
 
   const handleNavigate = (path: string) => {
     const [group, candidate] = path.split(".");
-    if (group === "equipment") {
+    if (group === "equipment" && path !== "equipment.projectile.attackFlat") {
       const slot = candidate as EquipmentSlot;
       if (input.equipment[slot] !== undefined) {
         setSelectedSlot(slot);
@@ -329,6 +344,7 @@ export function CalculatorApp() {
 
   return (
     <main className="calculator-shell" aria-busy={initialLoading}>
+      <MapleBackdrop />
       <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
         inputMode={inputMode}
@@ -341,20 +357,19 @@ export function CalculatorApp() {
         onLoad={handleLoad}
         onReset={handleReset}
       />
-      <div className="page-intro">
-        <div>
-          <h1>플래닛 데미지 계산기</h1>
-
-        </div>
-
-      </div>
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
-        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}>
+        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}
+        onOpenCharacter={() => {
+          if (settingsPanel.current) settingsPanel.current.open = true;
+          document.querySelector<HTMLElement>("#character-settings .stat-window-paste-zone")?.focus();
+        }}>
         <div className="setup-import-identity">
           <CharacterIdentityFields character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
-      <div className="section-heading" id="character-settings"><div><span>01</span><h2>캐릭터와 전투 조건</h2></div></div>
+      <details className="character-settings-drawer" id="character-settings" ref={settingsPanel}>
+      <summary><span>캐릭터·버프 설정</span><small>능력창 · 길드 스킬 · 공격력 버프</small></summary>
+      <div className="character-settings-content">
       <CharacterStatWindowPanel key={`stat:${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`} input={input} result={result} onSave={handleStatWindowSave} />
       <GuildSkillsPanel character={input.character} issues={result.issues} onChange={handleCharacterChange} />
       <div className="calculator-setup">
@@ -367,12 +382,10 @@ export function CalculatorApp() {
           />
           <AttackSetupPanel input={input} issues={result.issues}
             onEquipmentChange={handleEquipmentChange}
-            onStackableBuffChange={(buff, enabled) => setInput(current => ({
-              ...current,
-              attackBuffs: { sprinkling: false, rage: false, ...current.attackBuffs, [buff]: enabled },
-            }))} />
+            onStackableBuffChange={handleStackableBuffChange} />
       </div>
-      <div className="section-heading"><div><span>02</span><h2>내 장비와 계산 결과</h2></div></div>
+      </div>
+      </details>
       <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onCopy={handlePresetCopy} onSave={handleSave} />
       <div className="calculator-workspace" id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
@@ -412,11 +425,12 @@ export function CalculatorApp() {
             result={result}
             onNavigate={handleNavigate}
             onBuffSelect={attack => handleEquipmentChange("buff", "attackFlat", String(attack))}
+            onStackableBuffChange={handleStackableBuffChange}
           />
         </div>
       </div>
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect} onSaveStatWindow={handleStatWindowSave} />
-      <footer className="app-footer"><a href="#page-top">맨 위로 ↑</a></footer>
+      <footer className="app-footer"><span>플래닛 <span>장비 계산기</span></span><p>이 브라우저에 저장 · 이미지 외부 전송 없음</p><a className="asset-credit" href="https://maplestory.io/" target="_blank" rel="noreferrer">장비 아이콘: MapleStory.io · © NEXON</a><a href="#page-top">맨 위로 ↑</a></footer>
       </fieldset>
     </main>
   );

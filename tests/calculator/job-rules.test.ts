@@ -21,7 +21,7 @@ describe("MVP job rules", () => {
     },
   );
 
-  it("creates a complete empty input with one record per visible slot", () => {
+  it("creates equipment records with the projectile attack default", () => {
     const input = createDefaultInput("corsair");
 
     expect(input.character.level).toBe("160");
@@ -44,14 +44,14 @@ describe("MVP job rules", () => {
     expect(input.equipment.weapon).toBeDefined();
     expect(input.equipment.overall).toBeDefined();
     expect(input.equipment.top).toBeUndefined();
-    expect(Object.keys(input.equipment)).toHaveLength(19);
+    expect(Object.keys(input.equipment)).toHaveLength(20);
     expect(Object.values(input.equipment)).toEqual(
-      Array.from({ length: 19 }, () => ({
+      JOB_RULES.corsair.visibleSlots.map(slot => ({
         mainFlat: "",
         subFlat: "",
         mainPercent: "",
         subPercent: "",
-        attackFlat: "",
+        attackFlat: slot === "projectile" ? "20" : "",
         attackPercent: "",
         requiredSub: "",
       })),

@@ -10,7 +10,7 @@ export const ATTACK_BUFF_PRESETS = [
 ] as const;
 
 export const STACKABLE_ATTACK_BUFFS = [
-  { id: "sprinkling", label: "뿌리기", attack: 20 },
+  { id: "sprinkling", label: "뿌리기", attack: 30 },
   { id: "rage", label: "분노", attack: 12 },
 ] as const;
 

@@ -11,19 +11,19 @@ it("moves through visible fields and equipment slots in deterministic order", as
   const user = userEvent.setup();
   render(<Page />);
 
-  await user.click(screen.getByRole("button", { name: "목걸이 편집" }));
-  const main = screen.getByLabelText("목걸이 DEX");
+  await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
+  const main = screen.getByLabelText("펜던트 1 DEX");
   main.focus();
 
   expect(fireEvent.keyDown(main, { key: "ArrowDown" })).toBe(true);
   expect(main).toHaveFocus();
 
   await user.keyboard("{Enter}");
-  expect(screen.getByLabelText("목걸이 STR")).toHaveFocus();
+  expect(screen.getByLabelText("펜던트 1 STR")).toHaveFocus();
 
   await user.keyboard("{Control>}{Enter}{/Control}");
-  expect(screen.getByRole("heading", { name: "망토 옵션" })).toBeInTheDocument();
-  expect(screen.getByLabelText("망토 DEX")).toHaveFocus();
+  expect(screen.getByRole("heading", { name: "펜던트 2 옵션" })).toBeInTheDocument();
+  expect(screen.getByLabelText("펜던트 2 DEX")).toHaveFocus();
 });
 
 it("moves from the penultimate slot to the final slot before wrapping", async () => {
@@ -38,8 +38,8 @@ it("moves from the penultimate slot to the final slot before wrapping", async ()
   expect(screen.getByLabelText("한벌옷 DEX")).toHaveFocus();
 
   await user.keyboard("{Control>}{Enter}{/Control}");
-  expect(screen.getByRole("heading", { name: "목걸이 옵션" })).toBeInTheDocument();
-  expect(screen.getByLabelText("목걸이 DEX")).toHaveFocus();
+  expect(screen.getByRole("heading", { name: "펜던트 1 옵션" })).toBeInTheDocument();
+  expect(screen.getByLabelText("펜던트 1 DEX")).toHaveFocus();
 });
 
 it("opens the referenced card and focuses its invalid field from bulk mode", async () => {
@@ -56,7 +56,7 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   await user.clear(bulkAttack);
   await user.type(bulkAttack, "-1");
   expect((bulkAttack as HTMLInputElement).value).toBe("-1");
-  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^162$/); // invalid weapon contributes 0; guild contributes 5
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^810$/); // invalid weapon contributes 0; guild contributes 5
   await user.click(screen.getByRole("button", {
     name: "오류 무기 공격력: Enter a value from 0 to 9999.",
   }));

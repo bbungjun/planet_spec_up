@@ -3,6 +3,8 @@ import { MAX_CUSTOM_SLOTS } from "./domain/slots";
 import { captureWeaponPreset } from "./domain/weapon-presets";
 import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
 import { isStatWindowSnapshot } from "./domain/statWindow";
+import { emptyEquipment } from "./domain/defaults";
+import { isPendantCategory, isPendantId } from "./domain/pendants";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
 
@@ -78,9 +80,10 @@ function isGuildSkillLevel(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 {
 }
 
 function isEquipmentInput(value: unknown): value is EquipmentInput {
-  const optional = ["requiredLevel", "damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
+  const optional = ["pendantId", "requiredLevel", "damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
   return isRecord(value)
     && Object.keys(value).every(key => optional.includes(key) || equipmentKeys.some(known => key === known))
+    && (!Object.hasOwn(value, "pendantId") || isPendantId(value.pendantId))
     && equipmentKeys.every((key) => typeof value[key] === "string")
     && optional.every(key => !Object.hasOwn(value, key) || typeof value[key] === "string");
 }
@@ -120,7 +123,9 @@ function isCalculatorInput(value: unknown): value is CalculatorInput {
   if (!isCharacterInput(value.character) || !isRecord(equipment)) return false;
   if (value.customSlots !== undefined && !isCustomSlots(value.customSlots)) return false;
 
-  const visibleSlots = JOB_RULES[value.character.job].visibleSlots;
+  // Pre-pendant saves have only the original necklace key. Validate everything
+  // else before migration; never fill in missing records from a damaged save.
+  const visibleSlots = JOB_RULES[value.character.job].visibleSlots.filter(slot => slot !== "pendant_2" || Object.hasOwn(equipment, slot));
   const allSlots = [...visibleSlots, ...((value.customSlots ?? []) as NonNullable<CalculatorInput["customSlots"]>).map(({ id }) => id)];
   return hasOnlyKeys(equipment, allSlots)
     && allSlots.every((slot) => isEquipmentInput(equipment[slot]));
@@ -146,7 +151,16 @@ export function deserializeSetup(raw: string):
       return { ok: false, message: "invalid saved setup" };
     }
 
-    return { ok: true, value: parsed as SavedSetupV1 };
+    const saved = parsed as SavedSetupV1;
+    if (!saved.input.equipment.pendant_2) {
+      const legacy = saved.input.customSlots?.find(slot => isPendantCategory(slot.label));
+      saved.input.equipment.pendant_2 = legacy ? saved.input.equipment[legacy.id]! : emptyEquipment();
+      if (legacy) {
+        delete saved.input.equipment[legacy.id];
+        saved.input.customSlots = saved.input.customSlots!.filter(slot => slot.id !== legacy.id);
+      }
+    }
+    return { ok: true, value: saved };
   } catch {
     return { ok: false, message: "invalid saved setup" };
   }

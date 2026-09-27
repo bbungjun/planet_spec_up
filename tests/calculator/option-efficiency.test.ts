@@ -79,6 +79,7 @@ describe("option efficiency", () => {
 
   it("leaves equivalent stats unavailable when +1 main stat is lost to rounding", () => {
     const input = createDefaultInput("corsair");
+    input.equipment.projectile!.attackFlat = "0"; // Preserve the low-attack rounding boundary.
     Object.assign(input.character, { pureMain: "700", pureSub: "4", mapleWarrior: 0 });
     input.equipment.weapon!.attackFlat = "1";
     const result = calculateOptionEfficiency(input);

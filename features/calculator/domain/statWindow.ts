@@ -1,3 +1,4 @@
+import { isWearBlocked } from "./requirements";
 import { JOB_RULES } from "./job-rules";
 import { MAX_CHARACTER_LEVEL, pureStatPool } from "./level";
 import type { CalculationResult, CalculatorInput, StatWindowSnapshot } from "./types";
@@ -34,7 +35,7 @@ export type StatWindowComparison = { label: string; observed?: number; calculate
 export function compareStatWindow(input: CalculatorInput, result: CalculationResult): StatWindowComparison[] {
   const snapshot = input.statWindow;
   if (!snapshot) return [];
-  const rule = JOB_RULES[input.character.job], valid = snapshot.job === input.character.job && !result.issues.some(issue => issue.severity === "error" || ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code));
+  const rule = JOB_RULES[input.character.job], valid = snapshot.job === input.character.job && !result.issues.some(issue => issue.severity === "error" || isWearBlocked(issue));
   const values: Array<[string, number | undefined, number | undefined]> = [
     [`최종 ${rule.mainStat}`, snapshot.total[rule.mainStat], result.mainStat],
     [`최종 ${rule.subStat}`, snapshot.total[rule.subStat], result.subStat],

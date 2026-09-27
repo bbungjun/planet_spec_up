@@ -6,7 +6,7 @@ export type MapleWarrior = 0 | 20 | 30;
 export type GuildSkillLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type BuiltinEquipmentSlot =
-  | "necklace" | "cape" | "earrings" | "eye" | "face"
+  | "necklace" | "pendant_2" | "cape" | "earrings" | "eye" | "face"
   | "hat" | "shoes" | "gloves" | "overall" | "top" | "bottom"
   | "weapon" | "title" | "ring_1" | "ring_2" | "ring_3" | "ring_4"
   | "projectile" | "blessing_1" | "blessing_2" | "buff";
@@ -16,6 +16,8 @@ export type EquipmentSlot = BuiltinEquipmentSlot | CustomEquipmentSlot;
 export type CustomSlot = { id: CustomEquipmentSlot; label: string };
 
 export type EquipmentInput = {
+  /** Confirmed pendant kind; absent in legacy saves or when unread. */
+  pendantId?: string;
   mainFlat: string;
   subFlat: string;
   mainPercent: string;

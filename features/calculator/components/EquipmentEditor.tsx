@@ -1,3 +1,4 @@
+import { isWearBlocked } from "../domain/requirements";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import type {
@@ -8,8 +9,11 @@ import type {
 } from "../domain/types";
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
 import { EquipmentOcrPanel } from "./EquipmentOcrPanel";
-import type { OcrTarget, StatReplacement } from "../ocr/types";
+import type { OcrTarget, OcrSource, StatReplacement } from "../ocr/types";
 import type { ApplyOcrBatch } from "../ocr/batch";
+import { isPendantSlot } from "../domain/pendants";
+import { PendantSelect } from "./PendantSelect";
+import { EquipmentIcon } from "./GameVisuals";
 
 export type EquipmentChangeHandler = (
   slot: EquipmentSlot,
@@ -23,13 +27,13 @@ type EquipmentEditorProps = {
   issues: readonly ValidationIssue[];
   onEquipmentChange: EquipmentChangeHandler;
   onSelectSlot: (slot: EquipmentSlot) => void;
-  onOcrApply: (target: OcrTarget, replacement: StatReplacement) => void;
+  onOcrApply: (target: OcrTarget, replacement: StatReplacement, source?: OcrSource) => void;
   onOcrAddAsNew: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
   onOcrBatchApply: ApplyOcrBatch;
 };
 
 export type EquipmentFieldDefinition = {
-  field: keyof EquipmentInput;
+  field: Exclude<keyof EquipmentInput, "pendantId">;
   suffix: (mainStat: string, subStat: string) => string;
   max: number;
   step: number | "any";
@@ -95,18 +99,20 @@ export function EquipmentEditor({
 
   return (
     <section className="panel equipment-editor" aria-labelledby="editor-heading">
-      <div className="panel-heading">
+      <div className="panel-heading game-window-heading">
         <div>
 
+          <span className="game-window-label" aria-hidden="true">ITEM INFORMATION</span>
           <h2 id="editor-heading">{slotLabel} 옵션</h2>
         </div>
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
-      <p className="panel-description">
-        요구 조건은 스크린샷에서 자동으로 입력됩니다.
-      </p>
+      <div className="equipment-item-banner"><span className="equipment-item-icon"><EquipmentIcon slot={selectedSlot} job={input.character.job} label={slotLabel} /></span><div><small>{selectedSlot === "weapon" ? "선택 프리셋" : "공통 장비"}</small><h3>{slotLabel}</h3><span>{rule.label} · {rule.mainStat} / {rule.subStat}</span></div><span className="equipment-item-sparkle" aria-hidden="true">✦</span></div>
 
-      {issues.filter(issue => issue.path.startsWith(`equipment.${selectedSlot}.`) && ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code)).map(issue => <p className="equipment-wear-warning" role="status" key={issue.path+issue.code}>{issue.message}</p>)}
+      {issues.filter(issue => issue.path.startsWith(`equipment.${selectedSlot}.`) && isWearBlocked(issue)).map(issue => <p className="equipment-wear-warning" role="status" key={issue.path+issue.code}>{issue.message}</p>)}
+
+      {isPendantSlot(input, selectedSlot) && <PendantSelect label={`${slotLabel} 종류`} value={equipment.pendantId}
+        path={`equipment.${selectedSlot}.pendantId`} onChange={value => onEquipmentChange(selectedSlot, "pendantId", value)} />}
 
       <EquipmentOcrPanel
         captureDocumentPaste={false}
@@ -124,15 +130,14 @@ export function EquipmentEditor({
           if (field === "damagePercent" && !(equipment.damagePercent ?? "").trim()) return null;
           const path = `equipment.${selectedSlot}.${field}`;
           const id = path.replaceAll(".", "-");
-          const label = `${slotLabel} ${suffix(rule.mainStat, rule.subStat)}`;
           const error = issues.find(
             (issue) => issue.path === path && issue.severity === "error",
           );
           const errorId = `${id}-error`;
 
           return (
-            <div className="field" key={field}>
-              <label htmlFor={id}>{label}</label>
+            <div className={`field${field.endsWith("Percent") ? " is-percent-option" : ""}${field.startsWith("required") ? " is-requirement-option" : ""}`} key={field}>
+              <label htmlFor={id}><span className="candidate-sr-only">{slotLabel} </span>{suffix(rule.mainStat, rule.subStat)}</label>
               <input
                 id={id}
                 type="number"

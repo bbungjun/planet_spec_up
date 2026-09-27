@@ -1,3 +1,4 @@
+import { isWearBlocked } from "../domain/requirements";
 import { JOB_RULES, type JobRule } from "../domain/job-rules";
 import { useMemo } from "react";
 import { calculateDamageResult } from "../domain/calculate";
@@ -5,7 +6,7 @@ import { normalizeInput } from "../domain/normalize";
 import { sumEquipment } from "../domain/equipment";
 import { calculateTotalAttack } from "../domain/formulas";
 import { emptyEquipment } from "../domain/defaults";
-import { ATTACK_BUFF_PRESETS, STACKABLE_ATTACK_BUFFS } from "../domain/attack-buffs";
+import { ATTACK_BUFF_PRESETS, STACKABLE_ATTACK_BUFFS, type StackableAttackBuffId } from "../domain/attack-buffs";
 import type {
   CalculationResult,
   CalculatorInput,
@@ -18,6 +19,7 @@ import { getEquipmentSlotLabel } from "../domain/slots";
 import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
 import { PresetStatWindow } from "./PresetStatWindow";
 import { OptionEfficiencyPanel } from "./OptionEfficiencyPanel";
+import { StackableBuffControls } from "./StackableBuffControls";
 import { levelAchievementBonus } from "../domain/level";
 
 type ResultsPanelProps = {
@@ -26,6 +28,7 @@ type ResultsPanelProps = {
   result: CalculationResult;
   onNavigate: (path: string) => void;
   onBuffSelect: (attack: number) => void;
+  onStackableBuffChange: (buff: StackableAttackBuffId, enabled: boolean) => void;
 };
 
 const integerFormat = new Intl.NumberFormat("ko-KR", {
@@ -61,6 +64,7 @@ function issueContext(path: string, rule: JobRule, input: CalculatorInput): stri
       (definition) => definition.field === field,
     );
     const slotLabel = getEquipmentSlotLabel(input, slot);
+    if (field === "pendantId") return `${slotLabel} 종류`;
     if (slotLabel !== undefined && fieldDefinition !== undefined) {
       return `${slotLabel} ${
         fieldDefinition.suffix(rule.mainStat, rule.subStat)
@@ -81,6 +85,7 @@ export function ResultsPanel({
   result,
   onNavigate,
   onBuffSelect,
+  onStackableBuffChange,
 }: ResultsPanelProps) {
   const rule = JOB_RULES[job];
   const extraStat = job === "night_lord" ? " + STR" : "";
@@ -118,10 +123,11 @@ export function ResultsPanel({
   }, [input]);
 
   return (
-    <aside className="panel results-panel" aria-label="계산 결과">
+    <aside className="panel results-panel" aria-label="계산 결과" tabIndex={0}>
+      <div className="game-window-heading result-window-heading"><span className="game-window-label" aria-hidden="true">CHARACTER STAT</span><span>능력치</span><i aria-hidden="true">▦</i></div>
       <PresetStatWindow input={input} result={result} buffSummary={buffSummary} />
 
-      {result.issues.some(issue => ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code)) && <p className="equipment-wear-warning" role="status">착용 불가 장비 포함 · 가정값</p>}
+      {result.issues.some(issue => isWearBlocked(issue)) && <p className="equipment-wear-warning" role="status">착용 불가 장비 포함 · 가정값</p>}
 
       <OptionEfficiencyPanel input={input} />
 
@@ -138,6 +144,11 @@ export function ResultsPanel({
           </button>
         ))}
 
+      </section>
+
+      <section className="additional-buffs" aria-label="추가 버프">
+        <h3>추가 버프 <small>중첩 가능</small></h3>
+        <StackableBuffControls buffs={input.attackBuffs} label="추가 버프 선택" onChange={onStackableBuffChange} />
       </section>
 
       <details className="attack-breakdown">
@@ -171,7 +182,7 @@ export function ResultsPanel({
                     <span>{severityLabel}</span>
                     <div>
                       <strong>{context}</strong>
-                      {!["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code) && <div>{issue.message}</div>}
+                      {!isWearBlocked(issue) && <div>{issue.message}</div>}
                     </div>
                   </button>
                 </li>

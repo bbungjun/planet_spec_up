@@ -22,7 +22,9 @@ import {
 } from "../ocr/recognizeTooltip.client";
 import { mapRecognizedStats } from "../ocr/mapRecognizedStats";
 import { parseMapleTooltip } from "../ocr/parseMapleTooltip";
-import type { OcrBounds, OcrReview, OcrTarget, StatReplacement } from "../ocr/types";
+import type { OcrBounds, OcrReview, OcrTarget, OcrSource, StatReplacement } from "../ocr/types";
+import { isPendantCategory, pendantFromName, PENDANT_SLOTS } from "../domain/pendants";
+import { PendantSelect } from "./PendantSelect";
 import { editedTextReview, mapReviewedStats, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
@@ -33,7 +35,7 @@ import { clipboardImages } from "../ocr/clipboard";
 export type EquipmentOcrPanelProps = {
   target: OcrTarget;
   slotLabel?: string;
-  onApply: (target: OcrTarget, replacement: StatReplacement, source?: { category: string|null; name: string|null; file: File|null; previewFile?: File|null }) => void;
+  onApply: (target: OcrTarget, replacement: StatReplacement, source?: OcrSource) => void;
   purpose?: "equipment" | "candidate";
   onAddAsNew?: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
   createRecognizer?: () => TooltipRecognizer;
@@ -93,6 +95,7 @@ export function EquipmentOcrPanel({
   const panelId = useId();
   const [candidateConfirmed,setCandidateConfirmed] = useState(false);
   const [candidateSlot, setCandidateSlot] = useState("");
+  const [pendantChoice, setPendantChoice] = useState<string | null>(null);
   const [recognizer] = useState<TooltipRecognizer>(() => (
     createRecognizer === undefined
       ? createBrowserTooltipRecognizer()
@@ -149,6 +152,7 @@ export function EquipmentOcrPanel({
     setOverrides({});
     setCandidateConfirmed(false);
     setCandidateSlot("");
+    setPendantChoice(null);
     setSelectingRegion(false);
     if (clearProposal) {
       setAllowDuplicate(false);
@@ -357,6 +361,9 @@ export function EquipmentOcrPanel({
   const candidateDestination = candidateMatches.length === 1 ? candidateMatches[0]
     : candidateChoices.find(choice => choice.slot === candidateSlot);
   const needsCandidateSlot = purpose === "candidate" && candidateSlots !== undefined && !candidateDestination;
+  const reviewingPendant = isPendantCategory(parsed.category) || (purpose === "candidate" ? !!candidateDestination && PENDANT_SLOTS.includes(candidateDestination.slot) : PENDANT_SLOTS.includes(target.slot));
+  const pendantId = pendantChoice ?? pendantFromName(tooltipIdentity(recognizedText).name);
+  const needsPendantTarget = purpose === "equipment" && isPendantCategory(parsed.category) && !PENDANT_SLOTS.includes(target.slot);
   const duplicate = existingDuplicate(parsed, target.job, slotChoices);
   const duplicateBlocked = duplicate !== null && !allowDuplicate;
   const needsReview = review ? reviewBlocked(review, target.job) : false;
@@ -483,6 +490,8 @@ export function EquipmentOcrPanel({
             </select></label>}
           </div>}
           <p>{purpose === "candidate" ? "미입력 옵션은 0으로 비교합니다. 요구 레벨·스탯은 확인해주세요." : "미인식 값은 유지됩니다. 삭제하려면 0을 입력하세요."}</p>
+          {reviewingPendant && <PendantSelect label="OCR 펜던트 종류" value={pendantId} onChange={value => { setPendantChoice(value); setCandidateConfirmed(false); }} />}
+          {needsPendantTarget && <p role="alert">펜던트 1·2 카드를 선택한 뒤 사진을 넣어주세요.</p>}
           {review && reviewImage && <OcrReviewIssues review={review} job={target.job} image={reviewImage} onChange={updateReview} />}
           {duplicate && <div className="ocr-duplicate-message" role="alert">
             <p>{duplicate} 같은 옵션의 실제 별도 장비인지 확인하세요.</p>
@@ -521,6 +530,7 @@ export function EquipmentOcrPanel({
             <textarea id={`${panelId}-text`} rows={10} value={recognizedText} onChange={event => {
               setCandidateConfirmed(false);
               setCandidateSlot("");
+              setPendantChoice(null);
               const text = event.currentTarget.value;
               setRecognizedText(text);
               if (review) {
@@ -536,7 +546,7 @@ export function EquipmentOcrPanel({
           {!proposalValid && <p role="alert">검토값의 범위를 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999입니다.</p>}
           {purpose === "candidate" && <label className="check-field"><input type="checkbox" checked={candidateConfirmed} onChange={event=>setCandidateConfirmed(event.target.checked)} />원본의 모든 옵션을 확인했습니다</label>}
           <div className="equipment-ocr-actions">
-            {parsed.category && onAddAsNew && (
+            {parsed.category && !isPendantCategory(parsed.category) && onAddAsNew && (
               <button
                 type="button"
                 className="equipment-ocr-apply"
@@ -551,9 +561,13 @@ export function EquipmentOcrPanel({
             <button
               type="button"
               className="equipment-ocr-apply"
-              disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked || needsReview || needsCandidateSlot || (purpose === "candidate" && !candidateConfirmed)}
+              disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked || needsReview || needsCandidateSlot || needsPendantTarget || (purpose === "candidate" && !candidateConfirmed)}
               onClick={() => {
-                if (capturedTarget !== null) { if(purpose === "candidate") onApply({...capturedTarget, slot:candidateDestination?.slot ?? capturedTarget.slot},proposal,{category:parsed.category,name:tooltipIdentity(recognizedText).name,file:lastFile,previewFile:reviewImage}); else onApply(capturedTarget, proposal); }
+                if (capturedTarget === null) return;
+                if (purpose === "candidate" || (reviewingPendant && pendantId !== undefined)) {
+                  onApply(purpose === "candidate" ? {...capturedTarget, slot:candidateDestination?.slot ?? capturedTarget.slot} : capturedTarget, proposal,
+                    {category:parsed.category,name:tooltipIdentity(recognizedText).name,file:lastFile,previewFile:reviewImage,...(reviewingPendant && pendantId !== undefined ? {pendantId} : {})});
+                } else onApply(capturedTarget, proposal);
               }}
             >
               {purpose === "candidate" ? "후보로 비교" : "인식값 적용"}

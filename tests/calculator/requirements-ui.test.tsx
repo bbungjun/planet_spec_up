@@ -20,8 +20,8 @@ it("shows level/STR deficits on the slot and editor, preserves gear and marks re
   expect(screen.getByRole("complementary",{name:"계산 결과"})).toHaveTextContent("가정값");
   expect(screen.getByLabelText("무기 STR",{exact:true})).toHaveValue(100);
   expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
-  await user.click(screen.getByRole("button",{name:"목걸이 편집"}));
-  for(const [label,value] of [["목걸이 요구 레벨","0"],["목걸이 요구 STR","0"],["목걸이 STR","28"]])fireEvent.change(screen.getByLabelText(label,{exact:true}),{target:{value}});
+  await user.click(screen.getByRole("button",{name:"펜던트 1 편집"}));
+  for(const [label,value] of [["펜던트 1 요구 레벨","0"],["펜던트 1 요구 STR","0"],["펜던트 1 STR","28"]])fireEvent.change(screen.getByLabelText(label,{exact:true}),{target:{value}});
   expect(screen.getByRole("button",{name:"무기 편집"})).not.toHaveTextContent("착용 불가");
 });
 

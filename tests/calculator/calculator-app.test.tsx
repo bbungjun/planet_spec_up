@@ -178,14 +178,14 @@ describe("calculator app", () => {
     await user.type(screen.getByLabelText("레벨"), "180");
     await user.clear(screen.getByLabelText("타격당 평균 데미지 비율"));
     await user.type(screen.getByLabelText("타격당 평균 데미지 비율"), "420");
-    await user.clear(screen.getByLabelText("목걸이 DEX"));
-    await user.type(screen.getByLabelText("목걸이 DEX"), "77");
-    await user.type(screen.getByLabelText("목걸이 STR"), "12");
-    await user.type(screen.getByLabelText("목걸이 DEX%"), "13");
-    await user.type(screen.getByLabelText("목걸이 STR%"), "14");
-    await user.type(screen.getByLabelText("목걸이 공격력"), "15");
-    await user.type(screen.getByLabelText("목걸이 공격력%"), "16");
-    await user.type(screen.getByLabelText("목걸이 요구 STR"), "17");
+    await user.clear(screen.getByLabelText("펜던트 1 DEX"));
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "77");
+    await user.type(screen.getByLabelText("펜던트 1 STR"), "12");
+    await user.type(screen.getByLabelText("펜던트 1 DEX%"), "13");
+    await user.type(screen.getByLabelText("펜던트 1 STR%"), "14");
+    await user.type(screen.getByLabelText("펜던트 1 공격력"), "15");
+    await user.type(screen.getByLabelText("펜던트 1 공격력%"), "16");
+    await user.type(screen.getByLabelText("펜던트 1 요구 STR"), "17");
     await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
 
     await user.clear(screen.getByLabelText("한벌옷 DEX"));
@@ -234,15 +234,15 @@ describe("calculator app", () => {
 
     await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
 
-    await user.click(screen.getByRole("button", { name: "목걸이 편집" }));
-    expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(77);
-    expect(screen.getByLabelText("목걸이 STR")).toHaveValue(12);
-    expect(screen.getByLabelText("목걸이 DEX%")).toHaveValue(13);
-    expect(screen.getByLabelText("목걸이 STR%")).toHaveValue(14);
-    expect(screen.getByLabelText("목걸이 공격력")).toHaveValue(15);
-    expect(screen.getByLabelText("목걸이 공격력%")).toHaveValue(16);
-    expect(screen.getByLabelText("목걸이 요구 STR")).toHaveValue(17);
-    expect(screen.getByRole("button", { name: "목걸이 편집" })).toHaveClass("is-complete");
+    await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
+    expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(77);
+    expect(screen.getByLabelText("펜던트 1 STR")).toHaveValue(12);
+    expect(screen.getByLabelText("펜던트 1 DEX%")).toHaveValue(13);
+    expect(screen.getByLabelText("펜던트 1 STR%")).toHaveValue(14);
+    expect(screen.getByLabelText("펜던트 1 공격력")).toHaveValue(15);
+    expect(screen.getByLabelText("펜던트 1 공격력%")).toHaveValue(16);
+    expect(screen.getByLabelText("펜던트 1 요구 STR")).toHaveValue(17);
+    expect(screen.getByRole("button", { name: "펜던트 1 편집" })).toHaveClass("is-complete");
   }, 15000); // Full card → OCR → bulk flow performs dozens of user interactions.
 
   it("ignores a captured OCR target from a different job", async () => {
@@ -252,11 +252,11 @@ describe("calculator app", () => {
 
     await user.clear(screen.getByLabelText("레벨"));
     await user.type(screen.getByLabelText("레벨"), "180");
-    await user.type(screen.getByLabelText("목걸이 DEX"), "44");
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "44");
     const before = captureCalculatorInput();
     const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
 
-    await user.click(within(screen.getByRole("region", { name: "목걸이 옵션" })).getByRole("button", { name: "Test stale OCR job" }));
+    await user.click(within(screen.getByRole("region", { name: "펜던트 1 옵션" })).getByRole("button", { name: "Test stale OCR job" }));
 
     expect(captureCalculatorInput()).toEqual(before);
     expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
@@ -269,11 +269,11 @@ describe("calculator app", () => {
 
     await user.clear(screen.getByLabelText("레벨"));
     await user.type(screen.getByLabelText("레벨"), "175");
-    await user.type(screen.getByLabelText("목걸이 DEX"), "55");
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "55");
     const before = captureCalculatorInput();
     const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
 
-    await user.click(within(screen.getByRole("region", { name: "목걸이 옵션" })).getByRole("button", { name: "Test absent OCR slot" }));
+    await user.click(within(screen.getByRole("region", { name: "펜던트 1 옵션" })).getByRole("button", { name: "Test absent OCR slot" }));
 
     expect(captureCalculatorInput()).toEqual(before);
     expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
@@ -324,7 +324,7 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    const field = screen.getByLabelText("목걸이 DEX");
+    const field = screen.getByLabelText("펜던트 1 DEX");
     await user.type(field, "-1");
 
     const errorId = field.getAttribute("aria-describedby");
@@ -342,7 +342,7 @@ describe("calculator app", () => {
 
     const surfaces = [
       screen.getByRole("complementary", { name: "계산 결과" }),
-      screen.getByRole("button", { name: "목걸이 편집" }),
+      screen.getByRole("button", { name: "펜던트 1 편집" }),
       screen.getByRole("button", { name: "초기화" }),
     ];
     surfaces.forEach((surface) => {
@@ -360,27 +360,27 @@ describe("calculator app", () => {
     render(<Page />);
 
     expect(
-      screen.getByRole("heading", { name: "플래닛 데미지 계산기" }),
+      screen.getByRole("heading", { name: "나의 장비 작업실" }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
 
     const statAttack = screen.getByLabelText("스탯 공격력 결과");
     const convertedAttack = screen.getByLabelText("환산 공격력 결과");
-    expect(statAttack).toHaveTextContent(/^162$/); // default guild attack 5
-    expect(convertedAttack).toHaveTextContent(/^170$/);
+    expect(statAttack).toHaveTextContent(/^810$/); // default guild 5 + projectile 20
+    expect(convertedAttack).toHaveTextContent(/^850$/);
 
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
-    expect(statAttack).toHaveTextContent(/^3,402$/);
-    expect(convertedAttack).toHaveTextContent(/^3,572$/);
+    expect(statAttack).toHaveTextContent(/^4,050$/);
+    expect(convertedAttack).toHaveTextContent(/^4,252$/);
   });
 
   it("shows a level error and zero attacks when level zero is invalid", async () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    await user.type(screen.getByLabelText("목걸이 DEX"), "100");
-    await user.type(screen.getByLabelText("목걸이 STR"), "50");
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "100");
+    await user.type(screen.getByLabelText("펜던트 1 STR"), "50");
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
@@ -457,7 +457,8 @@ describe("calculator app", () => {
     render(<Page />);
 
     [
-      "목걸이",
+      "펜던트 1",
+      "펜던트 2",
       "망토",
       "귀고리",
       "눈장식",
@@ -471,7 +472,6 @@ describe("calculator app", () => {
       "반지 2",
       "반지 3",
       "반지 4",
-      "표창·불릿",
       "정령의 축복",
       "여제의 축복",
       "버프",
@@ -482,6 +482,7 @@ describe("calculator app", () => {
       ).toBeInTheDocument();
     });
     expect(screen.queryByRole("button", { name: "상의 편집" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "표창·불릿 편집" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "하의 편집" })).not.toBeInTheDocument();
   });
 
@@ -511,30 +512,30 @@ describe("calculator app", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<Page />);
 
-    await user.type(screen.getByLabelText("목걸이 DEX"), "22");
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "22");
     await user.click(screen.getByRole("button", { name: "초기화" }));
 
     expect(confirm).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(22);
+    expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(22);
 
     confirm.mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: "초기화" }));
 
-    expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(null);
+    expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(null);
   });
 
   it("shows text and styling when an equipment slot is complete", async () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    await user.type(screen.getByLabelText("목걸이 DEX"), "22");
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "22");
 
-    const necklace = screen.getByRole("button", { name: "목걸이 편집" });
+    const necklace = screen.getByRole("button", { name: "펜던트 1 편집" });
     expect(necklace).toHaveClass("is-complete");
     expect(within(necklace).queryByText("착용 조건 확인 필요")).not.toBeInTheDocument();
     expect(within(necklace).getByText("✓ 입력 완료")).toBeVisible();
-    await user.type(screen.getByLabelText("목걸이 요구 레벨"), "0");
-    await user.type(screen.getByLabelText("목걸이 요구 STR"), "0");
+    await user.type(screen.getByLabelText("펜던트 1 요구 레벨"), "0");
+    await user.type(screen.getByLabelText("펜던트 1 요구 STR"), "0");
     expect(within(necklace).getByText("✓ 입력 완료")).toBeVisible();
   });
 
@@ -591,7 +592,7 @@ describe("calculator app", () => {
 
     await user.click(screen.getByRole("button", { name: "모자 편집" }));
     await user.type(screen.getByLabelText("모자 DEX"), "-1");
-    await user.click(screen.getByRole("button", { name: "목걸이 편집" }));
+    await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
     await user.click(
       screen.getByRole("button", { name: /Enter a value from 0 to 9999/ }),
     );

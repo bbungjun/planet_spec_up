@@ -32,20 +32,20 @@ it("counts independent unknown and repeated gear slots and persists them without
   const secondShoulder = addEquipmentSlot(input, "어깨장식")!;
   input = secondShoulder.input;
   input.equipment[secondShoulder.slot]!.attackFlat = "7";
-  const secondNecklace = addEquipmentSlot(input, "목걸이")!;
+  const secondNecklace = addEquipmentSlot(input, "벨트")!;
   input = secondNecklace.input;
   input.equipment[secondNecklace.slot]!.mainFlat = "21";
 
   expect(getEquipmentSlotLabel(input, shoulder.slot)).toBe("어깨장식");
   expect(getEquipmentSlotLabel(input, secondShoulder.slot)).toBe("어깨장식 2");
-  expect(getEquipmentSlotLabel(input, secondNecklace.slot)).toBe("목걸이 2");
+  expect(getEquipmentSlotLabel(input, secondNecklace.slot)).toBe("벨트");
   expect(getVisibleEquipmentSlots(input)).toContain(secondNecklace.slot);
-  expect(calculateDamageResult(input)).toMatchObject({totalAttack: 17}); // gear 12 + default guild 5
+  expect(calculateDamageResult(input)).toMatchObject({totalAttack: 37}); // gear 12 + guild 5 + projectile 20
   expect(deserializeSetup(serializeSetup(input))).toMatchObject({
     ok: true,
     value: {input: {equipment: {[shoulder.slot]: {attackFlat: "5"}, [secondNecklace.slot]: {mainFlat: "21"}}}},
   });
-  expect(calculateDamageResult(removeEquipmentSlot(input, shoulder.slot)).totalAttack).toBe(12);
+  expect(calculateDamageResult(removeEquipmentSlot(input, shoulder.slot)).totalAttack).toBe(32);
 });
 
 it("adds a named gear slot to the card, bulk editor and the saved setup", async () => {
@@ -81,8 +81,8 @@ it("creates an extra slot from a reviewed OCR category without overwriting the s
   expect(screen.getByRole("heading", {name: "어깨장식 옵션"})).toBeInTheDocument();
   expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("어깨장식 STR", {exact: true})).toHaveValue(2);
-  await user.click(screen.getByRole("button", {name: "목걸이 편집"}));
-  expect(screen.getByLabelText("목걸이 공격력", {exact: true})).toHaveValue(null);
+  await user.click(screen.getByRole("button", {name: "펜던트 1 편집"}));
+  expect(screen.getByLabelText("펜던트 1 공격력", {exact: true})).toHaveValue(null);
 });
 
 it("imports a multi-image batch into a new slot and an empty existing slot in one update", async () => {

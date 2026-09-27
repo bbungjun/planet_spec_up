@@ -261,6 +261,10 @@ time,
 .buff-comparison output { font-weight: 800; }
 .buff-comparison .is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .buff-comparison p { color: var(--muted); font-size: 0.68rem; margin: 8px 0; }
+.additional-buffs { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+.additional-buffs h3 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; font-size: 0.85rem; }
+.additional-buffs h3 small { color: var(--muted); font-size: 0.7rem; font-weight: 400; }
+.additional-buffs .stackable-buffs { margin-top: 10px; }
 .attack-breakdown { border-top: 1px solid var(--line); margin-top: 16px; }
 .attack-breakdown summary { cursor: pointer; padding: 14px 0; font-size: 0.82rem; min-height: 44px; }
 .attack-breakdown summary strong { float: right; color: var(--accent); }
@@ -1293,7 +1297,7 @@ button:disabled { cursor: not-allowed; }
 .preset-damage-results > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
 .preset-damage-results span { color: var(--muted); font-size: .76rem; }
 .preset-damage-results output { color: var(--accent); font-weight: 800; font-size: 1.45rem; letter-spacing: -.03em; }
-.preset-damage-results .preset-converted-result output { font-size: 1.8rem; }
+.preset-damage-results .preset-primary-result output { font-size: 1.8rem; }
 .preset-stat-input-notice { color: var(--muted); font-size: .7rem; margin: 12px 0 0; }
 .preset-formula-details { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; font-size: .8rem; }
 .preset-formula-details summary { cursor: pointer; min-height: 44px; }
@@ -1401,3 +1405,5 @@ button:disabled { cursor: not-allowed; }
 .candidate-registration-notice { margin: 4px 0 14px; }
 .candidate-registration-notice p { margin: 0 0 8px; color: var(--muted); font-size: .72rem; }
 .candidate-dialog .stat-window-panel.is-embedded { margin: 0; padding: 0; border: 0; background: transparent; }
+
+.pendant-item-name { display: block; font-size: 11px; font-weight: 400; color: var(--muted); overflow-wrap: anywhere; }

@@ -37,7 +37,7 @@ it("applies multiple new and existing gear records atomically without losing ear
   const result = applyOcrBatch(input, "corsair", entries);
   expect(result.error).toBeNull();
   expect(result.input!.customSlots).toHaveLength(2);
-  expect(calculateDamageResult(result.input!).totalAttack).toBe(110); // gear 105 + default guild 5
+  expect(calculateDamageResult(result.input!).totalAttack).toBe(130); // gear 105 + guild 5 + projectile 20
   expect(input.customSlots).toBeUndefined();
   const invalid = applyOcrBatch(input, "corsair", [entries[1], entries[0], entries[0]]);
   expect(invalid.input).toBeNull();

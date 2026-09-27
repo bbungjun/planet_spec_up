@@ -1,4 +1,5 @@
 import { matchingSlots, RING_SLOTS } from "../domain/slots";
+import { checkPendantRequirements, isPendantCategory, isPendantId, isPendantSlot, PENDANT_SLOTS } from "../domain/pendants";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId } from "../domain/types";
 import { activeWeaponPreset, captureWeaponPreset, getWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 import { emptyEquipment } from "../domain/defaults";
@@ -10,7 +11,7 @@ import type { ParsedTooltipStats, StatReplacement } from "./types";
 
 export type OcrSlotChoice = { slot: EquipmentSlot; label: string; equipment: EquipmentInput };
 export type OcrDestination = EquipmentSlot | `preset:${WeaponPresetId}` | "new";
-export type OcrBatchEntry = { replacement: StatReplacement; destination: OcrDestination; label: string; category?: string | null };
+export type OcrBatchEntry = { replacement: StatReplacement; destination: OcrDestination; label: string; category?: string | null; pendantId?: string };
 export type ApplyOcrBatch = (job: JobId, entries: OcrBatchEntry[]) => string | null;
 export const MAX_BATCH_FILES = 50;
 export const MAX_BATCH_BYTES = 120 * 1024 * 1024;
@@ -23,7 +24,7 @@ export { matchingSlots } from "../domain/slots";
 
 export function existingDuplicate(parsed: ParsedTooltipStats, job: JobId, choices: OcrSlotChoice[]): string | null {
   // Up to four distinct rings may have identical names and options.
-  if (parsed.category === "반지") return null;
+  if (parsed.category === "반지" || isPendantCategory(parsed.category)) return null;
   const mapped = mapRecognizedStats(parsed, job);
   if (!Object.values(mapped).some(value => value && Number(value) !== 0)) return null;
   const match = matchingSlots(parsed.category, choices).find(({equipment}) => occupied(equipment)
@@ -72,6 +73,9 @@ export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBa
   let next = input;
   for (const entry of entries) {
     if (!validReplacement(entry.replacement)) return {input: null, error: "인식값의 숫자 범위를 확인하세요."};
+    if (entry.pendantId !== undefined && !isPendantId(entry.pendantId)) return {input: null, error: "펜던트 종류를 다시 확인해주세요."};
+    if ((isPendantCategory(entry.category) || isPendantCategory(entry.label) || entry.pendantId)
+      && !PENDANT_SLOTS.includes(entry.destination as EquipmentSlot)) return {input: null, error: "펜던트는 최대 2개입니다. 펜던트 1·2 중 적용 위치를 선택하세요."};
     if ((entry.category === "반지" || /^반지(?:\s+\d+)?$/.test(entry.label.trim())) && !RING_SLOTS.includes(entry.destination as EquipmentSlot)) {
       return { input: null, error: "반지는 최대 4개까지 착용할 수 있습니다. 반지 1~4 중 적용 위치를 선택하세요." };
     }
@@ -103,7 +107,10 @@ export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBa
       if (seen.has(slot)) return {input: null, error: "여러 이미지의 적용 위치가 같습니다. 각각 다른 부위나 새 장비를 선택하세요."};
       seen.add(slot);
     }
-    next = {...next, equipment: {...next.equipment, [slot]: applyStatReplacement(next.equipment[slot]!, entry.replacement)}};
+    next = {...next, equipment: {...next.equipment, [slot]: { ...applyStatReplacement(next.equipment[slot]!, entry.replacement),
+      ...(isPendantSlot(next, slot) && entry.pendantId !== undefined ? { pendantId: entry.pendantId } : {}) }}};
   }
+  const pendantIssue = checkPendantRequirements(next)[0];
+  if (pendantIssue) return {input: null, error: pendantIssue.message};
   return {input: next, error: null};
 }

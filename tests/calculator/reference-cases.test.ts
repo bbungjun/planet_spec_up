@@ -5,9 +5,10 @@ import {
 } from "@/features/calculator/domain/calculate";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
 
-// Frozen formula cases explicitly exclude guild bonuses, independent of UI defaults.
+// Frozen formula cases explicitly exclude guild/projectile bonuses, independent of UI defaults.
 function createReferenceInput(job: Parameters<typeof createDefaultInput>[0]) {
   const input = createDefaultInput(job);
+  input.equipment.projectile!.attackFlat = "0";
   Object.assign(input.character, { guildBossPercent: "0", guildIgnorePercent: "0", guildAttackFlat: "0", guildAccuracyFlat: "0" });
   return input;
 }
