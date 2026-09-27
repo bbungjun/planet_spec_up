@@ -42,6 +42,7 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
   { field: "subPercent", suffix: (_main, sub) => `${sub}%`, max: 999, step: "any" },
   { field: "attackFlat", suffix: () => "공격력", max: 9999, step: 1 },
   { field: "attackPercent", suffix: () => "공격력%", max: 999, step: "any" },
+  { field: "requiredLevel", suffix: () => "요구 레벨", max: 9999, step: 1 },
   { field: "requiredSub", suffix: (_main, sub) => `요구 ${sub}`, max: 9999, step: 1 },
   { field: "totalDamagePercent", suffix: () => "총데미지%", max: 999, step: "any" },
   { field: "bossDamagePercent", suffix: () => "보스공격력%", max: 999, step: "any" },
@@ -96,16 +97,19 @@ export function EquipmentEditor({
     <section className="panel equipment-editor" aria-labelledby="editor-heading">
       <div className="panel-heading">
         <div>
-          <p className="panel-kicker">카드 입력</p>
+
           <h2 id="editor-heading">{slotLabel} 옵션</h2>
         </div>
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
       <p className="panel-description">
-        빈칸은 0으로 계산되며 입력값은 다른 장비로 이동해도 유지됩니다.
+        요구 조건은 스크린샷에서 자동으로 입력됩니다.
       </p>
 
+      {issues.filter(issue => issue.path.startsWith(`equipment.${selectedSlot}.`) && ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code)).map(issue => <p className="equipment-wear-warning" role="status" key={issue.path+issue.code}>{issue.message}</p>)}
+
       <EquipmentOcrPanel
+        captureDocumentPaste={false}
         key={input.weaponPresets?.active ?? "boss"}
         target={{ job: input.character.job, slot: selectedSlot }}
         slotLabel={slotLabel}

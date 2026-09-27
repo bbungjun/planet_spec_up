@@ -11,6 +11,7 @@ export const calculateTotalStat = (
 ) => Math.floor((pure + equipment) * (1 + percent / 100))
   + Math.floor(pure * mapleWarrior);
 
+// Attack% scales equipment attack only; ammo, blessings, guild and buffs stay flat.
 export const calculateTotalAttack = (
   percentEligible: number,
   flat: number,

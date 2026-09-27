@@ -12,26 +12,68 @@ const aliases: Record<string, string> = {
   방어율무시: "방어율무시", 방어력무시: "방어율무시", 몬스터방어율무시: "방어율무시", 몬스터방어력무시: "방어율무시",
 };
 
+/** Recognize an option heading even if OCR dropped its entire numeric value. */
+export function readCombatOptionLabel(raw: string): string | null {
+  const label = raw.normalize("NFKC").toUpperCase().replace(/^[\s._·ㆍᆞ•|+'"*«<>:;\-]+/, "")
+    .split(/[:;+%]/, 1)[0].replace(/\s/g, "");
+  return Object.hasOwn(aliases, label) ? aliases[label] : null;
+}
+
+/** Normalize only the requirement label and separators; ambiguous digits stay raw. */
+export function readTooltipRequirement(raw: string): { label: string; valueText: string } | null {
+  const match = raw.normalize("NFKC").toUpperCase().match(/(?:REQ|REG|RER|REIQ|RE[@®])\s*(STR|STA|DEX|OEX|INT|LUK|LEVEL|LEV|LEU|LEW)(?=\s|[:;!.]|\d|$)[\s:;!]*(.*?)\s*$/);
+  if (!match) return null;
+  const label = /^(LEVEL|LEV|LEU|LEW)$/.test(match[1]) ? "LEV" : match[1] === "STA" ? "STR" : match[1] === "OEX" ? "DEX" : match[1];
+  return { label, valueText: match[2].replace(/[\s;:,.]+$/, "") };
+}
+
+/** Use the declared field type only after the label/value boundary is known.
+ * Keep unverified lookalikes (I/Q/S, etc.) unresolved and retain the raw text. */
+function numericToken(value: string, allowDecimal: boolean, allowLookalikes: boolean): string | null {
+  const normalized = allowLookalikes ? value.replace(/O/g, "0").replace(/B/g, "8") : value;
+  return (allowDecimal ? /^\d+(?:\.\d+)?$/ : /^\d+$/).test(normalized) ? normalized : null;
+}
+
 export function parseTooltipOption(raw: string): TooltipOption | null {
   const line = raw.normalize("NFKC").toUpperCase()
-    .replace(/^[\s·ㆍᆞ•|+'"*«<>\-]+/, "").replace(/[\s|]+$/, "").trim();
+    .replace(/^[\s._·ㆍᆞ•|+'"*«<>:;\-]+/, "").replace(/[\s|;:,.]+$/, "").trim()
+    .replace(/^5TR(?=\s*[:;+])/, "STR").replace(/^0EX(?=\s*[:;+])/, "DEX");
   // Requirement rows remain separate from the stats granted by equipment.
-  const requirement = line.match(/(?:REQ|REG|RER|RE[@®])\s*(STR|DEX|INT|LUK|LEV|LEVEL)\s*[:;]?\s*(\d+)$/);
-  if (requirement) {
-    return { label: requirement[1], value: Number(requirement[2]), percent: false, requirement: true, raw };
+  const requirement = readTooltipRequirement(line);
+  const requirementValue = requirement ? numericToken(requirement.valueText, false, true) : null;
+  if (requirement && requirementValue !== null) {
+    return { label: requirement.label, value: Number(requirementValue), percent: false, requirement: true, raw };
   }
-  const match = line.match(/^([\p{L}][\p{L}\s]*?)\s*[:;]?\s*\+\s*(\d+(?:\.\d+)?)\s*(%)?$/u);
-  if (!match) return null;
+  const match = line.match(/^([\p{L}][\p{L}\s]*?)\s*([:;])?\s*(\+)?\s*([0-9OB]+(?:\.[0-9OB]+)?)\s*(%)?$/u);
+  if (!match || (!match[2] && !match[3])) return null;
   const compact = match[1].replace(/\s/g, "");
   if (/^(REQ|REG|RER|ITEM)/.test(compact)) return null;
-  const label = Object.hasOwn(aliases, compact) ? aliases[compact] : match[1].trim();
+  const known = Object.hasOwn(aliases, compact);
+  if (!match[3] && !known) return null;
+  const value = numericToken(match[4], true, known && !!match[2]);
+  if (value === null) return null;
+  const label = known ? aliases[compact] : match[1].trim();
   // A missing percent glyph is ambiguous: retain the raw line for review,
   // instead of treating e.g. an OCR `996` as either 996 damage or 9%.
-  if (["총데미지", "보스데미지", "방어율무시"].includes(label) && match[3] !== "%") return null;
+  if (["총데미지", "보스데미지", "방어율무시"].includes(label) && match[5] !== "%") return null;
   return {
     label,
-    value: Number(match[2]), percent: match[3] === "%", requirement: false, raw,
+    value: Number(value), percent: match[5] === "%", requirement: false, raw,
   };
+}
+
+const equipmentCategories = ["얼굴장식", "눈장식", "어깨장식", "펜던트", "목걸이", "귀고리", "귀걸이", "한벌옷", "모자", "망토", "장갑", "신발", "상의", "하의", "반지", "훈장", "벨트", "건", "석궁", "아대", "무기"];
+export function isKnownEquipmentCategory(value: string): boolean { return equipmentCategories.includes(value); }
+export function parseEquipmentCategory(raw: string): string | null {
+  const match = raw.normalize("NFKC").match(/[장잠창참]비\s*분류\s*[:：;]\s*([가-힣A-Za-z·]{1,30})/);
+  if (!match) return null;
+  const label = match[1];
+  if (equipmentCategories.includes(label)) return label;
+  // Only a unique one-character substitution in a known, multi-character
+  // category is normalized. Numeric options never use fuzzy substitution.
+  const candidates = equipmentCategories.filter(category => category.length >= 3 && category.length === label.length
+    && [...category].filter((character, i) => character !== label[i]).length === 1);
+  return candidates.length === 1 ? candidates[0] : label;
 }
 
 export function parseMapleTooltip(text: string): ParsedTooltipStats {
@@ -41,8 +83,8 @@ export function parseMapleTooltip(text: string): ParsedTooltipStats {
   const unparsed: string[] = [];
   let category: string | null = null;
   for (const raw of text.split(/\r?\n/)) {
-    const equipmentType = raw.normalize("NFKC").match(/장비\s*분류\s*[:：;]\s*([가-힣A-Za-z·]{1,30})/);
-    if (equipmentType) category = equipmentType[1];
+    const equipmentType = parseEquipmentCategory(raw);
+    if (equipmentType) category = equipmentType;
     const option = parseTooltipOption(raw);
     if (!option) {
       if (raw.trim()) unparsed.push(raw);

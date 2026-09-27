@@ -325,7 +325,7 @@ describe("EquipmentOcrPanel", () => {
     await waitFor(() => expect(recognizer.recognize).toHaveBeenCalledTimes(2));
   });
 
-  it("revokes the preview URL once when recognition completes and when the panel unmounts", async () => {
+  it("keeps the source preview available for review and releases it on unmount", async () => {
     const user = userEvent.setup();
     const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:equipment-ocr");
     const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
@@ -339,10 +339,10 @@ describe("EquipmentOcrPanel", () => {
     await screen.findByLabelText("OCR DEX");
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:equipment-ocr");
+    expect(revokeObjectURL).not.toHaveBeenCalled();
     view.unmount();
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:equipment-ocr");
   });
 
   it("revokes a pending preview URL when the panel unmounts", async () => {
@@ -398,7 +398,7 @@ describe("EquipmentOcrPanel", () => {
         pending.push(resolve);
       })),
     );
-    renderPanel(recognizer);
+    const view = renderPanel(recognizer);
     const fileInput = screen.getByLabelText("장비 스크린샷 파일");
 
     await user.upload(fileInput, new File(["first"], "first.png", { type: "image/png" }));
@@ -410,6 +410,8 @@ describe("EquipmentOcrPanel", () => {
     expect(revokeObjectURL).toHaveBeenNthCalledWith(1, "blob:first-ocr");
     pending[1](attachedTooltipText);
     await screen.findByLabelText("OCR DEX");
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    view.unmount();
     expect(revokeObjectURL).toHaveBeenCalledTimes(2);
     expect(revokeObjectURL).toHaveBeenNthCalledWith(2, "blob:second-ocr");
     expect(createObjectURL).toHaveBeenCalledTimes(2);
@@ -426,7 +428,7 @@ describe("EquipmentOcrPanel", () => {
     const file = new File(["retry"], "retry.png", { type: "image/png" });
 
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), file);
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("읽지 못했습니다"));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("문자 인식 중 오류가 발생했습니다"));
     await user.click(screen.getByRole("button", { name: "다시 시도" }));
     await waitFor(() => expect(screen.getByLabelText("OCR DEX")).toHaveValue(21));
     expect(recognizer.recognize).toHaveBeenCalledTimes(2);

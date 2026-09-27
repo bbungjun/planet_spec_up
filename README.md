@@ -4,16 +4,29 @@
 
 기준 저장소: [bbungjun/planet_spec_up](https://github.com/bbungjun/planet_spec_up) · 기본 브랜치: `main`
 
+## 확정된 POC
+
+**캡틴 유저가 장비 스크린샷으로 자신의 세팅을 정확하게 등록하고, 같은 부위의 구매 후보를 현재 장비와 비교하는 흐름**을 검증합니다. 선택한 전투 프리셋의 환산공 before/after·상승률과 소수점을 허용하는 억 메소 구매 가격을 표시합니다. 후보는 한 개부터 추가할 수 있으며 임시 비교용으로만 유지하고, 원래 장비·캐릭터 세팅만 저장합니다.
+
+캐릭터 정보는 **스탯·능력창 사진을 OCR로 읽어 자동 저장**하는 방식을 지원합니다. 순수 스탯과 장비·버프가 반영된 최종 스탯을 구분하고, 불확실한 값은 사용자 확인·수정 후 저장합니다. 촬영 조건도 안내합니다. 후보 장착·영구 저장, 자동 점수·순위·추천 강조는 이번 범위에서 제외합니다. 지인·외부 플레이어 3~5명으로 사용 완료·저장 정확도·계산 정확도·직접 입력 대비 시간 단축을 확인합니다. **정의 확정은 구현 완료를 뜻하지 않습니다.** 상세 범위와 합격 기준은 [POC 정의](docs/poc-definition.md)를 확인하세요.
+
 ## 현재 구현
 
 - 신궁·캡틴·나이트로드의 스탯공 및 전투 조건별 환산공 계산
 - 장비 카드/일괄 입력, 사용자 정의 장비 부위, 키보드 입력 이동
 - 브라우저 내부 OCR, 이미지 붙여넣기, 여러 이미지 인식과 중복 검토
 - 카오스 보스·일반 보스·사냥용 무기 프리셋 3개
+- + 카드로 구매 후보 사진 추가 → OCR 교체 부위 자동 배정·원본 검토 → 현재 장비와 여러 후보를 나란히 비교. 후보 이름 입력 없이 가격만 직접 입력하며 반지·여러 목걸이·부위 미인식에서만 교체 대상을 선택. 스탯공/환산공·증감률과 캐릭터 DEX·STR·공격력 전후/증감, 카드의 원본 장비 미리보기·확대·전체 원본 보기, 가격 직접 수정·1억 메소당 환산공 상승률, 옵션 상세 창 지원 (캡틴·신궁)
+- 능력창 미등록 시 비교 카드에서 바로 사진 등록, 기존 후보·가격을 유지한 채 비교 자동 재개
+- 선택 프리셋의 스탯창: 순수/추가 스탯, 공격력·크리티컬, 최대 스탯공·환산공 실시간 표시
+- 현재 스탯 기준 옵션 효율: 각 옵션 +1의 환산공 상승률과 장비 DEX/LUK 환산값을 표시하며, 프리셋·장비·버프 변경에 즉시 반영. 기존 버림을 적용하고 순수 스탯은 고정하며, 추정·계산 불가 상태를 구분
 - 총데미지·보공·방무 분리 및 혼테일/핑크빈 공격력 버프 비교
 - 로그인 없는 브라우저 개인 세팅 1개 저장
+- 능력창 OCR·검증 후 자동 저장, 불확실한 값 검토, 순수 스탯 고정 및 장비 합계 검산
+- 레벨 1~220, 200부터 5레벨 간격 달성 버프 자동 적용, 상단 길드 증가량 입력
+- 장비 요구 레벨·부스탯 OCR/입력/저장, 착용 가능 순서 검사, 실제 요구 조건 미달 장비의 부족량 안내
 
-**아직 구현하지 않은 목표:** 실제 순수 스탯 고정 전환, 기존 장비를 보존하는 구매 후보·가격 대비 효율 비교, Vercel 배포 및 공개 SEO 완성. 현재 계산에는 장비 요구치 기반 순수 스탯 자동 배분이 남아 있습니다. 자세한 상태와 검증 한계는 [AGENTS.md](AGENTS.md)를 확인하세요.
+**아직 구현하지 않은 목표:** 나이트로드 구매 후보 비교, 독립 사용자 전체 흐름 검증, Vercel 배포 및 공개 SEO 완성. 구매 후보는 임시로만 비교하며 원래 장비·저장 프리셋에 반영하지 않습니다. 능력창 미등록 구형 세팅은 임시 자동 배분값을 유지하고 사진 등록으로 전환합니다. 전체 명중률 계산은 아직 지원하지 않습니다. 공격력%는 장비 공격력 합계에만 적용하며 달성 버프·길드·축복·불릿/표창·일반 버프는 이후 별도 가산합니다. 자세한 상태와 검증 한계는 [AGENTS.md](AGENTS.md)를 확인하세요.
 
 ## 로컬 실행
 
@@ -26,9 +39,9 @@ npm ci
 npm run dev -- --host 0.0.0.0
 ```
 
-브라우저에서 [localhost:3000](http://localhost:3000/)을 엽니다. 기존 `플래닛` 작업 공간에서는 새 앱을 만들지 않고 `.worktrees/planet-damage-mvp`에서 위 npm 명령을 실행합니다.
+브라우저에서 [localhost:3000](http://localhost:3000/)을 엽니다. 로컬 작업 위치는 `C:/Users/PC/Documents/플래닛`이며 이 저장소 루트에서 위 npm 명령을 실행합니다. `app/`, `features/`, `package.json`이 루트에 있습니다. 이전 `.worktrees/planet-damage-mvp` 경로는 더 이상 앱 작업 위치가 아닙니다.
 
-OCR 실행 파일과 한글·영문 학습 데이터는 `public/ocr`에 포함되어 있습니다. 이미지와 OCR 텍스트는 외부 OCR API로 보내지 않으며, 검토 후 사용자가 적용합니다. 개인 세팅은 현재 브라우저에 저장되어 다른 기기나 도메인으로 자동 이전되지 않습니다.
+OCR 모델·Worker·WASM 실행 자산과 라이선스는 `public/ocr`에 포함되어 있습니다. 이미지와 OCR 텍스트는 외부 OCR API로 보내지 않으며, 검토 후 사용자가 적용합니다. 개인 세팅은 현재 브라우저에 저장되어 다른 기기나 도메인으로 자동 이전되지 않습니다.
 
 ## 검증
 
@@ -43,25 +56,131 @@ npm run build
 
 테스트 병렬 실행으로 자원이 부족하면 `npx vitest run --maxWorkers=4`를 사용합니다. Windows의 한글 경로에서는 빌드 스크립트가 임시 드라이브 별칭을 만들고 종료 시 해제합니다.
 
-## 코드와 문서
+## 디렉터리 구조
+
+저장소 루트가 실제 앱 루트입니다. 프론트엔드와 계산·OCR 기능을 한 앱에서 관리하며, 아래 구조는 현재 구현 기준입니다.
+
+```text
+플래닛/
+├─ app/                          페이지 진입점과 공통 화면 설정
+│  ├─ page.tsx                   CalculatorApp을 표시하는 메인 페이지
+│  ├─ layout.tsx                 공통 HTML·메타데이터·공유 미리보기 설정
+│  ├─ globals.css                전역·계산기·OCR 화면 스타일
+│  └─ chatgpt-auth.ts             현재 앱에서 사용하지 않는 인증 헬퍼
+├─ features/calculator/          계산기 기능의 실제 구현
+│  ├─ CalculatorApp.tsx          입력 상태·화면 조합·적용·저장 연결
+│  ├─ components/               캐릭터·장비·프리셋·OCR 검토·결과 UI
+│  ├─ domain/                   계산식·숫자 정규화·직업·장비·프리셋 규칙
+│  ├─ ocr/                      이미지 준비·인식·파싱·검토·일괄 적용
+│  ├─ hooks/useSavedSetup.ts    브라우저 localStorage 읽기·쓰기·삭제
+│  ├─ storage.ts                저장 데이터 직렬화·형식 검증·호환 처리
+│  └─ labels.ts                 직업·스탯·장비의 표시 명칭
+├─ public/                       브라우저에 제공하는 정적 파일
+│  └─ ocr/                      실제 OCR 모델·Worker·WASM·라이선스
+├─ tests/                        자동 검증
+│  ├─ calculator/               계산·OCR·저장·프리셋·UI 회귀 테스트
+│  ├─ metadata.test.ts          메타데이터와 호스트 처리 테스트
+│  └─ setup.ts                  테스트 공통 환경
+├─ docs/                         구조 점검·OCR 검증 지침·과거 설계/계획
+├─ scripts/                      개발·빌드 보조 스크립트
+│  └─ run-vinext-build.mjs       Windows 한글 경로 대응 빌드 실행
+├─ worker/                       현재 Cloudflare 서버 진입점과 타입
+├─ build/                        Sites 메타데이터를 포장하는 빌드 플러그인
+├─ .openai/hosting.json           현재 빌드가 참조하는 호스팅 설정
+├─ db/                           현재 미사용인 D1 연결 헬퍼·빈 스키마
+├─ drizzle/                      DB 마이그레이션 메타데이터
+├─ examples/d1/                  선택적으로 참고할 DB·notes API 예제
+├─ AGENTS.md                     현재 작업 정책과 제약
+├─ CONTEXT.md                    도메인 용어 정의
+├─ DECISIONS.md                  사용자 결정·이유·KST 시각 누적 기록
+├─ README.md                     프로젝트 안내와 실행 방법
+├─ package.json                  의존성과 실행·검증 명령
+├─ package-lock.json             의존성 버전 고정
+├─ vite.config.ts                Vinext·Cloudflare·Sites 빌드 연결
+├─ next.config.ts                Next 호환 프레임워크 설정
+├─ tsconfig.json                 앱 TypeScript 검사 설정
+├─ tsconfig.worker.json          서버 Worker·DB TypeScript 검사 설정
+├─ eslint.config.mjs             코드 스타일·정적 검사 설정
+└─ vitest.config.ts              테스트 탐색·환경 설정
+```
+
+### 프론트엔드·계산·OCR·저장의 역할
+
+| 영역 | 위치와 역할 |
+| --- | --- |
+| 화면 | `app/`에서 페이지를 열고 `CalculatorApp.tsx`가 각 입력·결과 화면을 조합합니다. |
+| 계산 | `domain/`이 입력값을 숫자로 정규화하고 계산 결과와 검증 이슈를 반환합니다. React나 브라우저 저장소에 의존하지 않습니다. |
+| OCR | `ocr/`에서 툴팁 영역 탐지·전처리 → 브라우저 인식 → 옵션 파싱 → 불확실한 줄 검토를 처리합니다. 병렬 작업자와 취소·재시도도 이 흐름에 포함됩니다. 일부 작업 상태와 재시도 제어는 아직 `components/`에 있습니다. |
+| 장비 적용 | 검토한 옵션을 기존 장비나 무기 프리셋에 적용합니다. `ocr/batch.ts`가 일괄 적용 위치와 충돌을 검사합니다. |
+| 개인 저장 | `storage.ts`가 저장 형식을 다루고 `useSavedSetup.ts`가 localStorage에 접근합니다. 저장 시점과 화면 반영은 `CalculatorApp.tsx`에서 연결합니다. |
+
+현재 장비 OCR 기본 엔진은 **PaddleOCR 한국어 PP-OCRv5**이며 브라우저의 CPU/WASM에서 실행됩니다. 두 배율에서 읽은 옵션을 위치로 대조하고, 불확실한 값은 확인 대상으로 남깁니다. 모델·런타임은 `public/ocr/paddle/`에서 동일 사이트 자산으로 제공하며 모델·WASM만 약 43.4MB라 첫 사용 시 다운로드가 필요합니다. Tesseract.js는 회귀 비교용 어댑터로 보존했습니다. 능력창은 별도 인식 경로에서 직업·레벨·스탯·공격력 등을 대조합니다. 두 배율의 결과와 수치 관계가 일치하면 자동 저장하며, 불확실하면 원본을 보고 수정·확인합니다. 관측된 합계는 검산용으로만 저장해 장비·길드와 중복 가산하지 않습니다. 실제 캡틴 사진 검증과 전체 사용자 환경의 품질 보장은 구분합니다.
+
+### API와 서버 설정
+
+현재 서비스용 `app/api/` HTTP 엔드포인트는 없습니다. 계산·OCR·개인 세팅 저장은 방문자의 브라우저에서 처리하며, 서버는 페이지 렌더링과 자산 제공을 담당합니다. `examples/d1/app/api/notes/route.ts`는 실제 장비 서비스에 연결되지 않은 예제입니다. `db/`와 `app/chatgpt-auth.ts`도 현재 제품 흐름에서 사용하지 않습니다.
+
+반면 `worker/`, `build/`, `.openai/hosting.json`은 현재 `vite.config.ts`에 연결되어 있습니다. 미사용 예제와 구분해야 하며, 배포 방식을 변경할 때 함께 검토해야 합니다. `build/`는 빌드 플러그인 **소스**, `dist/`는 생성된 **빌드 결과**입니다.
+
+### 로컬 자료와 생성 폴더
+
+다음 폴더는 로컬에만 있거나 실행 후 생성됩니다. Git에서 제외되므로 새로 clone했을 때 없어도 정상입니다.
 
 | 위치 | 내용 |
 | --- | --- |
-| `app/` | 페이지, 메타데이터, 스타일 |
-| `features/calculator/domain/` | 계산식, 직업·장비·프리셋 규칙 |
-| `features/calculator/components/` | 입력·OCR 검토·결과 UI |
-| `features/calculator/ocr/` | 로컬 OCR, 옵션 파싱과 적용 |
-| `features/calculator/storage.ts` | 브라우저 저장과 이전 데이터 호환 |
-| `tests/` | 계산·OCR·저장·UI 회귀 테스트 |
-| `public/ocr/` | OCR 실행 자산과 라이선스 |
-| `docs/` | 설계, 구현 계획, OCR 비용 조사 |
+| `내장비/` | 사용자의 개인 장비 스크린샷. 공개 자산 폴더로 옮기지 않습니다. |
+| `output/` | 비공개 OCR 실험, 정답표, 보고서, 브라우저 캡처 및 루트 이전 복구본. 앱의 타입·린트 검사에서도 제외됩니다. |
+| `node_modules/` | `npm ci`로 설치하는 의존성. |
+| `dist/` | 빌드 결과. 직접 수정하지 않습니다. |
+| `.wrangler/` | 현재 Cloudflare 개발 환경의 상태·캐시·로그. |
+| `.playwright-cli/` | 브라우저 자동 검증 도구의 실행 기록. |
+| `.superpowers/` | 과거 설계·개발 도구의 로컬 작업 자료. |
+
+`output/root-migration-20260926-215715/previous-app/`은 복구용으로 보존한 이전 앱입니다. 그 안에서 개발하지 않고 현재 저장소 루트에서 작업합니다. 과거 검증 자료였던 루트 `.omo/`는 정리했습니다.
+
+### 수정할 위치 찾기
+
+- 화면 배치·입력 UX: `components/`, `CalculatorApp.tsx`, `app/globals.css`
+- 계산식·직업·장비 규칙: `domain/`과 대응하는 `tests/calculator/`
+- OCR 인식·옵션 누락·검토: `ocr/`과 OCR 화면·테스트
+- 저장 형식·복원 문제: `storage.ts`, `hooks/useSavedSetup.ts`, 저장 관련 테스트
+- 공개 메타데이터·빌드·호스팅: `app/layout.tsx`, `vite.config.ts`, `worker/`, `build/`
+
+## 정책과 설계 문서
 
 - [AGENTS.md](AGENTS.md): 최신 확정 정책, 개발 제약, 미구현 항목
 - [CONTEXT.md](CONTEXT.md): 도메인 용어
+- [DECISIONS.md](DECISIONS.md): 사용자 결정과 이유, 한국 시간(KST) 기준 누적 이력
+- [POC 정의](docs/poc-definition.md): 캡틴·동일 부위 비교의 확정 범위, 제외 항목, 합격 기준
+- [MVP 잔여 작업](docs/mvp-remaining-work.md): 확정 POC와 현재 구현의 차이, 우선순위와 완료 기준
+- [건슬링거·캡틴 계산 비교](docs/choni-captain-comparison.md): 초니 계산기와의 공식·절사·크리 상한 차이 및 수치 대조
+- [구조·유지보수 점검](docs/architecture-review.md): 현재 디렉터리 역할, OCR·저장 인터페이스 평가와 단계별 개선안
 - [agent.md](agent.md): 이전 구현 지침과 이력
 - [외부 OCR 비용 참고](docs/ocr-api-costs.md): 조사 자료이며 API 연결·과금 승인을 뜻하지 않음
 
-기술 구성은 React/TypeScript, Next API + Vinext/Vite, Tesseract.js, Vitest입니다. 기존 Cloudflare/Sites 관련 코드와 설정이 남아 있으며 Vercel 호환이 완료된 상태는 아닙니다. 저장소 업로드는 웹사이트 배포와 별개입니다.
+기술 구성은 React/TypeScript, Next 호환 API를 사용하는 Vinext/Vite, PaddleOCR.js·ONNX Runtime Web, 비교용 Tesseract.js, Vitest입니다. 기존 개발·빌드는 Cloudflare/Sites 구성과 연결된 Vinext 경로를 유지하며, Vercel용 Next.js 빌드를 별도로 제공합니다. 저장소 업로드와 실제 웹사이트 배포는 별개이며, 외부 배포는 별도 승인 후 진행합니다.
+
+## 기본 모드·다크 모드
+
+상단에서 밝은 기본 모드와 다크 모드를 선택할 수 있습니다. 선택은 `planet-ui-theme`에 저장되며 캐릭터·장비 세팅과 분리됩니다. 저장이 차단된 브라우저에서도 현재 화면에는 모드가 적용됩니다. 최초 HTML에서 테마를 적용해 저장된 다크 모드로 재방문할 때 밝은 화면이 먼저 나타나는 현상을 줄입니다.
+
+[Maple Scouter](https://maplescouter.com/ko)의 주황색 강조색, 상단 탐색, 정보 카드 구성을 참고해 자체 UI로 구현했습니다(확인일 2026-09-27). 스크린샷 등록을 주 동작으로 유지하며 상단 바로가기로 캐릭터·버프, 무기 프리셋, 장비 계산 영역에 이동합니다. 1280px 이상에서 장비 목록·입력·결과 3열, 1000px 미만에서 결과 하단 배치를 유지합니다.
+
+## Vercel 배포 준비
+
+저장소 루트의 `vercel.json`은 Next.js 프레임워크와 `npm run build:vercel`, `.next` 출력을 지정합니다. 추가 런타임 패키지는 필요하지 않습니다. Vercel 프로젝트의 Root Directory는 저장소 루트, Node.js는 22.x로 설정합니다.
+
+```powershell
+npm run build:vercel
+npm run start:vercel -- --port 3007
+```
+
+- 현재 OCR 작업자를 지원하는 Webpack 빌드를 명시합니다. OpenCV의 Node 전용 `fs` 분기는 클라이언트에서 제외하며, OCR은 기존 브라우저 WASM 경로를 사용합니다.
+- 배포 도메인 확정 후 서버 환경변수 `SITE_URL`에 HTTPS 원점(경로·쿼리 없음)을 설정합니다. 이전 Sites 주소를 기본 주소로 사용하지 않습니다. `SITE_URL`이 없거나 `VERCEL_ENV`가 `production`이 아니면 검색 엔진에 `noindex, nofollow`를 전달합니다. production 및 확정 주소가 모두 있을 때만 canonical을 출력합니다.
+- `public/ocr/`의 모델·WASM·라이선스 파일을 포함해야 합니다. 이미지는 같은 브라우저에서 처리하며 외부 OCR 호출이나 서버 업로드를 추가하지 않습니다. 최초 다운로드·메모리 비용은 그대로 존재합니다.
+- 로컬 성공은 실제 Vercel 배포 완료를 뜻하지 않습니다. 배포 승인 후 미리보기에서 OCR 모델·WASM·작업자 로딩, 저장/복원, 모바일 UI를 다시 확인하고 최종 도메인·SEO를 확정해야 합니다. 배포 도메인이 달라지면 기존 브라우저 세팅이 자동 이전되지 않습니다.
+
+설정 근거: [Vercel의 Next.js 지원](https://vercel.com/docs/frameworks/full-stack/nextjs), [빌드 설정](https://vercel.com/docs/builds/configure-a-build), [Next.js Webpack 설정](https://nextjs.org/docs/app/api-reference/config/next-config-js/webpack) (확인일 2026-09-27).
 
 ## 저장소에 포함하지 않는 자료
 

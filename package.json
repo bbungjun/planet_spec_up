@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "node scripts/run-vinext-build.mjs",
+    "build:vercel": "next build --webpack",
+    "start:vercel": "next start",
     "start": "vinext start",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
@@ -16,8 +18,10 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@paddleocr/paddleocr-js": "0.4.2",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",
+    "onnxruntime-web": "1.24.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "tesseract.js": "7.0.0"

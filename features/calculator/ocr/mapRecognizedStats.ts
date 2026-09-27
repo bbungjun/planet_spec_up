@@ -28,7 +28,7 @@ export function mapRecognizedStats(
   };
   for (const option of parsed.options) {
     const field = option.requirement
-      ? option.label === subStat ? "requiredSub" : undefined
+      ? option.label === subStat ? "requiredSub" : /^(LEV|LEVEL)$/.test(option.label) ? "requiredLevel" : undefined
       : option.label === "공격력" ? option.percent ? "attackPercent" : "attackFlat"
       : option.label === "총데미지" && option.percent ? "totalDamagePercent"
       : option.label === "보스데미지" && option.percent ? "bossDamagePercent"

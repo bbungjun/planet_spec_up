@@ -4,6 +4,7 @@ import type {
   EquipmentSlot,
   ValidationIssue,
 } from "./types";
+import { MAX_CHARACTER_LEVEL, pureStatPool } from "./level";
 
 export type NumberRule = {
   path: string;
@@ -32,6 +33,12 @@ export type NormalizedCharacterInput = {
   guildIgnoreLevel: CalculatorInput["character"]["guildIgnoreLevel"];
   guildAttackLevel: CalculatorInput["character"]["guildAttackLevel"];
   guildActiveBoss: boolean;
+  guildBossPercent: number;
+  guildIgnorePercent: number;
+  guildAttackFlat: number;
+  guildAccuracyFlat: number;
+  pureMain: number | null;
+  pureSub: number | null;
 };
 
 export type NormalizedCalculatorInput = {
@@ -73,11 +80,6 @@ export function parseNumber(
   return { value, issues: [] };
 }
 
-function apPool(level: number): number {
-  if (!Number.isInteger(level) || level < 1 || level > 200) return 0;
-  return level * 5 + (level >= 120 ? 22 : level >= 70 ? 17 : 12);
-}
-
 function readNumber(raw: string, rule: NumberRule, issues: ValidationIssue[]): number {
   const parsed = parseNumber(raw, rule);
   issues.push(...parsed.issues);
@@ -87,13 +89,13 @@ function readNumber(raw: string, rule: NumberRule, issues: ValidationIssue[]): n
 export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
   const issues: ValidationIssue[] = [];
   const level = readNumber(input.character.level, {
-    path: "character.level", min: 1, max: 200, integer: true,
+    path: "character.level", min: 1, max: MAX_CHARACTER_LEVEL, integer: true,
   }, issues);
   const manualRaw = input.character.manualPureSub;
-  const manualPureSub = manualRaw.trim() === ""
+  const manualPureSub = (input.character.pureMain?.trim() && input.character.pureSub?.trim()) || manualRaw.trim() === ""
     ? null
     : readNumber(manualRaw, {
-      path: "character.manualPureSub", min: 0, max: apPool(level), integer: true,
+      path: "character.manualPureSub", min: 0, max: pureStatPool(level), integer: true,
     }, issues);
 
   const character: NormalizedCharacterInput = {
@@ -132,7 +134,16 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     guildIgnoreLevel: input.character.guildIgnoreLevel,
     guildAttackLevel: input.character.guildAttackLevel,
     guildActiveBoss: input.character.guildActiveBoss,
+    guildBossPercent: readNumber(input.character.guildBossPercent ?? String(input.character.guildBossLevel), { path: "character.guildBossPercent", min: 0, max: 5, integer: true }, issues),
+    guildIgnorePercent: readNumber(input.character.guildIgnorePercent ?? String(input.character.guildIgnoreLevel * 2), { path: "character.guildIgnorePercent", min: 0, max: 10, integer: true }, issues),
+    guildAttackFlat: readNumber(input.character.guildAttackFlat ?? String(input.character.guildAttackLevel), { path: "character.guildAttackFlat", min: 0, max: 5, integer: true }, issues),
+    guildAccuracyFlat: readNumber(input.character.guildAccuracyFlat ?? "0", { path: "character.guildAccuracyFlat", min: 0, max: 30, integer: true }, issues),
+    pureMain: input.character.pureMain?.trim() ? readNumber(input.character.pureMain, { path: "character.pureMain", min: 0, max: pureStatPool(level), integer: true }, issues) : null,
+    pureSub: input.character.pureSub?.trim() ? readNumber(input.character.pureSub, { path: "character.pureSub", min: 0, max: pureStatPool(level), integer: true }, issues) : null,
   };
+
+  if ((character.pureMain === null) !== (character.pureSub === null)) issues.push({ severity: "error", code: "INCOMPLETE_PURE_STATS", path: "character.pureMain", message: "능력창의 순수 주스탯·부스탯을 함께 확인해주세요." });
+  if (character.pureMain !== null && character.pureSub !== null && character.pureMain + character.pureSub > pureStatPool(level)) issues.push({ severity: "error", code: "INVALID_PURE_STATS", path: "character.pureMain", message: "순수 스탯 합계가 레벨의 AP 범위를 초과합니다. 최종 스탯과 혼동하지 않았는지 확인해주세요." });
 
   const equipment: NormalizedCalculatorInput["equipment"] = {};
   for (const [slot, values] of Object.entries(input.equipment) as [EquipmentSlot, EquipmentInput][]) {
@@ -155,6 +166,7 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
       attackPercent: readNumber(values.attackPercent, {
         path: `equipment.${slot}.attackPercent`, min: 0, max: 999,
       }, issues),
+      requiredLevel: readNumber(values.requiredLevel ?? "", { path: `equipment.${slot}.requiredLevel`, min: 0, max: 9999, integer: true }, issues),
       requiredSub: readNumber(values.requiredSub, {
         path: `equipment.${slot}.requiredSub`, min: 0, max: 9999, integer: true,
       }, issues),

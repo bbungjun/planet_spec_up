@@ -4,10 +4,12 @@ import type {
   CalculatorInput,
   EquipmentInput,
   EquipmentSlot,
+  ValidationIssue,
 } from "../domain/types";
 
 type EquipmentNavigatorProps = {
   input: CalculatorInput;
+  issues?: readonly ValidationIssue[];
   selectedSlot: EquipmentSlot;
   onSelectSlot: (slot: EquipmentSlot) => void;
   onAddSlot: (label: string) => boolean;
@@ -19,6 +21,7 @@ const INTEGER_FIELDS = new Set<keyof EquipmentInput>([
   "subFlat",
   "attackFlat",
   "requiredSub",
+  "requiredLevel",
 ]);
 
 function hasValidValue(equipment: EquipmentInput | undefined): boolean {
@@ -40,6 +43,7 @@ function hasValidValue(equipment: EquipmentInput | undefined): boolean {
 export function EquipmentNavigator({
   input,
   selectedSlot,
+  issues = [],
   onSelectSlot,
   onAddSlot,
   onRemoveSlot,
@@ -56,7 +60,7 @@ export function EquipmentNavigator({
     <nav className="panel equipment-navigator" aria-labelledby="equipment-heading">
       <div className="panel-heading">
         <div>
-          <p className="panel-kicker">장비</p>
+
           <h2 id="equipment-heading">장비 슬롯</h2>
         </div>
         <span>{visibleSlots.length}개</span>
@@ -64,6 +68,7 @@ export function EquipmentNavigator({
       <ul className="equipment-list">
         {visibleSlots.map((slot) => {
           const complete = hasValidValue(input.equipment[slot]);
+          const blocked = issues.some(issue => issue.path.startsWith(`equipment.${slot}.`) && ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code));
           const statusId = `equipment-${slot}-status`;
           const label = getEquipmentSlotLabel(input, slot);
 
@@ -85,7 +90,7 @@ export function EquipmentNavigator({
                   {label}
                 </span>
                 <span id={statusId} className="equipment-slot-status">
-                  {complete ? "✓ 입력 완료" : "미입력"}
+                  {blocked ? "착용 불가" : complete ? "✓ 입력 완료" : "미입력"}
                 </span>
               </button>
               {input.customSlots?.some(({ id }) => id === slot) && (

@@ -1,6 +1,7 @@
 import type { JobRule } from "./job-rules";
 import type { NormalizedEquipmentInput } from "./normalize";
 import type { CustomEquipmentSlot, EquipmentInput, EquipmentSlot, ValidationIssue } from "./types";
+import { pureStatPool } from "./level";
 
 export type EquipmentRequirement = {
   slot: EquipmentSlot;
@@ -90,11 +91,6 @@ export function sumEquipment(
   return totals;
 }
 
-function apPool(level: number): number {
-  if (!Number.isInteger(level) || level < 1 || level > 200) return 0;
-  return level * 5 + (level >= 120 ? 22 : level >= 70 ? 17 : 12);
-}
-
 function hasRequirement(
   pureSub: number,
   equipmentSub: number,
@@ -110,7 +106,7 @@ function hasRequirement(
 }
 
 export function allocatePureStats(input: PureStatAllocationInput): PureStatAllocation {
-  const pool = apPool(input.level);
+  const pool = pureStatPool(input.level);
   const requirementsMet = (pureSub: number) => input.requirements.every((requirement) =>
     hasRequirement(
       pureSub,

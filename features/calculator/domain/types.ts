@@ -23,6 +23,8 @@ export type EquipmentInput = {
   attackFlat: string;
   attackPercent: string;
   requiredSub: string;
+  /** Blank/absent means not yet verified, explicit 0 means no level requirement. */
+  requiredLevel?: string;
   /** Optional for compatibility with existing saved equipment. */
   damagePercent?: string;
   totalDamagePercent?: string;
@@ -48,6 +50,14 @@ export type CharacterInput = {
   guildIgnoreLevel: GuildSkillLevel;
   guildAttackLevel: GuildSkillLevel;
   guildActiveBoss: boolean;
+  /** Actual bonuses; absent keys retain older level-based saved data. */
+  guildBossPercent?: string;
+  guildIgnorePercent?: string;
+  guildAttackFlat?: string;
+  guildAccuracyFlat?: string;
+  /** Verified base stats from the character window, separate from equipment. */
+  pureMain?: string;
+  pureSub?: string;
 };
 
 export type CalculatorInput = {
@@ -59,6 +69,22 @@ export type CalculatorInput = {
     active: WeaponPresetId;
     entries: Partial<Record<WeaponPresetId, WeaponPreset>>;
   };
+  statWindow?: StatWindowSnapshot;
+};
+
+export type StatWindowSnapshot = {
+  job: JobId;
+  level: number;
+  capturedAt: string;
+  pure: Partial<Record<"STR" | "DEX" | "INT" | "LUK", number>>;
+  total: Partial<Record<"STR" | "DEX" | "INT" | "LUK", number>>;
+  maxAttack?: number;
+  minAttack?: number;
+  totalDamagePercent?: number;
+  bossDamagePercent?: number;
+  ignoreDefensePercent?: number;
+  criticalRate?: number;
+  accuracy?: number;
 };
 
 export type WeaponPresetId = "chaos" | "boss" | "hunting";
@@ -85,5 +111,7 @@ export type CalculationResult = {
   };
   pureMain: number;
   pureSub: number;
+  criticalStats?: { baseRate: number; extraRate: number; buffRate: number; baseDamage: number; buffDamage: number };
+  windowStats?: { totalDamagePercent: number; bossDamagePercent: number; ignoreDefensePercent: number; criticalRate: number };
   issues: ValidationIssue[];
 };

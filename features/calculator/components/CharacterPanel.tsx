@@ -1,13 +1,13 @@
 import { JOB_RULES } from "../domain/job-rules";
 import type {
   CharacterInput,
-  GuildSkillLevel,
   JobId,
   MapleWarrior,
   SharpEyes,
   ValidationIssue,
 } from "../domain/types";
 import { WEAPON_LABELS } from "../labels";
+import { levelAchievementBonus, MAX_CHARACTER_LEVEL, pureStatPool } from "../domain/level";
 
 export type CharacterChangeHandler = <Field extends keyof CharacterInput>(
   field: Field,
@@ -19,6 +19,7 @@ type CharacterPanelProps = {
   issues: readonly ValidationIssue[];
   onChange: CharacterChangeHandler;
   onJobChange: (job: JobId) => void;
+  showIdentity?: boolean;
 };
 
 type NumericFieldProps = {
@@ -37,12 +38,6 @@ function errorFor(
   path: string,
 ): ValidationIssue | undefined {
   return issues.find((issue) => issue.path === path && issue.severity === "error");
-}
-
-function pureStatPool(rawLevel: string): number {
-  const level = Number(rawLevel);
-  if (!Number.isInteger(level) || level < 1 || level > 200) return 0;
-  return level * 5 + (level >= 120 ? 22 : level >= 70 ? 17 : 12);
 }
 
 function NumericField({
@@ -84,13 +79,31 @@ function NumericField({
   );
 }
 
-const GUILD_LEVELS = [0, 1, 2, 3, 4, 5] as const;
+export function CharacterIdentityFields({ character, issues, onChange, onJobChange }: CharacterPanelProps) {
+  const bonus = levelAchievementBonus(Number(character.level));
+  return <>
+    <div className="field">
+      <label htmlFor="character-job">직업</label>
+      <select id="character-job" value={character.job} onChange={event => onJobChange(event.currentTarget.value as JobId)}>
+        <option value="marksman">신궁</option>
+        <option value="corsair">캡틴</option>
+        <option value="night_lord">나이트로드</option>
+      </select>
+    </div>
+    <NumericField label="레벨" path="character.level" value={character.level} min={1} max={MAX_CHARACTER_LEVEL} step={1}
+      issues={issues} onChange={value => onChange("level", value)} />
+    <p className="level-achievement" role="status" aria-label="레벨 달성 버프">{bonus.attack > 0
+      ? `레벨 달성 버프 자동 적용 · 공격력 +${bonus.attack} · 올스탯 +${bonus.allStat}`
+      : "레벨 달성 버프 · 200레벨부터 자동 적용"}</p>
+  </>;
+}
 
 export function CharacterPanel({
   character,
   issues,
   onChange,
   onJobChange,
+  showIdentity = true,
 }: CharacterPanelProps) {
   const rule = JOB_RULES[character.job];
 
@@ -98,36 +111,14 @@ export function CharacterPanel({
     <section className="panel character-panel" aria-labelledby="character-heading">
       <div className="panel-heading">
         <div>
-          <p className="panel-kicker">캐릭터</p>
+
           <h2 id="character-heading">캐릭터 설정</h2>
         </div>
         <span className="job-chip">{rule.groupLabel}</span>
       </div>
 
       <div className="field-grid">
-        <div className="field">
-          <label htmlFor="character-job">직업</label>
-          <select
-            id="character-job"
-            value={character.job}
-            onChange={(event) => onJobChange(event.currentTarget.value as JobId)}
-          >
-            <option value="marksman">신궁</option>
-            <option value="corsair">캡틴</option>
-            <option value="night_lord">나이트로드</option>
-          </select>
-        </div>
-
-        <NumericField
-          label="레벨"
-          path="character.level"
-          value={character.level}
-          min={1}
-          max={200}
-          step={1}
-          issues={issues}
-          onChange={(value) => onChange("level", value)}
-        />
+        {showIdentity && <CharacterIdentityFields character={character} issues={issues} onChange={onChange} onJobChange={onJobChange} />}
 
         <div className="field">
           <label htmlFor="character-maple-warrior">메이플 용사</label>
@@ -178,7 +169,7 @@ export function CharacterPanel({
       </dl>
 
       <details className="character-advanced">
-        <summary>상세 전투·길드 설정</summary>
+        <summary>상세 전투 설정</summary>
       <fieldset className="settings-group">
         <legend>전투 설정</legend>
         <div className="field-grid">
@@ -231,16 +222,16 @@ export function CharacterPanel({
             issues={issues}
             onChange={(value) => onChange("criticalRate", value)}
           />
-          <NumericField
+          {character.pureMain?.trim() && character.pureSub?.trim() ? <p className="panel-description">능력창 기준 순수 {rule.mainStat} {character.pureMain} · {rule.subStat} {character.pureSub} 고정</p> : <NumericField
             label="순수 부스탯 수동값"
             path="character.manualPureSub"
             value={character.manualPureSub}
             min={0}
-            max={pureStatPool(character.level)}
+            max={pureStatPool(Number(character.level))}
             step={1}
             issues={issues}
             onChange={(value) => onChange("manualPureSub", value)}
-          />
+          />}
           {character.job === "night_lord" ? (
             <NumericField
               label="나이트로드 스탯창 STR"
@@ -256,42 +247,8 @@ export function CharacterPanel({
         </div>
       </fieldset>
 
-      <p className="panel-description">기타 데미지·방무에는 장비 옵션과 길드 스킬을 제외한 값만 입력하세요. 장비·길드 값은 별도 합산됩니다.</p>
+      <p className="panel-description">기타 수치에는 장비·길드 효과를 제외하세요.</p>
 
-      <fieldset className="settings-group">
-        <legend>길드 스킬</legend>
-        <div className="field-grid">
-          {([
-            ["guildBossLevel", "길드 보스 데미지 스킬 레벨"],
-            ["guildIgnoreLevel", "길드 방어율 무시 스킬 레벨"],
-          ] as const).map(([field, label]) => (
-            <div className="field" key={field}>
-              <label htmlFor={`character-${field}`}>{label}</label>
-              <select
-                id={`character-${field}`}
-                value={character[field]}
-                onChange={(event) => onChange(
-                  field,
-                  Number(event.currentTarget.value) as GuildSkillLevel,
-                )}
-              >
-                {GUILD_LEVELS.map((level) => (
-                  <option value={level} key={level}>{level}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-        <label className="check-field" htmlFor="character-guild-active-boss">
-          <input
-            id="character-guild-active-boss"
-            type="checkbox"
-            checked={character.guildActiveBoss}
-            onChange={(event) => onChange("guildActiveBoss", event.currentTarget.checked)}
-          />
-          길드 액티브 보스 스킬 적용
-        </label>
-      </fieldset>
       </details>
     </section>
   );

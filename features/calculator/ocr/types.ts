@@ -17,8 +17,23 @@ export type ParsedTooltipStats = {
   unparsed: string[];
   category: string | null;
 };
-export type StatReplacement = Pick<
-  EquipmentInput,
-  "mainFlat" | "subFlat" | "mainPercent" | "subPercent"
-> & Partial<Pick<EquipmentInput, "attackFlat" | "attackPercent" | "requiredSub" | "damagePercent" | "totalDamagePercent" | "bossDamagePercent" | "ignoreDefensePercent">>;
+/** Absent keys are unrecognized, never an instruction to clear saved gear. */
+export type StatReplacement = Partial<EquipmentInput>;
 export type OcrTarget = { job: JobId; slot: EquipmentSlot };
+
+export type OcrBounds = { x: number; y: number; width: number; height: number };
+export type OcrReading = { text: string; confidence?: number; bounds?: OcrBounds; pass: number };
+export type OcrReviewLine = {
+  id: string;
+  bounds?: OcrBounds;
+  readings: OcrReading[];
+  text: string;
+  status: "recognized" | "check" | "confirmed" | "ignored";
+  reason?: string;
+};
+export type OcrReview = {
+  category: string | null;
+  lines: OcrReviewLine[];
+  warnings: string[];
+  imageConfirmed?: boolean;
+};

@@ -5,6 +5,7 @@ import type { BuiltinEquipmentSlot, CalculatorInput, CustomEquipmentSlot, Equipm
 
 const builtinIds = new Set<EquipmentSlot>(Object.keys(EQUIPMENT_SLOT_LABELS) as BuiltinEquipmentSlot[]);
 export const MAX_CUSTOM_SLOTS = 50;
+export const RING_SLOTS: readonly EquipmentSlot[] = ["ring_1", "ring_2", "ring_3", "ring_4"];
 
 export function getVisibleEquipmentSlots(input: CalculatorInput): EquipmentSlot[] {
   return [...JOB_RULES[input.character.job].visibleSlots, ...(input.customSlots ?? []).map(({ id }) => id)];
@@ -48,4 +49,19 @@ export function removeEquipmentSlot(input: CalculatorInput, slot: EquipmentSlot)
     customSlots: input.customSlots.filter(({ id }) => id !== slot),
     equipment,
   };
+}
+
+const categories: Record<string, EquipmentSlot[]> = {
+  모자: ["hat"], 망토: ["cape"], 귀고리: ["earrings"], 귀걸이: ["earrings"],
+  얼굴장식: ["face"], 눈장식: ["eye"], 펜던트: ["necklace"], 목걸이: ["necklace"],
+  장갑: ["gloves"], 신발: ["shoes"], 한벌옷: ["overall"], 상의: ["top"], 하의: ["bottom"],
+  반지: ["ring_1", "ring_2", "ring_3", "ring_4"], 훈장: ["title"],
+  건: ["weapon"], 석궁: ["weapon"], 아대: ["weapon"], 무기: ["weapon"],
+};
+
+export function matchingSlots<T extends {slot: EquipmentSlot; label: string}>(category: string | null, choices: T[]): T[] {
+  if (!category) return [];
+  if (category === "반지") return choices.filter(({ slot }) => RING_SLOTS.includes(slot));
+  const known = Object.hasOwn(categories, category) ? categories[category] : [];
+  return choices.filter(({slot, label}) => known.includes(slot) || label.replace(/\s+\d+$/, "") === category);
 }

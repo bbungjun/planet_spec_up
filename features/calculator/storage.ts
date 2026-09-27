@@ -2,6 +2,7 @@ import { JOB_RULES } from "./domain/job-rules";
 import { MAX_CUSTOM_SLOTS } from "./domain/slots";
 import { captureWeaponPreset } from "./domain/weapon-presets";
 import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
+import { isStatWindowSnapshot } from "./domain/statWindow";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
 
@@ -49,10 +50,11 @@ function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): b
 }
 
 function isCharacterInput(value: unknown): value is CharacterInput {
+  const optional = ["totalDamagePercent", "bossDamagePercent", "guildBossPercent", "guildIgnorePercent", "guildAttackFlat", "guildAccuracyFlat", "pureMain", "pureSub"];
   if (!isRecord(value) || !hasOnlyKeys(
-    Object.fromEntries(Object.entries(value).filter(([key]) => !["totalDamagePercent", "bossDamagePercent"].includes(key))), characterKeys,
+    Object.fromEntries(Object.entries(value).filter(([key]) => !optional.includes(key))), characterKeys,
   )) return false;
-  if (["totalDamagePercent", "bossDamagePercent"].some(key => Object.hasOwn(value, key) && typeof value[key] !== "string")) return false;
+  if (optional.some(key => Object.hasOwn(value, key) && typeof value[key] !== "string")) return false;
 
   return (value.job === "marksman" || value.job === "corsair" || value.job === "night_lord")
     && typeof value.level === "string"
@@ -76,7 +78,7 @@ function isGuildSkillLevel(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 {
 }
 
 function isEquipmentInput(value: unknown): value is EquipmentInput {
-  const optional = ["damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
+  const optional = ["requiredLevel", "damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
   return isRecord(value)
     && Object.keys(value).every(key => optional.includes(key) || equipmentKeys.some(known => key === known))
     && equipmentKeys.every((key) => typeof value[key] === "string")
@@ -107,7 +109,8 @@ function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["cu
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {
   if (!isRecord(value) || !Object.hasOwn(value, "character") || !Object.hasOwn(value, "equipment")
-    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets"].includes(key))) return false;
+    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets", "statWindow"].includes(key))) return false;
+  if (Object.hasOwn(value, "statWindow") && !isStatWindowSnapshot(value.statWindow)) return false;
   if (Object.hasOwn(value, "weaponPresets") && !isWeaponPresets(value.weaponPresets)) return false;
   const equipment = value.equipment;
   if (!isCharacterInput(value.character) || !isRecord(equipment)) return false;

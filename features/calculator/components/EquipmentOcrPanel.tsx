@@ -2,34 +2,47 @@
 
 import {
   useCallback,
+  useId,
   useEffect,
   useState,
   useRef,
   type ChangeEvent,
+  type ReactNode,
 } from "react";
 import { JOB_RULES } from "../domain/job-rules";
+import { matchingSlots } from "../domain/slots";
 import { EQUIPMENT_SLOT_LABELS } from "../labels";
 import {
   createBrowserTooltipRecognizer,
   isSupportedTooltipImage,
   MAX_TOOLTIP_IMAGE_BYTES,
   toRecognitionError,
+  recognitionErrorMessage,
   type TooltipRecognizer,
 } from "../ocr/recognizeTooltip.client";
 import { mapRecognizedStats } from "../ocr/mapRecognizedStats";
 import { parseMapleTooltip } from "../ocr/parseMapleTooltip";
-import type { OcrTarget, StatReplacement } from "../ocr/types";
+import type { OcrBounds, OcrReview, OcrTarget, StatReplacement } from "../ocr/types";
+import { editedTextReview, mapReviewedStats, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
+import { OcrReviewIssues } from "./OcrReviewIssues";
+import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
-import { existingDuplicate, MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
+import { tooltipIdentity, existingDuplicate, MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
+import { clipboardImages } from "../ocr/clipboard";
 
 export type EquipmentOcrPanelProps = {
   target: OcrTarget;
   slotLabel?: string;
-  onApply: (target: OcrTarget, replacement: StatReplacement) => void;
+  onApply: (target: OcrTarget, replacement: StatReplacement, source?: { category: string|null; name: string|null; file: File|null; previewFile?: File|null }) => void;
+  purpose?: "equipment" | "candidate";
   onAddAsNew?: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
   createRecognizer?: () => TooltipRecognizer;
   slotChoices?: OcrSlotChoice[];
+  /** Candidate destinations are resolved after OCR without changing the active OCR target. */
+  candidateSlots?: Pick<OcrSlotChoice, "slot" | "label">[];
+  uploadFields?: ReactNode;
   onApplyBatch?: ApplyOcrBatch;
+  captureDocumentPaste?: boolean;
 };
 
 type PanelStatus = "idle" | "loading" | "recognizing" | "ready" | "error";
@@ -54,39 +67,6 @@ const revokePreviewUrl = (url: string | null): void => {
   URL.revokeObjectURL(url);
 };
 
-type ClipboardDataEvent = {
-  clipboardData: DataTransfer | null;
-};
-
-const findClipboardImages = (event: ClipboardDataEvent): File[] => {
-  const clipboard = event.clipboardData;
-  if (clipboard === null) return [];
-  const images: File[] = [];
-
-  for (const item of Array.from(clipboard.items ?? [])) {
-    if (item.kind !== "file") continue;
-    const file = item.getAsFile();
-    if (file !== null && file.type.toLowerCase().startsWith("image/")) {
-      images.push(file);
-    }
-  }
-
-  return images.length ? images : Array.from(clipboard.files ?? []).filter(file => file.type.toLowerCase().startsWith("image/"));
-};
-
-const errorMessage = (code: string): string => {
-  switch (code) {
-    case "UNSUPPORTED_FILE":
-      return "지원되지 않는 이미지 형식입니다. PNG, JPEG, WebP를 선택하세요.";
-    case "FILE_TOO_LARGE":
-      return "이미지가 너무 큽니다. 12MB 이하의 이미지를 선택하세요.";
-    case "CANCELLED":
-      return "OCR을 취소했습니다.";
-    default:
-      return "이미지에서 장비 옵션을 읽지 못했습니다. 다시 시도하세요.";
-  }
-};
-
 const progressMessage = (
   status: Exclude<PanelStatus, "idle" | "ready" | "error">,
   progress: number,
@@ -99,13 +79,20 @@ const progressMessage = (
 
 export function EquipmentOcrPanel({
   target,
+  purpose = "equipment",
   slotLabel: providedSlotLabel,
   onApply,
   onAddAsNew,
   createRecognizer,
   slotChoices = [],
+  candidateSlots,
+  uploadFields,
   onApplyBatch,
+  captureDocumentPaste = true,
 }: EquipmentOcrPanelProps) {
+  const panelId = useId();
+  const [candidateConfirmed,setCandidateConfirmed] = useState(false);
+  const [candidateSlot, setCandidateSlot] = useState("");
   const [recognizer] = useState<TooltipRecognizer>(() => (
     createRecognizer === undefined
       ? createBrowserTooltipRecognizer()
@@ -121,6 +108,10 @@ export function EquipmentOcrPanel({
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [proposal, setProposal] = useState<StatReplacement | null>(null);
+  const [review, setReview] = useState<OcrReview | null>(null);
+  const [reviewImage, setReviewImage] = useState<File | null>(null);
+  const [overrides, setOverrides] = useState<StatReplacement>({});
+  const [selectingRegion, setSelectingRegion] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
   const [allowDuplicate, setAllowDuplicate] = useState(false);
   const [batch, setBatch] = useState<{id: number; job: OcrTarget["job"]; files: File[]} | null>(null);
@@ -153,6 +144,12 @@ export function EquipmentOcrPanel({
     setProgress(0);
     setError(null);
     setLastFile(null);
+    setReview(null);
+    setReviewImage(null);
+    setOverrides({});
+    setCandidateConfirmed(false);
+    setCandidateSlot("");
+    setSelectingRegion(false);
     if (clearProposal) {
       setAllowDuplicate(false);
       setProposal(null);
@@ -161,21 +158,22 @@ export function EquipmentOcrPanel({
     }
   }, [clearPreview, recognizer]);
 
-  const processFile = useCallback((file: File) => {
+  const processFile = useCallback((file: File, region?: OcrBounds, enhance = false) => {
     cancelCurrent();
 
     if (!isSupportedTooltipImage(file)) {
       setStatus("error");
-      setError({ message: errorMessage("UNSUPPORTED_FILE"), retryable: false });
+      setError({ message: recognitionErrorMessage({ code: "UNSUPPORTED_FILE", retryable: false }), retryable: false });
       return;
     }
     if (file.size > MAX_TOOLTIP_IMAGE_BYTES) {
       setStatus("error");
-      setError({ message: errorMessage("FILE_TOO_LARGE"), retryable: false });
+      setError({ message: recognitionErrorMessage({ code: "FILE_TOO_LARGE", retryable: false }), retryable: false });
       return;
     }
 
     setLastFile(file);
+    setReviewImage(file);
     const id = operationIdRef.current + 1;
     operationIdRef.current = id;
     const controller = new AbortController();
@@ -192,9 +190,20 @@ export function EquipmentOcrPanel({
     setError(null);
 
     void (async () => {
+      let recognizedReview: OcrReview | undefined;
+      let succeeded = false;
       try {
         const text = await recognizer.recognize(file, {
-          signal: controller.signal,
+          signal: controller.signal, region, enhance,
+          onReview: result => { recognizedReview = result; },
+          onPrepared: image => {
+            if (controller.signal.aborted || activeOperationRef.current?.id !== id) return;
+            setReviewImage(image);
+            revokePreviewUrl(previewUrlRef.current);
+            const url = createPreviewUrl(image);
+            previewUrlRef.current = url;
+            setPreviewUrl(url);
+          },
           onProgress: ({ status: nextStatus, progress: nextProgress }) => {
             if (
               activeOperationRef.current?.id !== id ||
@@ -216,10 +225,12 @@ export function EquipmentOcrPanel({
         }
 
         setRecognizedText(text);
-        setProposal(mapRecognizedStats(parseMapleTooltip(text), captured.job));
+        setReview(recognizedReview ?? null);
+        setProposal(recognizedReview ? mapReviewedStats(recognizedReview, captured.job) : mapRecognizedStats(parseMapleTooltip(text), captured.job));
         setCapturedTarget(captured);
         setStatus("ready");
         setProgress(1);
+        succeeded = true;
       } catch (recognitionError) {
         if (
           activeOperationRef.current?.id !== id ||
@@ -238,19 +249,20 @@ export function EquipmentOcrPanel({
 
         setStatus("error");
         setError({
-          message: errorMessage(normalized.code),
+          message: recognitionErrorMessage(normalized),
           retryable: normalized.retryable,
         });
       } finally {
         if (activeOperationRef.current?.id !== id) return;
         activeOperationRef.current = null;
-        clearPreview();
+        if (!succeeded) clearPreview();
       }
     })();
   }, [cancelCurrent, clearPreview, recognizer, target]);
 
   const processFiles = useCallback((files: File[]) => {
     if (!files.length) return;
+    if (purpose === "candidate" && files.length > 1) { setError({message:"후보 사진은 한 장씩 추가해주세요.",retryable:false}); return; }
     if (files.length > MAX_BATCH_FILES || files.reduce((sum, file) => sum + file.size, 0) > MAX_BATCH_BYTES) {
       setError({message: "한 번에 최대 50장, 합계 120MB까지 선택할 수 있습니다.", retryable: false});
       return;
@@ -262,7 +274,7 @@ export function EquipmentOcrPanel({
       setBatch(null);
       processFile(files[0]);
     }
-  }, [onApplyBatch, batch, cancelCurrent, target.job, processFile]);
+  }, [onApplyBatch, batch, cancelCurrent, target.job, processFile, purpose]);
 
   useEffect(() => {
     return () => {
@@ -284,16 +296,20 @@ export function EquipmentOcrPanel({
   }, [cancelCurrent, target.job, target.slot]);
 
   useEffect(() => {
+    if (!captureDocumentPaste) return;
     const handleDocumentPaste = (event: ClipboardEvent) => {
-      const files = findClipboardImages(event);
+      if (event.defaultPrevented) return;
+      if (purpose === "candidate" && !fileInputRef.current?.closest("dialog")?.hasAttribute("open")) return;
+      const files = clipboardImages(event.clipboardData);
       if (files.length === 0) return;
       event.preventDefault();
+      if (purpose === "candidate") event.stopPropagation();
       processFiles(files);
     };
 
-    document.addEventListener("paste", handleDocumentPaste);
-    return () => document.removeEventListener("paste", handleDocumentPaste);
-  }, [processFiles]);
+    document.addEventListener("paste", handleDocumentPaste, purpose === "candidate");
+    return () => document.removeEventListener("paste", handleDocumentPaste, purpose === "candidate");
+  }, [processFiles, captureDocumentPaste, purpose]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.currentTarget.files ?? []);
@@ -302,9 +318,17 @@ export function EquipmentOcrPanel({
   };
 
   const updateProposal = (field: keyof StatReplacement, value: string) => {
+    setCandidateConfirmed(false);
+    setOverrides(current => ({ ...current, [field]: value }));
     setProposal((current) => current === null
       ? current
       : { ...current, [field]: value });
+  };
+  const updateReview = (next: OcrReview) => {
+    setCandidateConfirmed(false);
+    setReview(next);
+    setRecognizedText(reviewText(next));
+    setProposal({ ...mapReviewedStats(next, target.job), ...overrides });
   };
 
   const rule = JOB_RULES[target.job];
@@ -321,15 +345,22 @@ export function EquipmentOcrPanel({
     { field: "subPercent", label: `OCR ${rule.subStat}%`, max: 999, step: "any" },
     { field: "attackFlat", label: "OCR 공격력", max: 9999, step: 1 },
     { field: "attackPercent", label: "OCR 공격력%", max: 999, step: "any" },
+    { field: "requiredLevel", label: "OCR 요구 레벨", max: 9999, step: 1 },
     { field: "requiredSub", label: `OCR 요구 ${rule.subStat}`, max: 9999, step: 1 },
     { field: "totalDamagePercent", label: "OCR 총데미지%", max: 999, step: "any" },
     { field: "bossDamagePercent", label: "OCR 보스공격력%", max: 999, step: "any" },
     { field: "ignoreDefensePercent", label: "OCR 방어율 무시%", max: 100, step: "any" },
   ];
-  const parsed = parseMapleTooltip(recognizedText);
+  const parsed = { ...parseMapleTooltip(recognizedText), ...(review ? { category: review.category } : {}) };
+  const candidateMatches = matchingSlots(parsed.category, candidateSlots ?? []);
+  const candidateChoices = parsed.category ? candidateMatches : candidateSlots ?? [];
+  const candidateDestination = candidateMatches.length === 1 ? candidateMatches[0]
+    : candidateChoices.find(choice => choice.slot === candidateSlot);
+  const needsCandidateSlot = purpose === "candidate" && candidateSlots !== undefined && !candidateDestination;
   const duplicate = existingDuplicate(parsed, target.job, slotChoices);
   const duplicateBlocked = duplicate !== null && !allowDuplicate;
-  const hasApplicableOptions = parsed.options.some(option => {
+  const needsReview = review ? reviewBlocked(review, target.job) : false;
+  const hasApplicableOptions = review ? Object.values(proposal ?? {}).some(value => value !== undefined && value !== "") : parsed.options.some(option => {
     const mapped = mapRecognizedStats(parseMapleTooltip(option.raw), target.job);
     return Object.values(mapped).some(value => value !== "");
   });
@@ -343,18 +374,19 @@ export function EquipmentOcrPanel({
   return (
     <section
       className="equipment-ocr-panel"
-      aria-labelledby="equipment-ocr-heading"
+      aria-labelledby={`${panelId}-heading`}
+      tabIndex={purpose === "candidate" ? 0 : undefined}
+      onPaste={event => { if(purpose!=="candidate")return; const files=clipboardImages(event.clipboardData);if(files.length){event.preventDefault();event.stopPropagation();processFiles(files);} }}
+      onDragOver={event=>{if(purpose==="candidate")event.preventDefault();}}
+      onDrop={event=>{if(purpose==="candidate"){event.preventDefault();event.stopPropagation();processFiles(Array.from(event.dataTransfer.files));}}}
     >
       <div className="equipment-ocr-heading">
         <div>
-          <p className="panel-kicker">로컬 OCR</p>
-          <h3 id="equipment-ocr-heading">{batch && batch.job === target.job ? "여러 장비" : slotLabel} 스크린샷 인식</h3>
+
+          <h3 id={`${panelId}-heading`}>{batch && batch.job === target.job ? "여러 장비" : slotLabel} 스크린샷 인식</h3>
         </div>
-        <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
+
       </div>
-      <p className="equipment-ocr-description">
-        이미지를 붙여넣으면 스탯·공격력·잠재 옵션을 읽습니다. 인식값을 확인한 뒤 선택한 장비에 적용하세요.
-      </p>
 
       <div className="equipment-ocr-upload">
         <button
@@ -368,23 +400,22 @@ export function EquipmentOcrPanel({
           ref={fileInputRef}
           className="equipment-ocr-file-input"
           type="file"
-          multiple
+          multiple={purpose !== "candidate"}
           accept="image/png,image/jpeg,image/webp"
-          aria-label="장비 스크린샷 파일"
+          aria-label={purpose === "candidate" ? "비교 후보 스크린샷" : "장비 스크린샷 파일"}
           tabIndex={-1}
           onChange={handleFileChange}
         />
-        <div
+        {(captureDocumentPaste || purpose === "candidate") && <div
           className="equipment-ocr-paste-zone"
           tabIndex={0}
           role="group"
           aria-label="장비 스크린샷 붙여넣기"
         >
-          페이지 어디서든 Ctrl+V로 붙여넣기
-        </div>
+          Ctrl+V로 붙여넣기
+        </div>}
       </div>
-
-      <p className="equipment-ocr-description">여러 이미지를 한 번에 선택할 수 있습니다. 이미지당 12MB · 최대 50장 / 합계 120MB</p>
+      {uploadFields}
       {batch && batch.job === target.job && onApplyBatch && <EquipmentOcrBatchPanel key={batch.id}
         files={batch.files} job={batch.job} choices={slotChoices} onApply={onApplyBatch}
         createRecognizer={createRecognizer} onClose={() => setBatch(null)} />}
@@ -396,11 +427,10 @@ export function EquipmentOcrPanel({
         </figure>
       )}
 
-      {(!batch || batch.job !== target.job) && <p className="equipment-ocr-status" role="status" aria-live="polite">
-        {status === "idle" && "스크린샷을 선택하거나 붙여넣으세요."}
+      {status !== "idle" && (!batch || batch.job !== target.job) && <p className="equipment-ocr-status" role="status" aria-live="polite">
         {status === "loading" && progressMessage("loading", progress)}
         {status === "recognizing" && progressMessage("recognizing", progress)}
-        {status === "ready" && "인식 결과를 확인한 뒤 적용할 수 있습니다."}
+        {status === "ready" && "인식 완료"}
         {status === "error" && "인식에 실패했습니다."}
       </p>}
 
@@ -432,31 +462,44 @@ export function EquipmentOcrPanel({
         </div>
       )}
 
+      {lastFile && (status === "error" || status === "ready") && <div className="equipment-ocr-actions">
+        <button type="button" className="secondary-button" onClick={() => setSelectingRegion(true)}>설명창 영역 직접 선택</button>
+        <button type="button" className="secondary-button" onClick={() => processFile(lastFile, undefined, true)}>대비 보정 후 다시 읽기</button>
+      </div>}
+      {selectingRegion && lastFile && <TooltipRegionSelector file={lastFile} onSelect={region => processFile(lastFile, region)} onCancel={() => setSelectingRegion(false)} />}
+
       {proposal === null ? null : (
         <div className="equipment-ocr-review">
           <div className="equipment-ocr-review-heading">
             <h4>인식값 검토</h4>
-            <span>{capturedTarget?.slot === target.slot ? "현재 카드" : "이전 카드"}</span>
+            <span>{purpose === "candidate" ? candidateDestination ? `${candidateDestination.label} 교체` : "구매 후보" : capturedTarget?.slot === target.slot ? "현재 카드" : "이전 카드"}</span>
           </div>
-          <p>기본 스탯과 총데미지·보공·방무는 검토값으로 교체하며 빈칸은 0입니다. 누락된 잠재 옵션을 확인하세요. 공격력·요구 스탯은 인식된 항목만 교체합니다.</p>
+          {purpose === "candidate" && candidateSlots !== undefined && candidateMatches.length !== 1 && <div className="candidate-slot-review">
+            <p role="status">{parsed.category
+              ? candidateChoices.length ? `${parsed.category} 장착 칸이 여러 개입니다. 교체할 장비를 선택해주세요.` : `인식 부위(${parsed.category})에 맞는 장비 부위를 먼저 추가해주세요.`
+              : "부위를 인식하지 못했습니다. 교체할 장비를 선택해주세요."}</p>
+            {candidateChoices.length > 0 && <label>교체할 장비<select aria-label="교체할 장비 부위" value={candidateDestination?.slot ?? ""} onChange={event => setCandidateSlot(event.target.value)}>
+              <option value="" disabled>부위 선택</option>{candidateChoices.map(choice => <option key={choice.slot} value={choice.slot}>{choice.label}</option>)}
+            </select></label>}
+          </div>}
+          <p>{purpose === "candidate" ? "미입력 옵션은 0으로 비교합니다. 요구 레벨·스탯은 확인해주세요." : "미인식 값은 유지됩니다. 삭제하려면 0을 입력하세요."}</p>
+          {review && reviewImage && <OcrReviewIssues review={review} job={target.job} image={reviewImage} onChange={updateReview} />}
           {duplicate && <div className="ocr-duplicate-message" role="alert">
             <p>{duplicate} 같은 옵션의 실제 별도 장비인지 확인하세요.</p>
             <label className="check-field"><input type="checkbox" checked={allowDuplicate} onChange={event => setAllowDuplicate(event.currentTarget.checked)} />중복 확인 후 적용 허용</label>
           </div>}
-          {parsed.options.some(option => option.label.replace(/\s/g, "") === "흑수정강화공격력") && (
-            <p>사진에 표시된 공격력 수치를 그대로 입력합니다. 흑수정 강화 공격력은 별도 표기로 목록에만 표시합니다.</p>
-          )}
           <div className="equipment-ocr-proposal-grid">
-            {fieldDefinitions.filter(({field}) => proposal[field] !== undefined).map(({ field, label, max, step }) => (
+            {fieldDefinitions.map(({ field, label, max, step }) => (
               <div className="field" key={field}>
-                <label htmlFor={`equipment-ocr-${field}`}>{label}</label>
+                <label htmlFor={`${panelId}-${field}`}>{label}</label>
                 <input
-                  id={`equipment-ocr-${field}`}
+                  id={`${panelId}-${field}`}
                   type="number"
                   min={0}
                   max={max}
                   step={step}
-                  value={proposal[field]}
+                  value={proposal[field] ?? ""}
+                  placeholder={review && proposal[field] === undefined ? "미인식 · 기존 값 유지" : undefined}
                   onChange={(event) => updateProposal(field, event.currentTarget.value)}
                 />
               </div>
@@ -474,22 +517,30 @@ export function EquipmentOcrPanel({
           <details className="equipment-ocr-details">
             <summary>인식 텍스트 확인·수정 / 옵션 추가</summary>
             <p>누락된 옵션은 한 줄씩 추가할 수 있습니다. 예: 공격력 +106, 총데미지 +9%, REQ STR: 120</p>
-            <label htmlFor="ocr-recognized-text">인식 텍스트</label>
-            <textarea id="ocr-recognized-text" rows={10} value={recognizedText} onChange={event => {
+            <label htmlFor={`${panelId}-text`}>인식 텍스트</label>
+            <textarea id={`${panelId}-text`} rows={10} value={recognizedText} onChange={event => {
+              setCandidateConfirmed(false);
+              setCandidateSlot("");
               const text = event.currentTarget.value;
               setRecognizedText(text);
-              setProposal(mapRecognizedStats(parseMapleTooltip(text), target.job));
+              if (review) {
+                const edited = editedTextReview(text);
+                setReview(edited);
+                setOverrides({});
+                setProposal(mapReviewedStats(edited, target.job));
+              } else setProposal(mapRecognizedStats(parseMapleTooltip(text), target.job));
             }} />
-            <p>숫자나 옵션 이름이 잘못 읽힌 줄은 이미지와 대조해 수정하세요. 텍스트를 수정하면 위 검토값을 다시 계산합니다.</p>
+
           </details>
           {!hasApplicableOptions && <p role="alert">계산에 적용할 옵션을 찾지 못했습니다. 인식 텍스트를 확인하거나 다른 캡처를 넣어주세요.</p>}
           {!proposalValid && <p role="alert">검토값의 범위를 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999입니다.</p>}
+          {purpose === "candidate" && <label className="check-field"><input type="checkbox" checked={candidateConfirmed} onChange={event=>setCandidateConfirmed(event.target.checked)} />원본의 모든 옵션을 확인했습니다</label>}
           <div className="equipment-ocr-actions">
             {parsed.category && onAddAsNew && (
               <button
                 type="button"
                 className="equipment-ocr-apply"
-                disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked}
+                disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked || needsReview}
                 onClick={() => {
                   if (capturedTarget) onAddAsNew(capturedTarget, parsed.category!, proposal);
                 }}
@@ -500,12 +551,12 @@ export function EquipmentOcrPanel({
             <button
               type="button"
               className="equipment-ocr-apply"
-              disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked}
+              disabled={!hasApplicableOptions || !proposalValid || duplicateBlocked || needsReview || needsCandidateSlot || (purpose === "candidate" && !candidateConfirmed)}
               onClick={() => {
-                if (capturedTarget !== null) onApply(capturedTarget, proposal);
+                if (capturedTarget !== null) { if(purpose === "candidate") onApply({...capturedTarget, slot:candidateDestination?.slot ?? capturedTarget.slot},proposal,{category:parsed.category,name:tooltipIdentity(recognizedText).name,file:lastFile,previewFile:reviewImage}); else onApply(capturedTarget, proposal); }
               }}
             >
-              인식값 적용
+              {purpose === "candidate" ? "후보로 비교" : "인식값 적용"}
             </button>
             <button
               type="button"

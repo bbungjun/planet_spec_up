@@ -5,6 +5,7 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { calculateDamageResult } from "@/features/calculator/domain/calculate";
 import { parseMapleTooltip } from "@/features/calculator/ocr/parseMapleTooltip";
 import { mapRecognizedStats } from "@/features/calculator/ocr/mapRecognizedStats";
+import { RING_SLOTS } from "@/features/calculator/domain/slots";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -51,4 +52,22 @@ it("flags matching existing gear values only within a matching equipment categor
   const choices = [{slot: "weapon" as const, label: "무기", equipment: input.equipment.weapon!}];
   expect(existingDuplicate(parseMapleTooltip("장비분류: 건\n공격력 +100"), "corsair", choices)).toContain("이미 입력된 무기");
   expect(existingDuplicate(parseMapleTooltip("장비분류: 장갑\n공격력 +100"), "corsair", choices)).toBeNull();
+});
+
+it("keeps four equal rings distinct in calculation and rejects a fifth or a non-ring destination atomically", () => {
+  const input = createDefaultInput("corsair");
+  const replacement = mapRecognizedStats(parseMapleTooltip("장비분류: 반지\nDEX +5\nDEX +6%\nSTR +1"), "corsair");
+  const entries = RING_SLOTS.map(destination => ({ destination, label: "반지", category: "반지", replacement }));
+  const result = applyOcrBatch(input, "corsair", entries);
+  expect(result.error).toBeNull();
+  expect(RING_SLOTS.reduce((sum, slot) => sum + Number(result.input!.equipment[slot]!.mainFlat), 0)).toBe(20);
+  expect(RING_SLOTS.reduce((sum, slot) => sum + Number(result.input!.equipment[slot]!.mainPercent), 0)).toBe(24);
+  expect(existingDuplicate(parseMapleTooltip("장비분류: 반지\nDEX +5\nDEX +6%\nSTR +1"), "corsair",
+    RING_SLOTS.map(slot => ({ slot, label: "반지", equipment: result.input!.equipment[slot]! })))).toBeNull();
+  for (const destination of ["new", "hat"] as const) {
+    const invalid = applyOcrBatch(input, "corsair", [...entries, { destination, label: "다른 이름", category: "반지", replacement }]);
+    expect(invalid.input).toBeNull();
+    expect(invalid.error).toContain("최대 4개");
+  }
+  expect(input.equipment.ring_1!.mainFlat).toBe("");
 });

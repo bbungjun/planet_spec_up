@@ -11,7 +11,9 @@ export function useSavedSetup() {
   }, []);
 
   const save = useCallback((input: CalculatorInput) => {
-    window.localStorage.setItem(STORAGE_KEY, serializeSetup(input));
+    const savedAt = new Date().toISOString();
+    window.localStorage.setItem(STORAGE_KEY, serializeSetup(input, savedAt));
+    return savedAt;
   }, []);
 
   const clear = useCallback(() => {

@@ -1,0 +1,40 @@
+import { JOB_RULES } from "../domain/job-rules";
+import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
+import type { CalculationResult, CalculatorInput } from "../domain/types";
+
+type Props = { input: CalculatorInput; result: CalculationResult; buffSummary: string };
+const number = (value: number) => value.toLocaleString("ko-KR", { maximumFractionDigits: 4 });
+
+/** All values belong to the active calculator result; OCR observations are not substituted. */
+export function PresetStatWindow({input,result,buffSummary}:Props) {
+  const rule=JOB_RULES[input.character.job], preset=WEAPON_PRESETS.find(p=>p.id===activeWeaponPreset(input))!;
+  const critical=result.criticalStats;
+  const fixed=!!input.character.pureMain?.trim() && !!input.character.pureSub?.trim();
+  const invalid=result.issues.some(issue=>issue.severity==="error");
+  const missingWeapon=result.issues.some(issue=>issue.code==="MISSING_WEAPON_ATTACK");
+  return <section className="preset-stat-window" aria-label="선택 프리셋 스탯창">
+    <header className="preset-stat-heading"><div><h2>프리셋 스탯창</h2><span>{rule.label} · Lv. {input.character.level || "—"}</span></div><strong>{preset.label}</strong></header>
+    <div className="preset-stat-sheet">
+      <dl className="preset-base-stats">
+        {([[rule.mainStat,result.mainStat,result.pureMain],[rule.subStat,result.subStat,result.pureSub]] as const).map(([stat,total,pure])=><div key={stat}>
+          <dt>{stat}</dt><dd><strong>{number(total)}</strong><small aria-label={`${stat} 순수 및 추가 스탯`}>순수 {number(pure)} + 추가 {number(total-pure)}</small></dd>
+        </div>)}
+        {input.character.job==="night_lord" && <div><dt>STR</dt><dd><strong>{number(result.extraStr)}</strong><small>능력창 입력</small></dd></div>}
+        <div><dt>공격력</dt><dd><strong>{number(result.totalAttack)}</strong></dd></div>
+      </dl>
+      <div className="preset-stat-context"><span>{fixed?"순수 스탯 고정":"순수 스탯 추정"}</span><span aria-label="현재 적용 버프">{buffSummary}</span></div>
+      <dl className="preset-combat-stats">
+        <div><dt>크리확률</dt><dd><strong>{critical?`${number(critical.baseRate+critical.extraRate+critical.buffRate)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseRate)} + 추가 {number(critical.extraRate)} + 버프 {number(critical.buffRate)}</small>}</dd></div>
+        <div><dt>크리데미지</dt><dd><strong>{critical?`${number(critical.baseDamage+critical.buffDamage)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseDamage)} + 버프 {number(critical.buffDamage)}</small>}</dd></div>
+        <div><dt>크리 배율</dt><dd><strong>×{result.criticalMultiplier.toFixed(3)}</strong></dd></div>
+        <div><dt>보공·총뎀 적용값</dt><dd><strong>{number(result.formulaInputs.bossAndTotalDamage)}%</strong></dd></div>
+        <div><dt>방어율 배율</dt><dd><strong>×{result.defenseMultiplier.toFixed(3)}</strong></dd></div>
+      </dl>
+      <div className="preset-damage-results">
+        <div><span>최대 스탯 공격력</span><output aria-label="스탯 공격력 결과">{number(result.statAttack)}</output></div>
+        <div className="preset-converted-result"><span>환산 공격력</span><output aria-label="환산 공격력 결과">{number(result.convertedAttack)}</output></div>
+      </div>
+      {(invalid||missingWeapon)&&<p className="preset-stat-input-notice" role="status">{invalid?"입력값 확인 필요":"무기 공격력 입력 필요"}</p>}
+    </div>
+  </section>;
+}

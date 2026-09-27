@@ -1,3 +1,4 @@
+import { checkEquipmentRequirements } from "./requirements";
 import { allocatePureStats, sumEquipment } from "./equipment";
 import {
   calculateConvertedAttack,
@@ -12,6 +13,7 @@ import { JOB_RULES } from "./job-rules";
 import { normalizeInput } from "./normalize";
 import { activeWeaponPreset } from "./weapon-presets";
 import { getVisibleEquipmentSlots } from "./slots";
+import { levelAchievementBonus, MAX_CHARACTER_LEVEL } from "./level";
 import type {
   CalculatorInput,
   CalculationResult,
@@ -46,6 +48,9 @@ export type CalculationSnapshot = {
   guildIgnoreLevel: GuildSkillLevel;
   guildAttackLevel: GuildSkillLevel;
   guildActiveBoss: boolean;
+  guildBossPercent?: number;
+  guildIgnorePercent?: number;
+  guildAttackFlat?: number;
   pureMain?: number;
   pureSub?: number;
   issues?: ValidationIssue[];
@@ -64,9 +69,13 @@ export function calculateFromSnapshot(
   snapshot: CalculationSnapshot,
 ): CalculationResult {
   const rule = JOB_RULES[snapshot.job];
+  const guildBoss = snapshot.guildBossPercent ?? snapshot.guildBossLevel;
+  const guildIgnore = snapshot.guildIgnorePercent ?? snapshot.guildIgnoreLevel * 2;
+  const guildAttack = snapshot.guildAttackFlat ?? snapshot.guildAttackLevel;
+  const levelBonus = levelAchievementBonus(snapshot.level);
   const defenseMultiplier = calculateDefenseMultiplier(
     snapshot.monsterDefense,
-    snapshot.ignoreDefense + snapshot.guildIgnoreLevel * 2,
+    snapshot.ignoreDefense + guildIgnore,
   );
   const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
   const criticalMultiplier = calculateCriticalMultiplier(
@@ -75,10 +84,10 @@ export function calculateFromSnapshot(
     snapshot.skillPercent,
   );
   const bossAndTotalDamage = (snapshot.totalDamagePercent ?? 0) + (snapshot.isBoss === false ? 0 : snapshot.bossAndTotalDamage
-    + snapshot.guildBossLevel
+    + guildBoss
     + (snapshot.guildActiveBoss ? 10 : 0));
 
-  if (snapshot.level < 1) {
+  if (!Number.isInteger(snapshot.level) || snapshot.level < 1 || snapshot.level > MAX_CHARACTER_LEVEL) {
     return {
       mainStat: 0,
       subStat: 0,
@@ -102,7 +111,7 @@ export function calculateFromSnapshot(
     level: snapshot.level,
     mapleWarriorRate: warriorRate,
     minimumSub: rule.minimumSub,
-    equipmentSub: snapshot.equipmentSub,
+    equipmentSub: snapshot.equipmentSub + levelBonus.allStat,
     equipmentSubPercent: snapshot.subPercent,
     requirements: [],
     manualPureSub: null,
@@ -111,13 +120,13 @@ export function calculateFromSnapshot(
   const pureSub = snapshot.pureSub ?? defaultAllocation.pureSub;
   const mainStat = calculateTotalStat(
     pureMain,
-    snapshot.equipmentMain,
+    snapshot.equipmentMain + levelBonus.allStat,
     snapshot.mainPercent,
     warriorRate,
   );
   const subStat = calculateTotalStat(
     pureSub,
-    snapshot.equipmentSub,
+    snapshot.equipmentSub + levelBonus.allStat,
     snapshot.subPercent,
     warriorRate,
   );
@@ -126,7 +135,7 @@ export function calculateFromSnapshot(
     : 0;
   const totalAttack = calculateTotalAttack(
     snapshot.percentEligibleAttack,
-    snapshot.flatAttack + snapshot.guildAttackLevel,
+    snapshot.flatAttack + guildAttack + levelBonus.attack,
     snapshot.attackPercent,
   );
   const statAttack = calculateStatAttack(
@@ -157,11 +166,19 @@ export function calculateFromSnapshot(
     },
     pureMain,
     pureSub,
+    criticalStats: { baseRate: rule.baseCriticalRate, extraRate: snapshot.criticalRate ?? 0, buffRate: sharpEyes.criticalRate, baseDamage: rule.baseCriticalDamage, buffDamage: sharpEyes.criticalDamage },
+    windowStats: {
+      totalDamagePercent: snapshot.totalDamagePercent ?? 0,
+      bossDamagePercent: snapshot.bossAndTotalDamage + guildBoss + (snapshot.guildActiveBoss ? 10 : 0),
+      ignoreDefensePercent: snapshot.ignoreDefense + guildIgnore,
+      criticalRate: rule.baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate,
+    },
     issues: snapshot.issues ?? [],
   };
 }
 
-export function calculateDamageResult(input: CalculatorInput): CalculationResult {
+/** Shared current conditions, including the current pure-stat allocation. */
+export function createCalculationSnapshot(input: CalculatorInput): CalculationSnapshot {
   const normalized = normalizeInput(input);
   const character = normalized.value.character;
   const sumOption = (field: "damagePercent" | "totalDamagePercent" | "bossDamagePercent" | "ignoreDefensePercent") =>
@@ -197,13 +214,13 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
     level: character.level,
     mapleWarriorRate: warriorRate,
     minimumSub: rule.minimumSub,
-    equipmentSub: equipment.subFlat,
+    equipmentSub: equipment.subFlat + levelAchievementBonus(character.level).allStat,
     equipmentSubPercent: equipment.subPercent,
     requirements: equipment.requirements,
-    manualPureSub: character.manualPureSub,
+    manualPureSub: character.pureSub ?? character.manualPureSub,
   });
 
-  return calculateFromSnapshot({
+  return {
     job: character.job,
     level: character.level,
     mapleWarrior: character.mapleWarrior,
@@ -227,13 +244,20 @@ export function calculateDamageResult(input: CalculatorInput): CalculationResult
     guildIgnoreLevel: character.guildIgnoreLevel,
     guildAttackLevel: character.guildAttackLevel,
     guildActiveBoss: character.guildActiveBoss,
-    pureMain: allocation.pureMain,
-    pureSub: allocation.pureSub,
+    guildBossPercent: character.guildBossPercent,
+    guildIgnorePercent: character.guildIgnorePercent,
+    guildAttackFlat: character.guildAttackFlat,
+    pureMain: character.pureMain ?? allocation.pureMain,
+    pureSub: character.pureSub ?? allocation.pureSub,
     issues: [
       ...normalized.issues,
-      ...allocation.issues,
+      ...checkEquipmentRequirements(input, normalized.value),
       ...missingWeaponAttackIssues,
       ...legacyIssues,
     ],
-  });
+  };
+}
+
+export function calculateDamageResult(input: CalculatorInput): CalculationResult {
+  return calculateFromSnapshot(createCalculationSnapshot(input));
 }

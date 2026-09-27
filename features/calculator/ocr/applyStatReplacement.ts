@@ -5,5 +5,5 @@ export function applyStatReplacement(
   equipment: EquipmentInput,
   replacement: StatReplacement,
 ): EquipmentInput {
-  return { ...equipment, ...replacement };
+  return { ...equipment, ...Object.fromEntries(Object.entries(replacement).filter(([, value]) => value !== undefined)) };
 }

@@ -73,7 +73,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
 
   await user.type(necklace, "11");
   await user.click(screen.getByRole("button", { name: "저장" }));
-  expect(screen.getByRole("status", { name: "저장 상태" })).toHaveTextContent(savedAt);
+  expect(screen.getByRole("status", { name: "저장 상태" }).querySelector("time")).toHaveAttribute("datetime", savedAt);
 
   await user.clear(necklace);
   await user.type(necklace, "22");
@@ -100,7 +100,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
   await waitFor(() => {
     expect(screen.getByLabelText("목걸이 DEX")).toHaveValue(22);
   });
-  expect(screen.getByRole("status", { name: "저장 상태" })).toHaveTextContent(savedAt);
+  expect(screen.getByRole("status", { name: "저장 상태" }).querySelector("time")).toHaveAttribute("datetime", savedAt);
 });
 
 it("reports corrupt storage once without changing the current input", async () => {

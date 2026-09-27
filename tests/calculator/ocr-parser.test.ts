@@ -10,6 +10,13 @@ import { deserializeSetup, serializeSetup } from "@/features/calculator/storage"
 
 const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
 
+it("ignores leading bullet punctuation without repairing ambiguous digits or percentages", () => {
+  const parsed = parseMapleTooltip(". DEX: +3\n_DEX:+6%\n. STR: +5\nDEX +2.5%\n0.5DEX:+9%\n.DEX.446%");
+  expect(parsed.stats.DEX).toEqual({ flat: 3, percent: 8.5 });
+  expect(parsed.stats.STR.flat).toBe(5);
+  expect(parsed.unparsed).toEqual(["0.5DEX:+9%", ".DEX.446%"]);
+});
+
 const attachedTooltipText = [
   "STR +10",
   "DEX +21",
@@ -51,7 +58,7 @@ it("recognizes weapon options, requirements and repeated potential lines indepen
   expect(mapRecognizedStats(parsed, "corsair")).toEqual({
     ...clearedDamage,
     mainFlat: "7", subFlat: "3", mainPercent: "", subPercent: "",
-    attackFlat: "106", requiredSub: "120", totalDamagePercent: "21",
+    attackFlat: "106", requiredLevel: "120", requiredSub: "120", totalDamagePercent: "21",
   });
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "명중률", value: 5}));
   expect(parsed.options).toContainEqual(expect.objectContaining({label: "흑수정 강화 공격력", value: 2}));

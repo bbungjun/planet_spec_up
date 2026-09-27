@@ -16,26 +16,20 @@ import type {
 } from "../domain/types";
 import { getEquipmentSlotLabel } from "../domain/slots";
 import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
-import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
+import { PresetStatWindow } from "./PresetStatWindow";
+import { OptionEfficiencyPanel } from "./OptionEfficiencyPanel";
+import { levelAchievementBonus } from "../domain/level";
 
 type ResultsPanelProps = {
   job: JobId;
   input: CalculatorInput;
   result: CalculationResult;
   onNavigate: (path: string) => void;
+  onBuffSelect: (attack: number) => void;
 };
 
 const integerFormat = new Intl.NumberFormat("ko-KR", {
   maximumFractionDigits: 0,
-});
-
-const decimalFormat = new Intl.NumberFormat("ko-KR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-});
-
-const percentFormat = new Intl.NumberFormat("ko-KR", {
-  maximumFractionDigits: 20,
 });
 
 const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
@@ -48,6 +42,12 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   ignoreDefense: "방어율 무시",
   criticalRate: "추가 크리티컬 확률",
   manualPureSub: "순수 부스탯 수동값",
+  pureMain: "능력창 순수 주스탯",
+  pureSub: "능력창 순수 부스탯",
+  guildBossPercent: "길드 보스 공격력",
+  guildIgnorePercent: "길드 방어율 무시",
+  guildAttackFlat: "길드 공격력",
+  guildAccuracyFlat: "길드 명중률",
   nightLordStrStat: "나이트로드 스탯창 STR",
 };
 
@@ -80,11 +80,18 @@ export function ResultsPanel({
   input,
   result,
   onNavigate,
+  onBuffSelect,
 }: ResultsPanelProps) {
   const rule = JOB_RULES[job];
   const extraStat = job === "night_lord" ? " + STR" : "";
   const missingWeapon = result.issues.some(issue => issue.code === "MISSING_WEAPON_ATTACK");
-  const buffComparisons = useMemo(() => ATTACK_BUFF_PRESETS.filter(({attack}) => attack > 0).map(preset => ({
+  const activeBuffAttack = Number(input.equipment.buff?.attackFlat ?? "0");
+  const activeBuff = ATTACK_BUFF_PRESETS.find(preset => preset.attack === activeBuffAttack);
+  const invalidBuff = result.issues.some(issue => issue.path === "equipment.buff.attackFlat" && issue.severity === "error");
+  const buffSummary = invalidBuff ? "공격력 버프 입력을 확인해주세요"
+    : activeBuffAttack === 0 ? "공격력 버프 없음"
+    : `${activeBuff?.label ?? "직접 입력 버프"} +${activeBuffAttack} 적용`;
+  const buffComparisons = useMemo(() => ATTACK_BUFF_PRESETS.map(preset => ({
     ...preset,
     result: calculateDamageResult({
       ...input,
@@ -100,46 +107,32 @@ export function ResultsPanel({
       ["정령의 축복", normalized.equipment.blessing_1?.attackFlat ?? 0],
       ["여제의 축복", normalized.equipment.blessing_2?.attackFlat ?? 0],
       ["공격력 버프", normalized.equipment.buff?.attackFlat ?? 0],
-      ["길드 공격력", normalized.character.guildAttackLevel],
+      ["길드 공격력", normalized.character.guildAttackFlat],
+      ["레벨 달성 버프", levelAchievementBonus(normalized.character.level).attack],
     ] as const;
   }, [input]);
 
   return (
     <aside className="panel results-panel" aria-label="계산 결과">
-      <div className="panel-heading">
-        <div>
-          <p className="panel-kicker">실시간 결과</p>
-          <h2>계산 결과</h2>
-        </div>
-        <span className="live-badge">LIVE</span>
-      </div>
+      <PresetStatWindow input={input} result={result} buffSummary={buffSummary} />
 
-      <div className="primary-results">
-        <div className="result-card is-primary">
-          <span>최대 스탯 공격력</span>
-          <output aria-label="스탯 공격력 결과">
-            {integerFormat.format(result.statAttack)}
-          </output>
-          <small>게임 스탯창 공격력의 오른쪽 값</small>
-        </div>
-        <div className="result-card">
-          <span>환산 공격력</span>
-          <output aria-label="환산 공격력 결과">
-            {integerFormat.format(result.convertedAttack)}
-          </output>
-          <small>{WEAPON_PRESETS.find(preset => preset.id === activeWeaponPreset(input))!.label} · {activeWeaponPreset(input) === "hunting" ? "보공 제외" : "보공 포함"} · 방무·크리 반영</small>
-        </div>
-      </div>
+      {result.issues.some(issue => ["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code)) && <p className="equipment-wear-warning" role="status">착용 불가 장비 포함 · 가정값</p>}
+
+      <OptionEfficiencyPanel input={input} />
 
       <section className="buff-comparison" aria-label="버프별 스탯공 비교">
         <h3>버프별 최대 스탯공</h3>
         {buffComparisons.map(({label, attack, result: comparison}) => (
-          <div key={label} className={Number(input.equipment.buff?.attackFlat) === attack ? "is-active" : ""}>
-            <span>{label} <small>+{attack}</small></span>
+          <button key={label} type="button" className={`buff-comparison-option${!invalidBuff && activeBuffAttack === attack ? " is-active" : ""}`}
+            aria-label={`${label} 버프 적용`} aria-pressed={!invalidBuff && activeBuffAttack === attack}
+            onClick={() => onBuffSelect(attack)}>
+            <span className="buff-comparison-label">{label} <small>+{attack}</small>
+              {!invalidBuff && activeBuffAttack === attack && <span className="buff-applied-badge">적용 중</span>}
+            </span>
             <output aria-label={`${label} 예상 스탯공`}>{missingWeapon ? "—" : integerFormat.format(comparison.statAttack)}</output>
-          </div>
+          </button>
         ))}
-        <p>{missingWeapon ? "무기 공격력을 입력하면 비교값을 표시합니다." : "현재 장비에서 각 버프를 따로 적용한 값"}</p>
+
       </section>
 
       <details className="attack-breakdown">
@@ -147,59 +140,16 @@ export function ResultsPanel({
         <dl>{attackSources.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>+{integerFormat.format(value)}</dd></div>)}</dl>
       </details>
 
-      <section className="result-details" aria-labelledby="formula-heading">
-        <h3 id="formula-heading">계산 근거</h3>
-        <dl>
-          <div>
-            <dt>최종 주스탯</dt>
-            <dd>{integerFormat.format(result.mainStat)} {rule.mainStat}</dd>
-          </div>
-          <div>
-            <dt>최종 부스탯</dt>
-            <dd>{integerFormat.format(result.subStat)} {rule.subStat}</dd>
-          </div>
-          {job === "night_lord" ? (
-            <div>
-              <dt>스탯창 STR</dt>
-              <dd>{integerFormat.format(result.extraStr)} STR</dd>
-            </div>
-          ) : null}
-          <div>
-            <dt>최종 공격력</dt>
-            <dd>{integerFormat.format(result.totalAttack)}</dd>
-          </div>
-          <div>
-            <dt>보공·총뎀 적용값</dt>
-            <dd>{percentFormat.format(result.formulaInputs.bossAndTotalDamage)}%</dd>
-          </div>
-          <div>
-            <dt>순수 주스탯</dt>
-            <dd>{integerFormat.format(result.pureMain)}</dd>
-          </div>
-          <div>
-            <dt>순수 부스탯</dt>
-            <dd>{integerFormat.format(result.pureSub)}</dd>
-          </div>
-          <div>
-            <dt>방어율 배율</dt>
-            <dd>{decimalFormat.format(result.defenseMultiplier)}</dd>
-          </div>
-          <div>
-            <dt>크리 배율</dt>
-            <dd>{decimalFormat.format(result.criticalMultiplier)}</dd>
-          </div>
-        </dl>
-        <p className="formula-summary">
-          ({rule.mainStat} × {rule.weaponConstant} + {rule.subStat}{extraStat})
-          {" "}× 공격력 ÷ 100
-        </p>
-      </section>
+      <details className="preset-formula-details">
+        <summary>계산 근거</summary>
+        <p>최대 스탯공 = ⌊({rule.mainStat} × {rule.weaponConstant} + {rule.subStat}{extraStat}) × 공격력 ÷ 100⌋</p>
+        <p>환산공 = ⌊스탯공 × (1 + 보공·총뎀% ÷ 100) × 방어율 배율 × 크리 배율⌋</p>
+        <p>타격당 평균 데미지 {input.character.skillPercent || "0"}% 기준</p>
+      </details>
 
-      <section className="result-issues" aria-labelledby="issues-heading">
+      {result.issues.length > 0 && <section className="result-issues" aria-labelledby="issues-heading">
         <h3 id="issues-heading">확인할 항목</h3>
-        {result.issues.length === 0 ? (
-          <p className="no-issues">문제가 없습니다.</p>
-        ) : (
+
           <ul>
             {result.issues.map((issue, index) => {
               const severityLabel = issue.severity === "error" ? "오류" : "경고";
@@ -216,15 +166,14 @@ export function ResultsPanel({
                     <span>{severityLabel}</span>
                     <div>
                       <strong>{context}</strong>
-                      <div>{issue.message}</div>
+                      {!["UNMET_LEVEL_REQUIREMENT", "UNMET_SUBSTAT_REQUIREMENT"].includes(issue.code) && <div>{issue.message}</div>}
                     </div>
                   </button>
                 </li>
               );
             })}
           </ul>
-        )}
-      </section>
+      </section>}
     </aside>
   );
 }

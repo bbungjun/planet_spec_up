@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { render, screen, within, waitFor } from "@testing-library/react";
-import RootLayout, { PRODUCT_METADATA } from "@/app/layout";
+import RootLayout from "@/app/layout";
+import { PRODUCT_METADATA } from "@/features/site/metadata";
 import Page from "@/app/page";
 import type { EquipmentOcrPanelProps } from "@/features/calculator/components/EquipmentOcrPanel";
 import userEvent from "@testing-library/user-event";
@@ -255,7 +256,7 @@ describe("calculator app", () => {
     const before = captureCalculatorInput();
     const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
 
-    await user.click(screen.getByRole("button", { name: "Test stale OCR job" }));
+    await user.click(within(screen.getByRole("region", { name: "목걸이 옵션" })).getByRole("button", { name: "Test stale OCR job" }));
 
     expect(captureCalculatorInput()).toEqual(before);
     expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
@@ -272,7 +273,7 @@ describe("calculator app", () => {
     const before = captureCalculatorInput();
     const applyCallsBefore = mockedApplyStatReplacement.mock.calls.length;
 
-    await user.click(screen.getByRole("button", { name: "Test absent OCR slot" }));
+    await user.click(within(screen.getByRole("region", { name: "목걸이 옵션" })).getByRole("button", { name: "Test absent OCR slot" }));
 
     expect(captureCalculatorInput()).toEqual(before);
     expect(mockedApplyStatReplacement).toHaveBeenCalledTimes(applyCallsBefore);
@@ -396,7 +397,7 @@ describe("calculator app", () => {
     const errorId = level.getAttribute("aria-describedby");
     expect(errorId).not.toBeNull();
     expect(document.getElementById(errorId!))
-      .toHaveTextContent("Enter a value from 1 to 200.");
+      .toHaveTextContent("Enter a value from 1 to 220.");
     expect(statAttack).toHaveTextContent(/^0$/);
     expect(convertedAttack).toHaveTextContent(/^0$/);
   });
@@ -411,14 +412,14 @@ describe("calculator app", () => {
     expect(job).toHaveTextContent("나이트로드");
   });
 
-  it("exposes every character setting and keeps level editable from 1 to 200", async () => {
+  it("exposes every character setting and keeps level editable from 1 to 220", async () => {
     const user = userEvent.setup();
     render(<Page />);
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     const level = screen.getByLabelText("레벨");
     expect(level).toHaveAttribute("min", "1");
-    expect(level).toHaveAttribute("max", "200");
+    expect(level).toHaveAttribute("max", "220");
     await user.clear(level);
     await user.type(level, "70");
     expect(level).toHaveValue(70);
@@ -437,10 +438,10 @@ describe("calculator app", () => {
       "방어율 무시",
       "추가 크리티컬 확률",
       "순수 부스탯 수동값",
-      "길드 보스 데미지 스킬 레벨",
-      "길드 방어율 무시 스킬 레벨",
-      "길드 공격력 스킬 레벨",
-      "길드 액티브 보스 스킬 적용",
+      "길드 보스 공격력 (%)",
+      "길드 방어율 무시 (%)",
+      "길드 공격력",
+      "길드 액티브 보스 스킬 적용 (+10%)",
     ].forEach((label) => {
       expect(screen.getByLabelText(label)).toBeInTheDocument();
     });
@@ -530,6 +531,10 @@ describe("calculator app", () => {
 
     const necklace = screen.getByRole("button", { name: "목걸이 편집" });
     expect(necklace).toHaveClass("is-complete");
+    expect(within(necklace).queryByText("착용 조건 확인 필요")).not.toBeInTheDocument();
+    expect(within(necklace).getByText("✓ 입력 완료")).toBeVisible();
+    await user.type(screen.getByLabelText("목걸이 요구 레벨"), "0");
+    await user.type(screen.getByLabelText("목걸이 요구 STR"), "0");
     expect(within(necklace).getByText("✓ 입력 완료")).toBeVisible();
   });
 
@@ -538,11 +543,9 @@ describe("calculator app", () => {
     render(<Page />);
 
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20");
-    await user.selectOptions(
-      screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
-      "3",
-    );
-    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용"));
+    await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
+    await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");
+    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용 (+10%)"));
 
     const results = screen.getByRole("complementary", { name: "계산 결과" });
     const label = within(results).getByText("보공·총뎀 적용값");
@@ -556,11 +559,9 @@ describe("calculator app", () => {
     render(<Page />);
 
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20.5");
-    await user.selectOptions(
-      screen.getByLabelText("길드 보스 데미지 스킬 레벨"),
-      "3",
-    );
-    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용"));
+    await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
+    await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");
+    await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용 (+10%)"));
 
     const results = screen.getByRole("complementary", { name: "계산 결과" });
     const label = within(results).getByText("보공·총뎀 적용값");
@@ -577,11 +578,11 @@ describe("calculator app", () => {
     const results = screen.getByRole("complementary", { name: "계산 결과" });
     expect(within(results).getByText("계산 근거")).toBeInTheDocument();
     [
-      "최종 주스탯",
-      "최종 부스탯",
-      "최종 공격력",
-      "순수 주스탯",
-      "순수 부스탯",
+      "DEX",
+      "STR",
+      "공격력",
+      "크리확률",
+      "크리데미지",
       "방어율 배율",
       "크리 배율",
     ].forEach((label) => {

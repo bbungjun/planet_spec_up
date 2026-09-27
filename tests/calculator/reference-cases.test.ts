@@ -96,6 +96,8 @@ it("orchestrates normalized equipment and AP allocation", () => {
   input.equipment.weapon!.attackFlat = "100";
   input.equipment.weapon!.attackPercent = "10";
   input.equipment.projectile!.attackFlat = "30";
+  input.equipment.weapon!.requiredLevel = "0";
+  input.equipment.weapon!.requiredSub = "0";
 
   expect(calculateDamageResult(input)).toMatchObject({
     mainStat: 1458,
@@ -109,7 +111,7 @@ it("orchestrates normalized equipment and AP allocation", () => {
   });
 });
 
-it("propagates normalization and AP allocation issues", () => {
+it("reports invalid input without treating estimated AP as verified equipment eligibility", () => {
   const input = createDefaultInput("marksman");
   input.character.level = "1";
   input.equipment.hat!.mainFlat = "not-a-number";
@@ -121,13 +123,12 @@ it("propagates normalization and AP allocation issues", () => {
   expect(result).toMatchObject({ pureMain: 0, pureSub: 17 });
   expect(result.issues.map(({ code }) => code)).toEqual([
     "INVALID_NUMBER",
-    "UNMET_SUBSTAT_REQUIREMENT",
   ]);
 });
 
 it.each([
-  ["invalid zero", "0", ["INVALID_NUMBER", "UNMET_SUBSTAT_REQUIREMENT"]],
-  ["blank", "", ["UNMET_SUBSTAT_REQUIREMENT"]],
+  ["invalid zero", "0", ["INVALID_NUMBER"]],
+  ["blank", "", []],
 ] as const)("zeros the complete damage result for %s level input", (_, level, issueCodes) => {
   const input = createDefaultInput("corsair");
   input.character.level = level;

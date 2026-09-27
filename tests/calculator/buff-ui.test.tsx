@@ -7,6 +7,55 @@ import { serializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
 
 beforeEach(() => localStorage.clear());
 
+it("applies the result-panel preview to the main result and all presets without stacking", async () => {
+  const input = createDefaultInput("corsair");
+  Object.assign(input.equipment.necklace!, { mainFlat: "251", subFlat: "115", mainPercent: "215", subPercent: "24" });
+  Object.assign(input.equipment.weapon!, { attackFlat: "127", bossDamagePercent: "60" });
+  input.weaponPresets = { active: "boss", entries: {
+    boss: { weapon: { ...input.equipment.weapon! }, monsterDefense: "0" },
+    chaos: { weapon: { ...input.equipment.weapon! }, monsterDefense: "0" },
+    hunting: { weapon: { ...input.equipment.weapon! }, monsterDefense: "0" },
+  } };
+  const original = serializeSetup(input);
+  localStorage.setItem(STORAGE_KEY, original);
+  const user = userEvent.setup();
+  const view = render(<CalculatorApp />);
+  expect(await screen.findByDisplayValue("251")).toBeInTheDocument();
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("15,950");
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("공격력 버프 없음");
+
+  const selectPinkBean = screen.getByRole("button", { name: "핑크빈 버프 적용" });
+  await user.click(selectPinkBean);
+  await user.click(selectPinkBean);
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("20,346");
+  expect(screen.getByLabelText("환산 공격력 결과")).toHaveTextContent("32,553");
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("핑크빈 +35 적용");
+  expect(selectPinkBean).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "핑크빈 +35" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByLabelText("공격력 버프 직접 입력")).toHaveValue(35);
+  for (const card of view.container.querySelectorAll<HTMLElement>(".weapon-preset-card")) {
+    expect(within(card).getByText("최대 스탯공").nextElementSibling).toHaveTextContent("20,346");
+  }
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
+
+  await user.click(screen.getByRole("button", { name: "사냥용 프리셋 선택" }));
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("20,346");
+  expect(screen.getByLabelText("환산 공격력 결과")).toHaveTextContent("20,346");
+  await user.click(screen.getByRole("button", { name: /^저장$/ }));
+  view.unmount();
+  render(<CalculatorApp />);
+  expect(await screen.findByDisplayValue("35")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "핑크빈 버프 적용" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("20,346");
+
+  await user.click(screen.getByRole("button", { name: "혼테일 +30" }));
+  expect(screen.getByRole("button", { name: "혼테일 버프 적용" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("19,718");
+  await user.click(screen.getByRole("button", { name: "없음 버프 적용" }));
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("15,950");
+  expect(screen.getByLabelText("공격력 버프 직접 입력")).toHaveValue(0);
+});
+
 it("switches the verified Captain setup between boss buffs without stacking and saves the selected value", async () => {
   const input = createDefaultInput("corsair");
   input.character.level = "199";

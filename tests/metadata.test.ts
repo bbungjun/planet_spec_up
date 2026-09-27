@@ -1,18 +1,40 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
-import { createMetadata } from "@/app/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMetadata } from "@/features/site/metadata";
 
 const title = "플래닛 데미지 계산기";
 const description =
   "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.";
 const canonicalOrigin =
-  "https://planet-damage-calculator.sk-yaho2026.chatgpt.site/";
+  "https://planet.example.com/";
 const canonicalImage =
-  "https://planet-damage-calculator.sk-yaho2026.chatgpt.site/og.png";
+  "https://planet.example.com/og.png";
+
+beforeEach(() => { vi.stubEnv("SITE_URL", canonicalOrigin); vi.stubEnv("VERCEL_ENV", "production"); });
+afterEach(() => vi.unstubAllEnvs());
 
 describe("social metadata", () => {
+  it("omits obsolete domains and indexing before a production URL is confirmed", () => {
+    vi.stubEnv("SITE_URL", "");
+    const metadata = createMetadata(new Headers({host: "preview.vercel.app"}));
+    expect(metadata.robots).toEqual({index: false, follow: false});
+    expect(metadata.alternates).toBeUndefined();
+    expect(metadata.openGraph).toMatchObject({url: undefined, images: []});
+    expect(JSON.stringify(metadata)).not.toContain("chatgpt.site");
+  });
+
+  it("keeps Vercel previews out of search even when SITE_URL is configured", () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    const metadata = createMetadata(new Headers({host: "preview.vercel.app"}));
+    expect(metadata.robots).toEqual({index: false, follow: false});
+    expect(metadata.alternates).toBeUndefined();
+  });
+
+  it("uses only the configured production URL for canonical metadata", () => {
+    expect(createMetadata(new Headers({host: "evil.example"})).alternates).toEqual({canonical: canonicalOrigin});
+  });
   function expectCanonicalUrls(metadata: ReturnType<typeof createMetadata>) {
     expect(metadata.openGraph).toMatchObject({
       url: canonicalOrigin,

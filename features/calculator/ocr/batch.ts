@@ -1,3 +1,4 @@
+import { matchingSlots, RING_SLOTS } from "../domain/slots";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId } from "../domain/types";
 import { activeWeaponPreset, captureWeaponPreset, getWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 import { emptyEquipment } from "../domain/defaults";
@@ -9,7 +10,7 @@ import type { ParsedTooltipStats, StatReplacement } from "./types";
 
 export type OcrSlotChoice = { slot: EquipmentSlot; label: string; equipment: EquipmentInput };
 export type OcrDestination = EquipmentSlot | `preset:${WeaponPresetId}` | "new";
-export type OcrBatchEntry = { replacement: StatReplacement; destination: OcrDestination; label: string };
+export type OcrBatchEntry = { replacement: StatReplacement; destination: OcrDestination; label: string; category?: string | null };
 export type ApplyOcrBatch = (job: JobId, entries: OcrBatchEntry[]) => string | null;
 export const MAX_BATCH_FILES = 50;
 export const MAX_BATCH_BYTES = 120 * 1024 * 1024;
@@ -18,21 +19,11 @@ export function occupied(equipment: EquipmentInput): boolean {
   return Object.values(equipment).some(value => (value ?? "").trim() !== "");
 }
 
-const categories: Record<string, EquipmentSlot[]> = {
-  모자: ["hat"], 망토: ["cape"], 귀고리: ["earrings"], 귀걸이: ["earrings"],
-  얼굴장식: ["face"], 눈장식: ["eye"], 펜던트: ["necklace"], 목걸이: ["necklace"],
-  장갑: ["gloves"], 신발: ["shoes"], 한벌옷: ["overall"], 상의: ["top"], 하의: ["bottom"],
-  반지: ["ring_1", "ring_2", "ring_3", "ring_4"], 훈장: ["title"],
-  건: ["weapon"], 석궁: ["weapon"], 아대: ["weapon"], 무기: ["weapon"],
-};
-
-export function matchingSlots(category: string | null, choices: OcrSlotChoice[]): OcrSlotChoice[] {
-  if (!category) return [];
-  const known = Object.hasOwn(categories, category) ? categories[category] : [];
-  return choices.filter(({slot, label}) => known.includes(slot) || label.replace(/\s+\d+$/, "") === category);
-}
+export { matchingSlots } from "../domain/slots";
 
 export function existingDuplicate(parsed: ParsedTooltipStats, job: JobId, choices: OcrSlotChoice[]): string | null {
+  // Up to four distinct rings may have identical names and options.
+  if (parsed.category === "반지") return null;
   const mapped = mapRecognizedStats(parsed, job);
   if (!Object.values(mapped).some(value => value && Number(value) !== 0)) return null;
   const match = matchingSlots(parsed.category, choices).find(({equipment}) => occupied(equipment)
@@ -66,7 +57,7 @@ export async function imageFingerprint(file: File): Promise<string | null> {
 
 export function validReplacement(value: StatReplacement): boolean {
   return Object.values(value).some(raw => raw !== undefined && raw !== "") && Object.entries(value).every(([key, raw]) => {
-    if (raw === "") return true;
+    if (raw === "" || raw === undefined) return true;
     const number = Number(raw);
     const percent = key.endsWith("Percent");
     return Number.isFinite(number) && number >= 0 && number <= (key === "ignoreDefensePercent" ? 100 : percent ? 999 : 9999) && (percent || Number.isInteger(number));
@@ -81,6 +72,9 @@ export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBa
   let next = input;
   for (const entry of entries) {
     if (!validReplacement(entry.replacement)) return {input: null, error: "인식값의 숫자 범위를 확인하세요."};
+    if ((entry.category === "반지" || /^반지(?:\s+\d+)?$/.test(entry.label.trim())) && !RING_SLOTS.includes(entry.destination as EquipmentSlot)) {
+      return { input: null, error: "반지는 최대 4개까지 착용할 수 있습니다. 반지 1~4 중 적용 위치를 선택하세요." };
+    }
     if (entry.destination.startsWith("preset:")) {
       const id = entry.destination.slice(7) as WeaponPresetId;
       const preset = WEAPON_PRESETS.find(preset => preset.id === id);

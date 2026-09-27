@@ -28,13 +28,13 @@ export function BulkEditor({
     <section className="panel bulk-editor" aria-labelledby="bulk-editor-heading">
       <div className="panel-heading">
         <div>
-          <p className="panel-kicker">일괄 입력</p>
+
           <h2 id="bulk-editor-heading">전체 장비 옵션</h2>
         </div>
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
       <p className="panel-description">
-        카드 입력과 같은 값을 편집하며 빈칸은 0으로 계산됩니다.
+        카드 입력과 같은 값을 편집합니다. 요구 조건은 OCR 인식값을 사용합니다.
       </p>
 
       <div className="bulk-table-wrap">

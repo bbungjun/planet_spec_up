@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored Tesseract worker and WebAssembly runtime files.
     "public/ocr/**",
+    // Private experiments and reports are checked independently of the app.
+    "output/**",
   ]),
 ]);
 
