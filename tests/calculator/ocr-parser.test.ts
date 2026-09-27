@@ -116,8 +116,8 @@ it("stores equipment damage, recalculates it and never adds it twice on re-apply
   const replacement = mapRecognizedStats(parseMapleTooltip(weaponText), "corsair");
   input.equipment.weapon = applyStatReplacement(input.equipment.weapon!, replacement);
   const first = calculateDamageResult(input);
-  expect(first.totalAttack).toBe(106);
-  expect(first.formulaInputs.bossAndTotalDamage).toBe(31);
+  expect(first.totalAttack).toBe(111);
+  expect(first.formulaInputs.bossAndTotalDamage).toBe(36);
   input.equipment.weapon = applyStatReplacement(input.equipment.weapon, replacement);
   expect(calculateDamageResult(input)).toEqual(first);
   const saved = deserializeSetup(serializeSetup(input));

@@ -33,6 +33,10 @@ export function createDefaultInput(job: JobId): CalculatorInput {
       guildIgnoreLevel: 0,
       guildAttackLevel: 0,
       guildActiveBoss: false,
+      guildBossPercent: "5",
+      guildIgnorePercent: "10",
+      guildAccuracyFlat: "30",
+      guildAttackFlat: "5",
     },
     equipment: Object.fromEntries(
       rule.visibleSlots.map((slot) => [slot, emptyEquipment()]),

@@ -63,6 +63,8 @@ export type CharacterInput = {
 export type CalculatorInput = {
   character: CharacterInput;
   equipment: Partial<Record<EquipmentSlot, EquipmentInput>>;
+  /** Independent attack buffs; absent in older saves means disabled. */
+  attackBuffs?: { sprinkling: boolean; rage: boolean };
   /** Older saved setups have no custom slots. */
   customSlots?: CustomSlot[];
   weaponPresets?: {

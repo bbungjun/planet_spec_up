@@ -46,7 +46,7 @@ it("keeps three independent weapons and defense rates with shared armor and buff
   expect(input.equipment.weapon).toMatchObject({attackFlat: "120", totalDamagePercent: "21"});
   expect(input.equipment.necklace).toEqual(armor);
   expect(input.equipment.buff!.attackFlat).toBe("35");
-  expect(calculateDamageResult(input).totalAttack).toBe(155); // one weapon, not all three
+  expect(calculateDamageResult(input).totalAttack).toBe(160); // weapon 120 + buff 35 + default guild 5
 });
 
 it("excludes all boss bonuses in hunting but preserves total damage and additive IED", () => {
@@ -78,7 +78,7 @@ it("preserves ambiguous legacy data and marks it for splitting instead of guessi
   expect(loaded).toMatchObject({ok: true, value: {input: old}});
   expect(activeWeaponPreset(old)).toBe("boss");
   const result = calculateDamageResult(old);
-  expect(result.formulaInputs.bossAndTotalDamage).toBe(86);
+  expect(result.formulaInputs.bossAndTotalDamage).toBe(91);
   expect(result.issues.filter(issue => issue.code === "LEGACY_DAMAGE_SPLIT")).toHaveLength(2);
   expect(switchWeaponPreset(switchWeaponPreset(old, "chaos"), "boss").equipment.weapon).toEqual(old.equipment.weapon);
 });
@@ -100,9 +100,9 @@ it("imports three weapons atomically into presets without summing them", () => {
   ]);
   expect(outcome.error).toBeNull();
   if (!outcome.input) throw new Error("import failed");
-  expect(calculateDamageResult(outcome.input).totalAttack).toBe(100);
-  expect(calculateDamageResult(switchWeaponPreset(outcome.input, "chaos")).totalAttack).toBe(110);
-  expect(calculateDamageResult(switchWeaponPreset(outcome.input, "hunting")).totalAttack).toBe(120);
+  expect(calculateDamageResult(outcome.input).totalAttack).toBe(105);
+  expect(calculateDamageResult(switchWeaponPreset(outcome.input, "chaos")).totalAttack).toBe(115);
+  expect(calculateDamageResult(switchWeaponPreset(outcome.input, "hunting")).totalAttack).toBe(125);
   expect(input.equipment.weapon!.attackFlat).toBe("");
   for (const destinations of [["weapon", "preset:boss"], ["preset:boss", "weapon"], ["preset:chaos", "preset:chaos"]] as const) {
     const conflict = applyOcrBatch(input, "corsair", destinations.map(destination => ({destination, label: "건", replacement: replacement("공격력 +100")})));

@@ -5,6 +5,13 @@ import {
 } from "@/features/calculator/domain/calculate";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
 
+// Frozen formula cases explicitly exclude guild bonuses, independent of UI defaults.
+function createReferenceInput(job: Parameters<typeof createDefaultInput>[0]) {
+  const input = createDefaultInput(job);
+  Object.assign(input.character, { guildBossPercent: "0", guildIgnorePercent: "0", guildAttackFlat: "0", guildAccuracyFlat: "0" });
+  return input;
+}
+
 const common = {
   level: 160,
   mapleWarrior: 20 as const,
@@ -85,7 +92,7 @@ it.each([
 );
 
 it("orchestrates normalized equipment and AP allocation", () => {
-  const input = createDefaultInput("marksman");
+  const input = createReferenceInput("marksman");
   input.character.bossDamagePercent = "20";
   input.character.monsterDefense = "60";
   input.character.ignoreDefense = "30";
@@ -112,7 +119,7 @@ it("orchestrates normalized equipment and AP allocation", () => {
 });
 
 it("reports invalid input without treating estimated AP as verified equipment eligibility", () => {
-  const input = createDefaultInput("marksman");
+  const input = createReferenceInput("marksman");
   input.character.level = "1";
   input.equipment.hat!.mainFlat = "not-a-number";
   input.equipment.weapon!.attackFlat = "1";
@@ -130,7 +137,7 @@ it.each([
   ["invalid zero", "0", ["INVALID_NUMBER"]],
   ["blank", "", []],
 ] as const)("zeros the complete damage result for %s level input", (_, level, issueCodes) => {
-  const input = createDefaultInput("corsair");
+  const input = createReferenceInput("corsair");
   input.character.level = level;
   input.equipment.weapon!.mainFlat = "100";
   input.equipment.weapon!.subFlat = "50";
@@ -238,7 +245,7 @@ it("zeros Night Lord STR and attack for a level-zero snapshot", () => {
 });
 
 it("returns a complete zero-damage result with a missing weapon warning", () => {
-  expect(calculateDamageResult(createDefaultInput("corsair"))).toMatchObject({
+  expect(calculateDamageResult(createReferenceInput("corsair"))).toMatchObject({
     mainStat: 899,
     subStat: 4,
     extraStr: 0,
@@ -258,7 +265,7 @@ it("returns a complete zero-damage result with a missing weapon warning", () => 
 });
 
 it("does not treat an explicit zero weapon attack as a missing field", () => {
-  const input = createDefaultInput("corsair");
+  const input = createReferenceInput("corsair");
   input.equipment.weapon!.attackFlat = "0";
 
   expect(calculateDamageResult(input).issues).not.toContainEqual(
@@ -267,7 +274,7 @@ it("does not treat an explicit zero weapon attack as a missing field", () => {
 });
 
 it("passes normalized critical rate into the critical multiplier", () => {
-  const input = createDefaultInput("marksman");
+  const input = createReferenceInput("marksman");
   input.character.skillPercent = "100";
   input.character.criticalRate = "10";
   input.equipment.weapon!.attackFlat = "1";
@@ -276,7 +283,7 @@ it("passes normalized critical rate into the critical multiplier", () => {
 });
 
 it("uses Night Lord stat-window STR directly in stat attack", () => {
-  const input = createDefaultInput("night_lord");
+  const input = createReferenceInput("night_lord");
   input.character.nightLordStrStat = "4";
   input.equipment.weapon!.attackFlat = "100";
 

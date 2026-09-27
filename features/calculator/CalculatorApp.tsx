@@ -366,7 +366,11 @@ export function CalculatorApp() {
             onJobChange={handleJobChange}
           />
           <AttackSetupPanel input={input} issues={result.issues}
-            onEquipmentChange={handleEquipmentChange} />
+            onEquipmentChange={handleEquipmentChange}
+            onStackableBuffChange={(buff, enabled) => setInput(current => ({
+              ...current,
+              attackBuffs: { sprinkling: false, rage: false, ...current.attackBuffs, [buff]: enabled },
+            }))} />
       </div>
       <div className="section-heading"><div><span>02</span><h2>내 장비와 계산 결과</h2></div></div>
       <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onCopy={handlePresetCopy} onSave={handleSave} />

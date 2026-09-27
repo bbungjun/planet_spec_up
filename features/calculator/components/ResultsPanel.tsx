@@ -5,7 +5,7 @@ import { normalizeInput } from "../domain/normalize";
 import { sumEquipment } from "../domain/equipment";
 import { calculateTotalAttack } from "../domain/formulas";
 import { emptyEquipment } from "../domain/defaults";
-import { ATTACK_BUFF_PRESETS } from "./AttackSetupPanel";
+import { ATTACK_BUFF_PRESETS, STACKABLE_ATTACK_BUFFS } from "../domain/attack-buffs";
 import type {
   CalculationResult,
   CalculatorInput,
@@ -88,9 +88,13 @@ export function ResultsPanel({
   const activeBuffAttack = Number(input.equipment.buff?.attackFlat ?? "0");
   const activeBuff = ATTACK_BUFF_PRESETS.find(preset => preset.attack === activeBuffAttack);
   const invalidBuff = result.issues.some(issue => issue.path === "equipment.buff.attackFlat" && issue.severity === "error");
+  const activeBuffLabels = [
+    ...(activeBuffAttack > 0 ? [`${activeBuff?.label ?? "직접 입력 버프"} +${activeBuffAttack}`] : []),
+    ...STACKABLE_ATTACK_BUFFS.filter(buff => input.attackBuffs?.[buff.id]).map(buff => `${buff.label} +${buff.attack}`),
+  ];
   const buffSummary = invalidBuff ? "공격력 버프 입력을 확인해주세요"
-    : activeBuffAttack === 0 ? "공격력 버프 없음"
-    : `${activeBuff?.label ?? "직접 입력 버프"} +${activeBuffAttack} 적용`;
+    : activeBuffLabels.length === 0 ? "공격력 버프 없음"
+    : `${activeBuffLabels.join(" · ")} 적용`;
   const buffComparisons = useMemo(() => ATTACK_BUFF_PRESETS.map(preset => ({
     ...preset,
     result: calculateDamageResult({
@@ -107,6 +111,7 @@ export function ResultsPanel({
       ["정령의 축복", normalized.equipment.blessing_1?.attackFlat ?? 0],
       ["여제의 축복", normalized.equipment.blessing_2?.attackFlat ?? 0],
       ["공격력 버프", normalized.equipment.buff?.attackFlat ?? 0],
+      ...STACKABLE_ATTACK_BUFFS.map(buff => [buff.label, input.attackBuffs?.[buff.id] ? buff.attack : 0] as const),
       ["길드 공격력", normalized.character.guildAttackFlat],
       ["레벨 달성 버프", levelAchievementBonus(normalized.character.level).attack],
     ] as const;

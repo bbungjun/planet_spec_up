@@ -234,8 +234,10 @@ time,
 }
 .character-advanced { border-top: 1px solid var(--line); margin-top: 16px; }
 .character-advanced > summary { min-height: 44px; padding: 14px 0 0; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
-.buff-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.buff-presets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+.buff-presets.stackable-buffs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .buff-presets button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: var(--surface-raised); }
+.buff-presets:not(.stackable-buffs) button { flex-direction: column; gap: 3px; }
 .buff-presets button strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
 .buff-presets button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .attack-source-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
@@ -1017,6 +1019,7 @@ time,
 
 @media (max-width: 759px) {
   .attack-source-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .buff-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .buff-presets button { flex-direction: column; gap: 3px; }
   .character-panel > .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .equipment-navigator .equipment-list { max-height: 320px; overflow-y: auto; }

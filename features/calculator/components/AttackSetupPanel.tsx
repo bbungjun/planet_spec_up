@@ -1,19 +1,15 @@
 import type { CalculatorInput, ValidationIssue } from "../domain/types";
 import type { EquipmentChangeHandler } from "./EquipmentEditor";
+import { ATTACK_BUFF_PRESETS, STACKABLE_ATTACK_BUFFS, type StackableAttackBuffId } from "../domain/attack-buffs";
 
 type Props = {
   input: CalculatorInput;
   issues: readonly ValidationIssue[];
   onEquipmentChange: EquipmentChangeHandler;
+  onStackableBuffChange: (buff: StackableAttackBuffId, enabled: boolean) => void;
 };
 
-export const ATTACK_BUFF_PRESETS = [
-  { label: "없음", attack: 0 },
-  { label: "혼테일", attack: 30 },
-  { label: "핑크빈", attack: 35 },
-] as const;
-
-export function AttackSetupPanel({ input, issues, onEquipmentChange }: Props) {
+export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackableBuffChange }: Props) {
   const buff = input.equipment.buff?.attackFlat ?? "";
   const activePreset = ATTACK_BUFF_PRESETS.find(({attack}) => Number(buff) === attack);
   return (
@@ -21,9 +17,8 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange }: Props) {
       <div className="panel-heading">
         <div>
 
-          <h2 id="attack-setup-heading">오늘의 전투 준비</h2>
+          <h2 id="attack-setup-heading">공격력 버프</h2>
         </div>
-        <span className="job-chip">{activePreset?.label ?? "직접 입력"}</span>
       </div>
       <div className="buff-presets" role="group" aria-label="공격력 버프 선택">
         {ATTACK_BUFF_PRESETS.map(({label, attack}) => (
@@ -33,6 +28,16 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange }: Props) {
           </button>
         ))}
       </div>
+      <p className="attack-setup-hint">사이다·혼테일·핑크빈·요괴대사 중 하나만 적용</p>
+      <div className="buff-presets stackable-buffs" role="group" aria-label="중첩 가능한 공격력 버프">
+        {STACKABLE_ATTACK_BUFFS.map(({id, label, attack}) => (
+          <button type="button" key={id} aria-label={`${label} +${attack}`} aria-pressed={input.attackBuffs?.[id] ?? false}
+            onClick={() => onStackableBuffChange(id, !input.attackBuffs?.[id])}>
+            <span>{label}</span><strong>+{attack}</strong>
+          </button>
+        ))}
+      </div>
+      <p className="attack-setup-hint">뿌리기·분노는 다른 버프와 중첩 가능</p>
       <div className="attack-source-fields">
         {([
           ["projectile", "불릿·표창 공격력"],

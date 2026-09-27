@@ -56,7 +56,7 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   await user.clear(bulkAttack);
   await user.type(bulkAttack, "-1");
   expect((bulkAttack as HTMLInputElement).value).toBe("-1");
-  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^0$/);
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^162$/); // invalid weapon contributes 0; guild contributes 5
   await user.click(screen.getByRole("button", {
     name: "오류 무기 공격력: Enter a value from 0 to 9999.",
   }));

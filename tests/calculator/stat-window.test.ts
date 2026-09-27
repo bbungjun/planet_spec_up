@@ -19,9 +19,9 @@ describe("level milestones and direct guild bonuses",()=>{
     const result=calculateDamageResult(input);
     expect(result.mainStat).toBe(2306); // (1000+100+3)*2 + floor(1000*.1)
     expect(result.subStat).toBe(83); // floor((22+20+3)*1.8)+floor(22*.1)
-    expect(result.totalAttack).toBe(102);
+    expect(result.totalAttack).toBe(107); // weapon 100 + level 2 + default guild 5
     input.equipment.weapon!.attackPercent="10";
-    expect(calculateDamageResult(input).totalAttack).toBe(112);
+    expect(calculateDamageResult(input).totalAttack).toBe(117);
     expect(calculateDamageResult(input).issues.some(i=>i.code==="LEVEL_BUFF_ATTACK_PERCENT_UNVERIFIED")).toBe(false);
   });
   it("scales the sum of equipment attack only and adds every other source afterward",()=>{
@@ -41,6 +41,10 @@ describe("level milestones and direct guild bonuses",()=>{
   });
   it("preserves legacy guild settings until direct bonuses are supplied, without double addition",()=>{
     const input=createDefaultInput("corsair");input.equipment.weapon!.attackFlat="100";
+    delete input.character.guildAttackFlat;
+    delete input.character.guildBossPercent;
+    delete input.character.guildIgnorePercent;
+    delete input.character.guildAccuracyFlat;
     Object.assign(input.character,{guildAttackLevel:5,guildBossLevel:5,guildIgnoreLevel:5});
     expect(calculateDamageResult(input).totalAttack).toBe(105);
     Object.assign(input.character,{guildAttackFlat:"2",guildBossPercent:"3",guildIgnorePercent:"7",guildAccuracyFlat:"30"});

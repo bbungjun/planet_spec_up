@@ -14,6 +14,7 @@ import { normalizeInput } from "./normalize";
 import { activeWeaponPreset } from "./weapon-presets";
 import { getVisibleEquipmentSlots } from "./slots";
 import { levelAchievementBonus, MAX_CHARACTER_LEVEL } from "./level";
+import { stackableAttackBonus } from "./attack-buffs";
 import type {
   CalculatorInput,
   CalculationResult,
@@ -230,7 +231,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     subPercent: equipment.subPercent,
     nightLordStrStat: character.nightLordStrStat,
     percentEligibleAttack: equipment.percentEligibleAttack,
-    flatAttack: equipment.flatAttack,
+    flatAttack: equipment.flatAttack + stackableAttackBonus(input),
     attackPercent: equipment.attackPercent,
     bossAndTotalDamage: character.bossAndTotalDamage + character.bossDamagePercent + sumOption("damagePercent") + sumOption("bossDamagePercent"),
     totalDamagePercent: character.totalDamagePercent + sumOption("totalDamagePercent"),

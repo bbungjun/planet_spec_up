@@ -40,12 +40,12 @@ it("counts independent unknown and repeated gear slots and persists them without
   expect(getEquipmentSlotLabel(input, secondShoulder.slot)).toBe("어깨장식 2");
   expect(getEquipmentSlotLabel(input, secondNecklace.slot)).toBe("목걸이 2");
   expect(getVisibleEquipmentSlots(input)).toContain(secondNecklace.slot);
-  expect(calculateDamageResult(input)).toMatchObject({totalAttack: 12});
+  expect(calculateDamageResult(input)).toMatchObject({totalAttack: 17}); // gear 12 + default guild 5
   expect(deserializeSetup(serializeSetup(input))).toMatchObject({
     ok: true,
     value: {input: {equipment: {[shoulder.slot]: {attackFlat: "5"}, [secondNecklace.slot]: {mainFlat: "21"}}}},
   });
-  expect(calculateDamageResult(removeEquipmentSlot(input, shoulder.slot)).totalAttack).toBe(7);
+  expect(calculateDamageResult(removeEquipmentSlot(input, shoulder.slot)).totalAttack).toBe(12);
 });
 
 it("adds a named gear slot to the card, bulk editor and the saved setup", async () => {

@@ -109,7 +109,11 @@ function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["cu
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {
   if (!isRecord(value) || !Object.hasOwn(value, "character") || !Object.hasOwn(value, "equipment")
-    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets", "statWindow"].includes(key))) return false;
+    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets", "statWindow", "attackBuffs"].includes(key))) return false;
+  if (Object.hasOwn(value, "attackBuffs") && (!isRecord(value.attackBuffs)
+    || !hasOnlyKeys(value.attackBuffs, ["sprinkling", "rage"])
+    || typeof value.attackBuffs.sprinkling !== "boolean"
+    || typeof value.attackBuffs.rage !== "boolean")) return false;
   if (Object.hasOwn(value, "statWindow") && !isStatWindowSnapshot(value.statWindow)) return false;
   if (Object.hasOwn(value, "weaponPresets") && !isWeaponPresets(value.weaponPresets)) return false;
   const equipment = value.equipment;

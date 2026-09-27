@@ -366,13 +366,13 @@ describe("calculator app", () => {
 
     const statAttack = screen.getByLabelText("스탯 공격력 결과");
     const convertedAttack = screen.getByLabelText("환산 공격력 결과");
-    expect(statAttack).toHaveTextContent(/^0$/);
-    expect(convertedAttack).toHaveTextContent(/^0$/);
+    expect(statAttack).toHaveTextContent(/^162$/); // default guild attack 5
+    expect(convertedAttack).toHaveTextContent(/^170$/);
 
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
-    expect(statAttack).not.toHaveTextContent(/^0$/);
-    expect(convertedAttack).not.toHaveTextContent(/^0$/);
+    expect(statAttack).toHaveTextContent(/^3,402$/);
+    expect(convertedAttack).toHaveTextContent(/^3,572$/);
   });
 
   it("shows a level error and zero attacks when level zero is invalid", async () => {

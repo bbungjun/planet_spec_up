@@ -8,7 +8,7 @@ import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client"
 import type { StatRecognition } from "@/features/calculator/ocr/parseStatWindow";
 const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
-function seed(){const input=createDefaultInput("corsair");Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
+function seed(){const input=createDefaultInput("corsair");Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
 const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
 beforeEach(()=>{localStorage.clear();recognize.mockReset().mockResolvedValue("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");vi.spyOn(recognition,"createBrowserTooltipRecognizer").mockImplementation(()=>({recognize,terminate:vi.fn().mockResolvedValue(undefined)}));});
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});

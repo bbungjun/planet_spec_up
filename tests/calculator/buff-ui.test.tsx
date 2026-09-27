@@ -9,6 +9,7 @@ beforeEach(() => localStorage.clear());
 
 it("applies the result-panel preview to the main result and all presets without stacking", async () => {
   const input = createDefaultInput("corsair");
+  Object.assign(input.character, { guildBossPercent: "0", guildIgnorePercent: "0", guildAttackFlat: "0" });
   Object.assign(input.equipment.necklace!, { mainFlat: "251", subFlat: "115", mainPercent: "215", subPercent: "24" });
   Object.assign(input.equipment.weapon!, { attackFlat: "127", bossDamagePercent: "60" });
   input.weaponPresets = { active: "boss", entries: {
@@ -54,6 +55,50 @@ it("applies the result-panel preview to the main result and all presets without 
   await user.click(screen.getByRole("button", { name: "없음 버프 적용" }));
   expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("15,950");
   expect(screen.getByLabelText("공격력 버프 직접 입력")).toHaveValue(0);
+});
+
+it("switches cider exclusively while stacking, removing, and restoring sprinkling and rage", async () => {
+  const input = createDefaultInput("corsair");
+  input.equipment.weapon!.attackFlat = "100";
+  localStorage.setItem(STORAGE_KEY, serializeSetup(input));
+  const user = userEvent.setup();
+  const view = render(<CalculatorApp />);
+  const panel = await screen.findByRole("region", { name: "공격력 버프" });
+  const buffInput = screen.getByLabelText("공격력 버프 직접 입력");
+  await user.click(within(panel).getByRole("button", { name: "사이다 +10" }));
+  await user.click(within(panel).getByRole("button", { name: "뿌리기 +20" }));
+  await user.click(within(panel).getByRole("button", { name: "분노 +12" }));
+  expect(buffInput).toHaveValue(10);
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("사이다 +10 · 뿌리기 +20 · 분노 +12 적용");
+  const ciderAttack = screen.getByLabelText("사이다 예상 스탯공").textContent;
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(ciderAttack!);
+  await user.click(screen.getByRole("button", { name: "핑크빈 버프 적용" }));
+  expect(buffInput).toHaveValue(35);
+  expect(within(panel).getByRole("button", { name: "사이다 +10" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("핑크빈 +35 · 뿌리기 +20 · 분노 +12 적용");
+  await user.click(within(panel).getByRole("button", { name: "혼테일 +30" }));
+  expect(buffInput).toHaveValue(30);
+  await user.click(screen.getByRole("button", { name: "사이다 버프 적용" }));
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(ciderAttack!);
+  await user.click(within(panel).getByRole("button", { name: "요괴대사 +40" }));
+  expect(buffInput).toHaveValue(40);
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("요괴대사 +40 · 뿌리기 +20 · 분노 +12 적용");
+  const yokaiAttack = screen.getByLabelText("요괴대사 예상 스탯공").textContent;
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(yokaiAttack!);
+  expect(screen.getByRole("button", { name: "요괴대사 버프 적용" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(screen.getByRole("button", { name: /^저장$/ }));
+  view.unmount();
+  render(<CalculatorApp />);
+  expect(await screen.findByRole("button", { name: "뿌리기 +20", pressed: true })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "분노 +12" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(yokaiAttack!);
+  expect(screen.getByRole("button", { name: "요괴대사 +40" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(screen.getByRole("button", { name: "없음 +0" }));
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("뿌리기 +20 · 분노 +12 적용");
+  await user.click(screen.getByRole("button", { name: "뿌리기 +20" }));
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("분노 +12 적용");
+  await user.click(screen.getByRole("button", { name: "분노 +12" }));
+  expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("공격력 버프 없음");
 });
 
 it("switches the verified Captain setup between boss buffs without stacking and saves the selected value", async () => {

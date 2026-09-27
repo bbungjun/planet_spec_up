@@ -8,7 +8,7 @@ import { calculateDamageResult } from "@/features/calculator/domain/calculate";
 import { serializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
 beforeEach(()=>localStorage.clear());
 it("follows the selected weapon and combat target, with fixed pure stats and live buffs",async()=>{
-  const input=createDefaultInput("corsair");Object.assign(input.character,{level:"200",pureMain:"1000",pureSub:"22",guildBossPercent:"5"});
+  const input=createDefaultInput("corsair");Object.assign(input.character,{level:"200",pureMain:"1000",pureSub:"22",guildBossPercent:"5",guildAttackFlat:"0",guildIgnorePercent:"0"});
   Object.assign(input.equipment.necklace!,{mainFlat:"100",subFlat:"20",mainPercent:"100",subPercent:"80",requiredLevel:"0",requiredSub:"0"});
   Object.assign(input.equipment.weapon!,{attackFlat:"100",totalDamagePercent:"10",bossDamagePercent:"20",requiredLevel:"0",requiredSub:"0"});
   input.weaponPresets={active:"boss",entries:{hunting:{weapon:{...input.equipment.weapon!},monsterDefense:"0"},chaos:{weapon:{...input.equipment.weapon!,attackFlat:"200",mainFlat:"10"},monsterDefense:"80"}}};
