@@ -33,25 +33,37 @@ export function GameIcon({ name, className = "" }: { name: string; className?: s
   </svg>;
 }
 
-// Original MapleStory sprites, pinned to the provider's GMS 83 data.
-// These identify the slot visually, not the player's recognized/equipped item.
-// Item IDs, source URLs and hashes: public/images/equipment/corsair/sources.json.
+export function CharacterIcon({ job }: { job: JobId }) {
+  if (job !== "corsair") return <GameIcon name="hat" />;
+  // Preserve the official job sprite's pixels; provenance: public/images/jobs/sources.json.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="character-job-sprite" src="/images/jobs/corsair.webp"
+    width={72} height={86} alt="" aria-hidden="true" draggable={false} />;
+}
+
+// User-selected slot illustrations; not identification of an equipped item.
+// Names, provider versions, source URLs and hashes are recorded beside the PNGs.
+const REPRESENTATIVE_SLOT_ICONS: Partial<Record<EquipmentSlot, number>> = {
+  earrings: 1032022, eye: 1022073, face: 1012070, hat: 1003112,
+  shoes: 1072312, gloves: 1082207, overall: 1052125,
+  ring_1: 1112400, ring_2: 1112400, ring_3: 1112400, ring_4: 1112400,
+  top: 1042231, bottom: 1062148,
+};
+
 const CORSAIR_SLOT_ICONS: Partial<Record<EquipmentSlot, number>> = {
-  necklace: 1122000, pendant_2: 1122000, cape: 1102041, earrings: 1032015,
-  eye: 1022082, face: 1012106, hat: 1002649, shoes: 1072321,
-  gloves: 1082216, overall: 1052134, weapon: 1492013, title: 1142013,
-  ring_1: 1112408, ring_2: 1112408, ring_3: 1112408, ring_4: 1112408,
-  projectile: 2330005,
+  necklace: 1122000, pendant_2: 1122000, cape: 1102041, weapon: 1492013, title: 1142013,
 };
 
 export function EquipmentIcon({ slot, job, label = "" }: { slot: EquipmentSlot; job: JobId; label?: string }) {
-  const itemId = job === "corsair"
+  const representativeId = REPRESENTATIVE_SLOT_ICONS[slot] ?? (/어깨|견장/.test(label) ? 1152052 : undefined);
+  const itemId = representativeId ?? (job === "corsair"
     ? CORSAIR_SLOT_ICONS[slot] ?? (/벨트/.test(label) ? 1132004 : undefined)
-    : undefined;
+    : undefined);
   if (itemId !== undefined) {
+    const folder = representativeId !== undefined ? "representative" : "corsair";
     // Small local sprites need their original pixels, without image optimization.
     // eslint-disable-next-line @next/next/no-img-element
-    return <img className="game-icon maple-equipment-icon" src={`/images/equipment/corsair/${itemId}.png`}
+    return <img className="game-icon maple-equipment-icon" src={`/images/equipment/${folder}/${itemId}.png`}
       width={32} height={32} alt="" aria-hidden="true" draggable={false} />;
   }
   const names: Record<string, string> = {

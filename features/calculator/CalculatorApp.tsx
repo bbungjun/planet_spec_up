@@ -5,7 +5,7 @@ import { calculateDamageResult } from "./domain/calculate";
 import { createDefaultInput, DEFAULT_PROJECTILE_ATTACK } from "./domain/defaults";
 import type { StackableAttackBuffId } from "./domain/attack-buffs";
 import { JOB_RULES } from "./domain/job-rules";
-import { addEquipmentSlot, getEquipmentSlotLabel, removeEquipmentSlot } from "./domain/slots";
+import { addEquipmentSlot, getEquipmentSlotLabel, isNonEquipmentSlot, removeEquipmentSlot } from "./domain/slots";
 import { applyStatReplacement } from "./ocr/applyStatReplacement";
 import type { OcrTarget, OcrSource, StatReplacement } from "./ocr/types";
 import { isPendantSlot } from "./domain/pendants";
@@ -29,10 +29,11 @@ import {
 } from "./components/CharacterPanel";
 import {
   EquipmentEditor,
+  isEquipmentCardFieldVisible,
   type EquipmentChangeHandler,
 } from "./components/EquipmentEditor";
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
-import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
+import { CandidateComparisonPanel, CandidateDialog } from "./components/CandidateComparisonPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
 import { CharacterStatWindowPanel } from "./components/CharacterStatWindowPanel";
@@ -41,7 +42,7 @@ import type { StatWindowSnapshot } from "./domain/types";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
 import { WeaponPresetsPanel } from "./components/WeaponPresetsPanel";
 import { SetupImportPanel } from "./components/SetupImportPanel";
-import { activeWeaponPreset, captureWeaponPreset, getWeaponPreset, switchWeaponPreset } from "./domain/weapon-presets";
+import { activeWeaponPreset, captureWeaponPreset, switchWeaponPreset } from "./domain/weapon-presets";
 import type { WeaponPresetId } from "./domain/types";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
@@ -72,7 +73,7 @@ export function CalculatorApp() {
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
-  const settingsPanel = useRef<HTMLDetailsElement>(null);
+  const [statRegistrationOpen, setStatRegistrationOpen] = useState(false);
   const result = useMemo(() => calculateDamageResult(input), [input]);
 
   const handleStackableBuffChange = (buff: StackableAttackBuffId, enabled: boolean) => {
@@ -293,19 +294,6 @@ export function CalculatorApp() {
     setInputMode("cards");
   };
 
-  const handlePresetCopy = (id: WeaponPresetId) => {
-    if (id === activeWeaponPreset(input)) return;
-    const existing = getWeaponPreset(input, id);
-    if (existing && Object.values(existing.weapon).some(value => value.trim() !== "")
-      && !window.confirm("해당 프리셋의 무기를 현재 무기로 교체할까요?")) return;
-    setInput(current => {
-      const destination = switchWeaponPreset(current, id);
-      return { ...destination, equipment: { ...destination.equipment, weapon: { ...current.equipment.weapon! } } };
-    });
-    setSelectedSlot("weapon");
-    setInputMode("cards");
-  };
-
   const handleLoad = () => {
     try {
       const saved = load();
@@ -329,15 +317,18 @@ export function CalculatorApp() {
   };
 
   const handleNavigate = (path: string) => {
-    const [group, candidate] = path.split(".");
-    if (group === "equipment" && path !== "equipment.projectile.attackFlat") {
+    const [group, candidate, field] = path.split(".");
+    let targetMode: InputMode = "cards";
+    if (group === "equipment" && !(isNonEquipmentSlot(candidate as EquipmentSlot) && field === "attackFlat")) {
       const slot = candidate as EquipmentSlot;
       if (input.equipment[slot] !== undefined) {
         setSelectedSlot(slot);
+        // Preserve an editing route for errors in saved options hidden from cards.
+        if (!isEquipmentCardFieldVisible(slot, field)) targetMode = "bulk";
       }
     }
 
-    setInputMode("cards");
+    setInputMode(targetMode);
     pendingFocusPath.current = path;
     setFocusRequest((request) => request + 1);
   };
@@ -359,18 +350,12 @@ export function CalculatorApp() {
       />
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}
-        onOpenCharacter={() => {
-          if (settingsPanel.current) settingsPanel.current.open = true;
-          document.querySelector<HTMLElement>("#character-settings .stat-window-paste-zone")?.focus();
-        }}>
+        onOpenCharacter={() => setStatRegistrationOpen(true)}>
         <div className="setup-import-identity">
           <CharacterIdentityFields character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
-      <details className="character-settings-drawer" id="character-settings" ref={settingsPanel}>
-      <summary><span>캐릭터·버프 설정</span><small>능력창 · 길드 스킬 · 공격력 버프</small></summary>
-      <div className="character-settings-content">
-      <CharacterStatWindowPanel key={`stat:${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`} input={input} result={result} onSave={handleStatWindowSave} />
+      <div className="character-settings-content" id="character-settings">
       <GuildSkillsPanel character={input.character} issues={result.issues} onChange={handleCharacterChange} />
       <div className="calculator-setup">
           <CharacterPanel
@@ -385,8 +370,15 @@ export function CalculatorApp() {
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      </details>
-      <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onCopy={handlePresetCopy} onSave={handleSave} />
+      {statRegistrationOpen && <CandidateDialog title="능력창 등록" onClose={() => setStatRegistrationOpen(false)}>
+        <CharacterStatWindowPanel embedded key={`stat:${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`} input={input} result={result}
+          onSave={snapshot => {
+            const error = handleStatWindowSave(snapshot);
+            if (!error) setStatRegistrationOpen(false);
+            return error;
+          }} />
+      </CandidateDialog>}
+      <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave} />
       <div className="calculator-workspace" id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator

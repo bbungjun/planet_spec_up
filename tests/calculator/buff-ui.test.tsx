@@ -134,10 +134,13 @@ it("switches the verified Captain setup between boss buffs without stacking and 
   expect(screen.getByLabelText("정령의 축복", {exact: true})).toHaveValue(15);
   expect(screen.getByLabelText("여제의 축복", {exact: true})).toHaveValue(12);
 
-  await user.click(screen.getByRole("button", {name: "버프 편집"}));
-  expect(screen.getByLabelText("버프 공격력", {exact: true})).toHaveValue(35);
+  expect(screen.queryByRole("button", {name: "버프 편집"})).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {name: "정령의 축복 편집"})).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {name: "여제의 축복 편집"})).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("버프 공격력", {exact: true})).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
-  expect(screen.getByLabelText("일괄 입력 버프 공격력", {exact: true})).toHaveValue(35);
+  expect(screen.queryByLabelText("일괄 입력 버프 공격력", {exact: true})).not.toBeInTheDocument();
+  expect(screen.getByLabelText("공격력 버프 직접 입력")).toHaveValue(35);
   await user.click(screen.getByRole("button", {name: /^저장$/}));
   view.unmount();
   render(<CalculatorApp />);

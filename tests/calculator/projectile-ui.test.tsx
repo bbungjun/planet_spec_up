@@ -13,7 +13,9 @@ it("defaults projectile attack to 20 while excluding it from all equipment desti
   for (const job of ["corsair", "night_lord", "marksman"] as const) {
     const input = createDefaultInput(job);
     expect(input.equipment.projectile?.attackFlat).toBe("20");
-    expect(getVisibleEquipmentSlots(input)).not.toContain("projectile");
+    for (const slot of ["projectile", "blessing_1", "blessing_2", "buff"]) {
+      expect(getVisibleEquipmentSlots(input)).not.toContain(slot);
+    }
     expect(calculateDamageResult(input).totalAttack).toBe(25);
   }
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
@@ -57,13 +59,18 @@ it.each(["0", "", "30"])("preserves a legacy saved projectile value %j instead o
   expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
 });
 
-it("opens attack settings when navigating a projectile validation error", async () => {
+it.each([
+  ["불릿·표창 공격력", "표창·불릿"],
+  ["정령의 축복", "정령의 축복"],
+  ["여제의 축복", "여제의 축복"],
+  ["공격력 버프 직접 입력", "버프"],
+])("focuses %s directly when navigating its validation error", async (label, slotLabel) => {
   const user = userEvent.setup(); render(<CalculatorApp />);
-  const direct = screen.getByLabelText("불릿·표창 공격력");
+  const direct = screen.getByLabelText(label, { exact: true });
   await waitFor(() => expect(direct).toBeEnabled());
   fireEvent.change(direct, { target: { value: "-1" } });
-  await user.click(screen.getByRole("button", { name: /^오류 표창·불릿 공격력:/ }));
+  await user.click(screen.getByRole("button", { name: `오류 ${slotLabel} 공격력: Enter a value from 0 to 9999.` }));
   expect(direct).toHaveFocus();
-  expect(document.getElementById("character-settings")).toHaveAttribute("open");
-  expect(screen.queryByRole("heading", { name: "표창·불릿 옵션" })).not.toBeInTheDocument();
+  expect(direct.closest("details")).toBeNull();
+  expect(screen.queryByRole("heading", { name: `${slotLabel} 옵션` })).not.toBeInTheDocument();
 });

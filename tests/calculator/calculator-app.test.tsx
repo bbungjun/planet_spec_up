@@ -183,8 +183,12 @@ describe("calculator app", () => {
     await user.type(screen.getByLabelText("펜던트 1 STR"), "12");
     await user.type(screen.getByLabelText("펜던트 1 DEX%"), "13");
     await user.type(screen.getByLabelText("펜던트 1 STR%"), "14");
-    await user.type(screen.getByLabelText("펜던트 1 공격력"), "15");
-    await user.type(screen.getByLabelText("펜던트 1 공격력%"), "16");
+    await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+    await user.type(screen.getByLabelText("일괄 입력 펜던트 1 공격력"), "15");
+    await user.type(screen.getByLabelText("일괄 입력 펜던트 1 공격력%"), "16");
+    await user.type(screen.getByLabelText("일괄 입력 한벌옷 공격력"), "123");
+    await user.type(screen.getByLabelText("일괄 입력 한벌옷 공격력%"), "9");
+    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
     await user.type(screen.getByLabelText("펜던트 1 요구 STR"), "17");
     await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
 
@@ -192,10 +196,6 @@ describe("calculator app", () => {
     await user.type(screen.getByLabelText("한벌옷 DEX"), "99");
     await user.clear(screen.getByLabelText("한벌옷 STR%"));
     await user.type(screen.getByLabelText("한벌옷 STR%"), "88");
-    await user.clear(screen.getByLabelText("한벌옷 공격력"));
-    await user.type(screen.getByLabelText("한벌옷 공격력"), "123");
-    await user.clear(screen.getByLabelText("한벌옷 공격력%"));
-    await user.type(screen.getByLabelText("한벌옷 공격력%"), "9");
     await user.clear(screen.getByLabelText("한벌옷 요구 STR"));
     await user.type(screen.getByLabelText("한벌옷 요구 STR"), "45");
 
@@ -210,8 +210,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(null);
     expect(screen.getByLabelText("한벌옷 STR%"))
       .toHaveValue(88);
-    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
-    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
+    expect(screen.queryByLabelText("한벌옷 공격력")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("한벌옷 공격력%")).not.toBeInTheDocument();
     expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
 
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
@@ -220,8 +220,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("한벌옷 STR")).toHaveValue(10);
     expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(21);
     expect(screen.getByLabelText("한벌옷 STR%")).toHaveValue(null);
-    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
-    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
+    expect(screen.queryByLabelText("한벌옷 공격력")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("한벌옷 공격력%")).not.toBeInTheDocument();
     expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
     expect(screen.getByLabelText("레벨")).toHaveValue(180);
     expect(screen.getByLabelText("타격당 평균 데미지 비율")).toHaveValue(420);
@@ -231,6 +231,10 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("일괄 입력 한벌옷 STR")).toHaveValue(10);
     expect(screen.getByLabelText("일괄 입력 한벌옷 DEX%")).toHaveValue(21);
     expect(screen.getByLabelText("일괄 입력 한벌옷 STR%")).toHaveValue(null);
+    expect(screen.getByLabelText("일괄 입력 한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("일괄 입력 한벌옷 공격력%")).toHaveValue(9);
+    expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력")).toHaveValue(15);
+    expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력%")).toHaveValue(16);
 
     await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
 
@@ -239,8 +243,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("펜던트 1 STR")).toHaveValue(12);
     expect(screen.getByLabelText("펜던트 1 DEX%")).toHaveValue(13);
     expect(screen.getByLabelText("펜던트 1 STR%")).toHaveValue(14);
-    expect(screen.getByLabelText("펜던트 1 공격력")).toHaveValue(15);
-    expect(screen.getByLabelText("펜던트 1 공격력%")).toHaveValue(16);
+    expect(screen.queryByLabelText("펜던트 1 공격력")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("펜던트 1 공격력%")).not.toBeInTheDocument();
     expect(screen.getByLabelText("펜던트 1 요구 STR")).toHaveValue(17);
     expect(screen.getByRole("button", { name: "펜던트 1 편집" })).toHaveClass("is-complete");
   }, 15000); // Full card → OCR → bulk flow performs dozens of user interactions.
@@ -472,9 +476,6 @@ describe("calculator app", () => {
       "반지 2",
       "반지 3",
       "반지 4",
-      "정령의 축복",
-      "여제의 축복",
-      "버프",
       "한벌옷",
     ].forEach((slot) => {
       expect(
@@ -483,6 +484,9 @@ describe("calculator app", () => {
     });
     expect(screen.queryByRole("button", { name: "상의 편집" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "표창·불릿 편집" })).not.toBeInTheDocument();
+    for (const source of ["정령의 축복", "여제의 축복", "버프"]) {
+      expect(screen.queryByRole("button", { name: `${source} 편집` })).not.toBeInTheDocument();
+    }
     expect(screen.queryByRole("button", { name: "하의 편집" })).not.toBeInTheDocument();
   });
 

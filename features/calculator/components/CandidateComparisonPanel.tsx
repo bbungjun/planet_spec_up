@@ -37,7 +37,7 @@ function CandidatePhoto({ file, originalFile = file, alt = "비교 후보 원본
     {showOriginalLink && <a ref={link} className="candidate-original-link" target="_blank" rel="noopener noreferrer">전체 원본 열기 ↗</a>}</>;
 }
 
-function CandidateDialog({ title, onClose, children, className = "" }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
+export function CandidateDialog({ title, onClose, children, className = "" }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const node = dialog.current;

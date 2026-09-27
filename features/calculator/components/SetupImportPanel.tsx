@@ -6,7 +6,7 @@ import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots
 import { MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch } from "../ocr/batch";
 import { clipboardImages } from "../ocr/clipboard";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
-import { GameIcon } from "./GameVisuals";
+import { CharacterIcon, GameIcon } from "./GameVisuals";
 
 type Props = {
   input: CalculatorInput;
@@ -81,7 +81,7 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, children, on
       </div>
     </div>
     <div className="workshop-character-bar">
-      <span className="workshop-character-icon"><GameIcon name="hat" /></span>
+      <span className="workshop-character-icon"><CharacterIcon job={input.character.job} /></span>
       {children}
       {onOpenCharacter && <button type="button" className="secondary-button character-photo-shortcut" onClick={onOpenCharacter}><GameIcon name="camera" />능력창 사진</button>}
     </div>

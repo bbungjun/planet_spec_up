@@ -1,0 +1,20 @@
+{
+  "assets": [
+    {
+      "job": "corsair",
+      "name": "캡틴",
+      "file": "corsair.webp",
+      "provider": "NEXON MapleStory Japan",
+      "referencePage": "https://maplestory.nexon.co.jp/job/adventurer/captain/",
+      "source": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/captain/char_02.webp",
+      "retrievedAt": "2026-09-27T18:27:28.660Z",
+      "copyright": "MapleStory artwork © NEXON",
+      "width": 72,
+      "height": 86,
+      "bytes": 4732,
+      "sha256": "1f52b322fb1b073659584855abf1fa17c25c6f3bea8d6ed519c21aa8f596598e",
+      "animated": false,
+      "purpose": "Official representative Corsair job sprite for the character header, not identification of the users character."
+    }
+  ]
+}

@@ -122,33 +122,50 @@ it("rejects malformed preset saves and out-of-range OCR ignore-defense", () => {
   expect(applyOcrBatch(input, "corsair", [{destination: "preset:chaos", label: "건", replacement: replacement("방어율 무시 +101%")}]).input).toBeNull();
 });
 
-it("edits, switches, copies and restores all presets through the UI", async () => {
+it("registers one to three independent weapons and restores them through the UI", async () => {
   const user = userEvent.setup();
   const view = render(<CalculatorApp />);
+  expect(screen.queryByRole("button", {name: /현재 무기를 .* 복사/})).not.toBeInTheDocument();
+  expect(screen.getAllByText("무기 미등록")).toHaveLength(3);
   await user.click(screen.getByRole("button", {name: "일반 보스용 프리셋 선택"}));
   await user.type(screen.getByLabelText("무기 공격력", {exact: true}), "100");
   await user.type(screen.getByLabelText("무기 보스공격력%"), "60");
-  await user.click(screen.getByRole("button", {name: "현재 무기를 카오스 보스용에 복사"}));
-  expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(100);
-  await user.clear(screen.getByLabelText("무기 보스공격력%"));
+  await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
+  const oneWeapon = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
+  expect(oneWeapon.ok).toBe(true);
+  if (!oneWeapon.ok) throw new Error("save failed");
+  expect(oneWeapon.value.input.weaponPresets?.entries.chaos).toBeUndefined();
+  expect(oneWeapon.value.input.weaponPresets?.entries.hunting).toBeUndefined();
+  expect(screen.getAllByText("무기 미등록")).toHaveLength(2);
+  await user.click(screen.getByRole("button", {name: "카오스 보스용 프리셋 선택"}));
+  expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(null);
+  expect(screen.getByLabelText("무기 보스공격력%")).toHaveValue(null);
+  await user.type(screen.getByLabelText("무기 공격력", {exact: true}), "110");
   await user.type(screen.getByLabelText("무기 방어율 무시%"), "60");
+  await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
+  const twoWeapons = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
+  expect(twoWeapons.ok).toBe(true);
+  if (!twoWeapons.ok) throw new Error("save failed");
+  expect(twoWeapons.value.input.weaponPresets?.entries.hunting).toBeUndefined();
+  expect(screen.getAllByText("무기 미등록")).toHaveLength(1);
   await user.click(screen.getByRole("button", {name: "사냥용 프리셋 선택"}));
   expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(null);
   await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
   await user.type(screen.getByLabelText("일괄 입력 무기 공격력", {exact: true}), "120");
   await user.type(screen.getByLabelText("일괄 입력 무기 총데미지%"), "21");
-  await user.click(screen.getByRole("button", {name: "프리셋 3개 함께 저장"}));
+  await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
   expect(localStorage.length).toBe(1);
   const saved = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
   expect(saved).toMatchObject({ok: true, value: {input: {weaponPresets: {active: "hunting", entries: {
     boss: {weapon: {attackFlat: "100", bossDamagePercent: "60"}},
-    chaos: {weapon: {ignoreDefensePercent: "60"}},
+    chaos: {weapon: {attackFlat: "110", ignoreDefensePercent: "60"}},
     hunting: {weapon: {attackFlat: "120", totalDamagePercent: "21"}},
   }}}}});
   view.unmount();
   render(<CalculatorApp />);
   await waitFor(() => expect(screen.getByRole("button", {name: "사냥용 프리셋 선택"})).toHaveAttribute("aria-pressed", "true"));
   await user.click(screen.getByRole("button", {name: "카오스 보스용 프리셋 선택"}));
+  expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(110);
   expect(screen.getByLabelText("무기 방어율 무시%")).toHaveValue(60);
   await user.click(screen.getByRole("button", {name: "일반 보스용 프리셋 선택"}));
   expect(screen.getByLabelText("무기 보스공격력%")).toHaveValue(60);

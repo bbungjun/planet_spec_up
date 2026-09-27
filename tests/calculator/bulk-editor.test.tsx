@@ -27,13 +27,14 @@ it("shares raw string values between card and bulk modes in both directions", as
   const user = userEvent.setup();
   render(<Page />);
 
-  const cardAttackPercent = screen.getByLabelText("펜던트 1 공격력%") as HTMLInputElement;
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
+  const cardAttackPercent = screen.getByLabelText("무기 공격력%") as HTMLInputElement;
   await user.type(cardAttackPercent, "22.5");
   expect(cardAttackPercent.value).toBe("22.5");
 
   await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
   const bulkAttackPercent = screen.getByLabelText(
-    "일괄 입력 펜던트 1 공격력%",
+    "일괄 입력 무기 공격력%",
   ) as HTMLInputElement;
   expect(bulkAttackPercent.value).toBe("22.5");
 
@@ -41,7 +42,7 @@ it("shares raw string values between card and bulk modes in both directions", as
   await user.type(bulkAttackPercent, "31.25");
   await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
 
-  expect((screen.getByLabelText("펜던트 1 공격력%") as HTMLInputElement).value)
+  expect((screen.getByLabelText("무기 공격력%") as HTMLInputElement).value)
     .toBe("31.25");
 });
 

@@ -46,7 +46,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
               <label htmlFor={`attack-source-${slot}`}>{label}</label>
               <input id={`attack-source-${slot}`} type="number" min={0} max={9999} step={1}
                 value={input.equipment[slot]?.attackFlat ?? ""}
-                data-field-path={slot === "projectile" ? path : undefined}
+                data-field-path={path}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `attack-source-${slot}-error` : undefined}
                 onChange={event => onEquipmentChange(slot, "attackFlat", event.currentTarget.value)} />

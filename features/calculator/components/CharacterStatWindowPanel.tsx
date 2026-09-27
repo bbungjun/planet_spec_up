@@ -8,9 +8,9 @@ import type { StatDraft } from "../ocr/parseStatWindow";
 import { clipboardImages } from "../ocr/clipboard";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES } from "../ocr/recognizeTooltip.client";
 
-type Props={embedded?:boolean;input:CalculatorInput;result:CalculationResult;onSave:(snapshot:StatWindowSnapshot)=>string|null};
+type Props={embedded?:boolean;showReconciliation?:boolean;input:CalculatorInput;result:CalculationResult;onSave:(snapshot:StatWindowSnapshot)=>string|null};
 const observed = [["maxAttack","최대 스탯공"],["minAttack","최소 스탯공"],["totalDamagePercent","총데미지 (%)"],["bossDamagePercent","보스공격력 (%)"],["ignoreDefensePercent","방어율 무시 (%)"],["criticalRate","크리티컬 확률 (%)"],["accuracy","명중률"]] as const;
-export function CharacterStatWindowPanel({input,result,onSave,embedded=false}:Props) {
+export function CharacterStatWindowPanel({input,result,onSave,embedded=false,showReconciliation=false}:Props) {
   const [draft,setDraft]=useState<StatDraft|null>(null),[message,setMessage]=useState(""),[busy,setBusy]=useState(false),[preview,setPreview]=useState("");
   const [warnings,setWarnings]=useState<string[]>([]);
   const controller=useRef<AbortController|null>(null),saveRef=useRef(onSave);
@@ -58,13 +58,13 @@ export function CharacterStatWindowPanel({input,result,onSave,embedded=false}:Pr
     document.addEventListener("paste",paste,true);
     return()=>document.removeEventListener("paste",paste,true);
   },[embedded,acceptImages]);
-  const rows=compareStatWindow(input,result);
-  return <section ref={section} className={`stat-window-panel${embedded?" is-embedded":""}`} aria-label="능력창 등록 및 검산" onPaste={event=>{
+  const rows=showReconciliation?compareStatWindow(input,result):[];
+  return <section ref={section} className={`stat-window-panel${embedded?" is-embedded":""}`} aria-label="능력창 사진 등록" onPaste={event=>{
     if(event.defaultPrevented)return;
     const images=clipboardImages(event.clipboardData);
     if(images.length){event.preventDefault();event.stopPropagation();acceptImages(images);}
   }}>
-    <div>{!embedded&&<h2>능력창으로 한 번 더 점검</h2>}<p>스탯창과 상세 공격력 창이 함께 보이는 사진</p></div>
+    <div>{!embedded&&<h2>능력창 등록</h2>}<p>스탯창과 상세 공격력 창이 함께 보이는 사진</p></div>
     <label className="stat-upload">능력창 사진 선택<input type="file" accept="image/png,image/jpeg,image/webp" aria-label="능력창 사진 선택" disabled={busy} onChange={event=>{const files=Array.from(event.target.files??[]);event.target.value="";acceptImages(files);}} /></label>
     <div className="equipment-ocr-paste-zone stat-window-paste-zone" role="group" aria-label="능력창 사진 붙여넣기" tabIndex={0} aria-disabled={busy} onClick={event=>event.currentTarget.focus()}>
       {embedded?"이 창에서 Ctrl+V로 능력창 사진 붙여넣기":"여기를 클릭하고 Ctrl+V로 능력창 사진 붙여넣기"}

@@ -54,6 +54,14 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
   { field: "damagePercent", suffix: () => "기존 합산값% (분리 후 비우기)", max: 999, step: "any" },
 ];
 
+const WEAPON_ONLY_CARD_FIELDS = new Set<string>([
+  "attackFlat", "attackPercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent",
+]);
+
+export function isEquipmentCardFieldVisible(slot: EquipmentSlot, field: string): boolean {
+  return slot === "weapon" || !WEAPON_ONLY_CARD_FIELDS.has(field);
+}
+
 export function EquipmentEditor({
   input,
   selectedSlot,
@@ -78,6 +86,10 @@ export function EquipmentEditor({
 
   if (equipment === undefined) return null;
 
+  const fields = EQUIPMENT_FIELD_DEFINITIONS.filter(({ field }) =>
+    isEquipmentCardFieldVisible(selectedSlot, field)
+    && (field !== "damagePercent" || (equipment.damagePercent ?? "").trim() !== ""));
+
   const handleKeyDown = (
     event: KeyboardEvent<HTMLInputElement>,
     fieldIndex: number,
@@ -94,7 +106,7 @@ export function EquipmentEditor({
       return;
     }
 
-    fieldRefs.current[fieldIndex + 1]?.focus();
+    if (fieldIndex + 1 < fields.length) fieldRefs.current[fieldIndex + 1]?.focus();
   };
 
   return (
@@ -126,8 +138,7 @@ export function EquipmentEditor({
       />
 
       <div className="equipment-field-grid">
-        {EQUIPMENT_FIELD_DEFINITIONS.map(({ field, suffix, max, step }, fieldIndex) => {
-          if (field === "damagePercent" && !(equipment.damagePercent ?? "").trim()) return null;
+        {fields.map(({ field, suffix, max, step }, fieldIndex) => {
           const path = `equipment.${selectedSlot}.${field}`;
           const id = path.replaceAll(".", "-");
           const error = issues.find(

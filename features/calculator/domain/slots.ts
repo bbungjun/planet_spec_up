@@ -8,10 +8,14 @@ const builtinIds = new Set<EquipmentSlot>(Object.keys(EQUIPMENT_SLOT_LABELS) as 
 export const MAX_CUSTOM_SLOTS = 50;
 export const RING_SLOTS: readonly EquipmentSlot[] = ["ring_1", "ring_2", "ring_3", "ring_4"];
 
+export function isNonEquipmentSlot(slot: EquipmentSlot): boolean {
+  return slot === "projectile" || slot === "blessing_1" || slot === "blessing_2" || slot === "buff";
+}
+
 export function getVisibleEquipmentSlots(input: CalculatorInput): EquipmentSlot[] {
-  // Projectile attack remains in the saved/calculated sources, but is entered
+  // Non-equipment attack remains in the saved/calculated sources, but is entered
   // directly in attack settings instead of equipment cards, bulk editing or OCR.
-  return [...JOB_RULES[input.character.job].visibleSlots.filter(slot => slot !== "projectile"), ...(input.customSlots ?? []).map(({ id }) => id)];
+  return [...JOB_RULES[input.character.job].visibleSlots.filter(slot => !isNonEquipmentSlot(slot)), ...(input.customSlots ?? []).map(({ id }) => id)];
 }
 
 export function getEquipmentSlotLabel(input: CalculatorInput, slot: EquipmentSlot): string {

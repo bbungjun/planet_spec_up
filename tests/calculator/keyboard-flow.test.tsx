@@ -21,6 +21,13 @@ it("moves through visible fields and equipment slots in deterministic order", as
   await user.keyboard("{Enter}");
   expect(screen.getByLabelText("펜던트 1 STR")).toHaveFocus();
 
+  for (const label of ["펜던트 1 DEX%", "펜던트 1 STR%", "펜던트 1 요구 레벨", "펜던트 1 요구 STR"]) {
+    await user.keyboard("{Enter}");
+    expect(screen.getByLabelText(label)).toHaveFocus();
+  }
+  await user.keyboard("{Enter}");
+  expect(screen.getByLabelText("펜던트 1 요구 STR")).toHaveFocus();
+
   await user.keyboard("{Control>}{Enter}{/Control}");
   expect(screen.getByRole("heading", { name: "펜던트 2 옵션" })).toBeInTheDocument();
   expect(screen.getByLabelText("펜던트 2 DEX")).toHaveFocus();
@@ -30,8 +37,8 @@ it("moves from the penultimate slot to the final slot before wrapping", async ()
   const user = userEvent.setup();
   render(<Page />);
 
-  await user.click(screen.getByRole("button", { name: "버프 편집" }));
-  screen.getByLabelText("버프 DEX").focus();
+  await user.click(screen.getByRole("button", { name: "반지 4 편집" }));
+  screen.getByLabelText("반지 4 DEX").focus();
 
   await user.keyboard("{Control>}{Enter}{/Control}");
   expect(screen.getByRole("heading", { name: "한벌옷 옵션" })).toBeInTheDocument();
@@ -76,6 +83,7 @@ it("gives identical validation messages unique field names and navigates each ex
   await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
   await user.type(screen.getByLabelText("일괄 입력 모자 DEX"), "-1");
   await user.type(screen.getByLabelText("일괄 입력 망토 STR"), "-1");
+  await user.type(screen.getByLabelText("일괄 입력 모자 공격력"), "-1");
 
   const hatIssueName = "오류 모자 DEX: Enter a value from 0 to 9999.";
   const capeIssueName = "오류 망토 STR: Enter a value from 0 to 9999.";
@@ -90,4 +98,9 @@ it("gives identical validation messages unique field names and navigates each ex
   await user.click(screen.getByRole("button", { name: hatIssueName }));
   expect(screen.getByRole("heading", { name: "모자 옵션" })).toBeInTheDocument();
   expect(screen.getByLabelText("모자 DEX")).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: "오류 모자 공격력: Enter a value from 0 to 9999." }));
+  expect(screen.getByRole("button", { name: "카드 입력 보기" })).toBeInTheDocument();
+  expect(screen.getByLabelText("일괄 입력 모자 공격력")).toHaveFocus();
+  expect(screen.getByLabelText("일괄 입력 모자 공격력")).toHaveValue(-1);
 });
