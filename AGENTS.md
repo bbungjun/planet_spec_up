@@ -4,6 +4,8 @@
 
 기준 저장소는 [bbungjun/planet_spec_up](https://github.com/bbungjun/planet_spec_up)이며 기본 브랜치는 `main`이다. **실제 앱과 Git 작업 루트는 `C:/Users/PC/Documents/플래닛`**이며, 새로 clone한 환경에서도 저장소 루트가 앱 루트다. `app/`, `features/`, `package.json`이 있는 이 루트에서 모든 앱 명령과 검증을 실행한다. 2026-09-26 사용자 결정으로 `.worktrees/planet-damage-mvp`의 앱을 루트로 이전했다. 단일 앱을 중심으로 개발하며 중첩된 앱이나 추가 worktree를 기본 작업 위치로 만들지 않는다. GitHub 소스 업로드와 웹사이트 배포는 별개이며, 배포는 별도 승인을 따른다.
 
+2026-09-29 사용자 승인(D-141): 현재 캡틴 전용 베타를 Vercel에 먼저 공개하고 발견되는 문제를 고치는 방식으로 진행한다. 이번 첫 공개와 공개 동작 확인에 필요한 수정·재배포는 승인됐다. 우선 기존 Hobby 계정과 기본 vercel.app 주소를 사용하며 도메인 구매·유료 플랜 전환·외부 OCR 도입으로 확대하지 않는다. 공개 성공과 독립 사용자 POC 합격·500명 부하 검증은 구분한다.
+
 이전 전 문서와 앱 복구본은 Git 제외 경로 `output/root-migration-20260926-215715/`에 보존했다. 그 아래 `previous-app/`은 복구용 detached worktree이며 개발·실행 대상이 아니다. 기존 `master` 이력도 보존한다. 백업 안의 과거 작업 지침을 현재 정책으로 적용하지 않는다.
 
 ## 사용자 결정 기록 — 매 작업 필수

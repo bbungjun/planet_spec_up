@@ -186,7 +186,11 @@ npm run build
 
 ## Vercel 배포 준비
 
-저장소 루트의 `vercel.json`은 Next.js 프레임워크와 `npm run build:vercel`, `.next` 출력을 지정합니다. 추가 런타임 패키지는 필요하지 않습니다. Vercel 프로젝트의 Root Directory는 저장소 루트, Node.js는 22.x로 설정합니다.
+저장소 루트의 `vercel.json`은 Next.js 프레임워크와 `npm run build:vercel`, `.next` 출력을 지정합니다. 추가 런타임 패키지는 필요하지 않습니다. Vercel 프로젝트의 Root Directory는 저장소 루트, Node.js는24.x를 사용합니다.2026-09-29 확인한 로컬 검증 런타임은24.12.0이며 Vercel의 현재 기본 LTS도24.x입니다. package.json의 `>=22.13.0`은22.x 고정이 아니라 더 높은 지원 버전도 허용합니다. [Node 버전 선택 기준](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
+
+도메인 구매 없이 Vercel이 배정하는 `vercel.app` 프로덕션 주소로 시작할 수 있습니다. GitHub의 `bbungjun/planet_spec_up`를 가져와 production branch를 main으로 확인하고 최초 배포 후 실제 프로덕션 주소를 `SITE_URL`의 Production 값으로 지정해 재배포합니다. 환경변수 변경은 새 배포에 적용됩니다. 기존 기본주소를 예시 이름으로 추측하거나 매번 달라지는 개별 배포 URL을 고정 사이트 주소로 사용하지 않습니다. [생성 URL](https://vercel.com/docs/deployments/generated-urls), [환경변수](https://vercel.com/docs/environment-variables).
+
+외부 이용자에게는 로그인 없이 열리는 프로덕션 도메인을 공유합니다. Deployment Protection의 Standard Protection은 프로덕션 도메인을 제외하고 보호하므로 미리보기 보호를 모두 해제할 필요는 없습니다. GitHub 자동 배포를 연결하면 main 푸시가 프로덕션 배포를 촉발하므로, 별도 배포 승인 정책과 함께 자동 배포 사용 여부를 정해야 합니다. 현재 안내만으로 계정 연결이나 자동 배포 정책을 변경하지 않았습니다. [배포 보호](https://vercel.com/docs/deployment-protection), [Git 연동](https://vercel.com/docs/git/vercel-for-github).
 
 ```powershell
 npm run build:vercel
