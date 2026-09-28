@@ -178,7 +178,7 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
       {candidates.map((candidate, index) => <CandidateCard key={candidate.id} input={input} candidate={candidate} index={index} onChange={changeCandidate} onRemove={() => setCandidates(current => current.filter(item => item.id !== candidate.id))} onDetails={() => setDetailsId(candidate.id)} onRegisterStats={onEditBaseStats}/>)}
       <button type="button" className="comparison-add-card" onClick={openImport} aria-label="비교 카드 추가"><span className="comparison-add-symbol"><Plus/></span><strong>비교 대상 추가</strong></button>
     </div>
-    <p className="comparison-footnote">후보는 임시 비교용입니다.</p>
+    <p className="comparison-footnote">구매 후보·사진·가격은 임시 비교용이며, 새로고침하거나 페이지를 닫으면 사라집니다.</p>
     {importOpen && <CandidateDialog title="비교할 장비 추가" onClose={() => setImportOpen(false)}>
       <EquipmentOcrPanel key={`${draftSlot}:${activeWeaponPreset(input)}`} target={{ job: input.character.job, slot: draftSlot }} slotLabel="구매 후보" purpose="candidate"
         candidateSlots={slots.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot) }))}
