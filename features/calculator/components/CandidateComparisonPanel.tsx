@@ -105,7 +105,7 @@ function BaselineCard({ input, onRegisterStats }: { input: CalculatorInput; onRe
     <div className="candidate-metric is-main"><span className="candidate-metric-label">최대 스탯공</span><div className="candidate-metric-value"><strong>{valid ? format(result.statAttack) : "—"}</strong></div><span className="baseline-marker">기준값</span></div>
     <div className="candidate-metric"><span className="candidate-metric-label">환산 공격력</span><div className="candidate-metric-value"><strong>{valid ? format(result.convertedAttack) : "—"}</strong></div><span className="baseline-marker">기준값</span></div>
     </div>
-    <div className="comparison-base-stats"><span>{rule.mainStat}<b>{format(result.mainStat)}</b></span><span>{rule.subStat}<b>{format(result.subStat)}</b></span><span>공격력<b>{format(result.totalAttack)}</b></span></div>
+    <div className="comparison-base-stats"><span>{rule.mainStat}<b>{input.character.job === "aran" && !valid ? "—" : format(result.mainStat)}</b></span><span>{rule.subStat}<b>{input.character.job === "aran" && !valid ? "—" : format(result.subStat)}</b></span><span>공격력<b>{input.character.job === "aran" && !valid ? "—" : format(result.totalAttack)}</b></span></div>
     <div className="comparison-baseline-footer">{fixed ? "순수 스탯 고정" : <button type="button" className="candidate-register-stats" onClick={onRegisterStats}>순수 스탯 입력</button>}</div>
   </div>;
 }

@@ -2,6 +2,7 @@ import type { EquipmentSlot, JobId } from "../domain/types";
 
 // Original UI illustrations carried over from the approved local design preview.
 const drawings: Record<string, string> = {
+  polearm: '<path d="M9 42 34 9" stroke="#9a7c56" stroke-width="5"/><path d="m31 5 12 2-3 17-7-4 2-9-6 1z" fill="#d5e9e9" stroke="#435d73" stroke-width="2"/><path d="m11 35 6 4" stroke="#cfb673" stroke-width="3"/>',
   crossbow: '<path d="m6 11 6-5 14 12 13-1 4 7-10 4-8-5-8 20-8-3 11-24" fill="#9a7c56" stroke="#435d73" stroke-width="2"/><path d="M7 7Q37 8 40 39M7 7l7 29 26 3" fill="none" stroke="#d0b361" stroke-width="3"/><path d="m14 36 21-24" stroke="#c6e8ed" stroke-width="3"/>',
   claw: '<path d="m8 20 21-8 13 12-6 17-24-4z" fill="#748ba3" stroke="#435d73" stroke-width="2"/><path d="m20 18 4-15 4 13m0 3 7-14 0 16m-1 2 11-10-5 17" fill="#d5e9e9" stroke="#435d73" stroke-width="2"/><path d="m12 26 24 3-4 8-17-4z" fill="#cfb673"/>',
   potion: '<path d="m18 5 12 0 0 12 11 14-3 12-27 0-4-12 11-14z" fill="#bedfe6" stroke="#486d82" stroke-width="2"/><path d="m12 29 23 0 2 9-25 0z" fill="#a4c77f"/><path d="m16 4 16 0 0 7-16 0z" fill="#b9905c" stroke="#6a6450" stroke-width="2"/><path d="m17 23-3 10" stroke="#fff" stroke-width="3"/>',
@@ -71,7 +72,7 @@ export function EquipmentIcon({ slot, job, label = "" }: { slot: EquipmentSlot; 
     eye: "glasses", face: "face", shoes: "shoes", gloves: "glove", top: "top", overall: "top",
     bottom: "pants", title: "medal", projectile: "projectile", blessing_1: "leaf", blessing_2: "medal", buff: "potion",
   };
-  const name = slot === "weapon" ? (job === "marksman" ? "crossbow" : job === "night_lord" ? "claw" : "weapon")
+  const name = slot === "weapon" ? (job === "marksman" ? "crossbow" : job === "night_lord" ? "claw" : job === "aran" ? "polearm" : "weapon")
     : slot.startsWith("ring_") ? "ring" : names[slot] ?? (/벨트/.test(label) ? "belt" : /어깨/.test(label) ? "top" : "medal");
   return <GameIcon name={name} />;
 }

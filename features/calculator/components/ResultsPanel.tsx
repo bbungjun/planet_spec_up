@@ -117,7 +117,7 @@ export function ResultsPanel({
     return [
       ["장비 (% 적용 후)", equipmentAttack],
       ["캐시 장비 (% 적용 후)", calculateTotalAttack(totals.percentEligibleAttack + cashAttack, 0, totals.attackPercent) - equipmentAttack],
-      ["불릿·표창", normalized.equipment.projectile?.attackFlat ?? 0],
+      ...(input.character.job === "aran" ? [["패시브·콤보 (공% 제외 가정)", normalized.character.aranFlatAttack] as const] : [["불릿·표창", normalized.equipment.projectile?.attackFlat ?? 0] as const]),
       ["정령의 축복", normalized.equipment.blessing_1?.attackFlat ?? 0],
       ["여제의 축복", normalized.equipment.blessing_2?.attackFlat ?? 0],
       ["공격력 버프", normalized.equipment.buff?.attackFlat ?? 0],
@@ -145,7 +145,7 @@ export function ResultsPanel({
             <span className="buff-comparison-label">{label} <small>+{attack}</small>
               {!invalidBuff && activeBuffAttack === attack && <span className="buff-applied-badge">적용 중</span>}
             </span>
-            <output aria-label={`${label} 예상 스탯공`}>{missingWeapon ? "—" : integerFormat.format(comparison.statAttack)}</output>
+            <output aria-label={`${label} 예상 스탯공`}>{missingWeapon || (input.character.job === "aran" && result.issues.some(issue => issue.severity === "error")) ? "—" : integerFormat.format(comparison.statAttack)}</output>
           </button>
         ))}
 
@@ -163,7 +163,7 @@ export function ResultsPanel({
 
       <details className="preset-formula-details">
         <summary>계산 근거</summary>
-        <p>최대 스탯공 = ⌊({rule.mainStat} × {rule.weaponConstant} + {rule.subStat}{extraStat}) × 공격력 ÷ 100⌋</p>
+        <p>최대 스탯공 = ⌊({rule.mainStat} × {input.character.job === "aran" ? input.character.aranWeaponConstant || "미확인" : rule.weaponConstant} + {rule.subStat}{extraStat}) × 공격력 ÷ 100⌋</p>
         <p>환산공 = ⌊스탯공 × (1 + 보공·총뎀% ÷ 100) × 방어율 배율 × 크리 배율⌋</p>
         <p>타격당 평균 데미지 {input.character.skillPercent || "0"}% 기준</p>
       </details>

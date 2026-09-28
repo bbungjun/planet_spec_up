@@ -65,6 +65,7 @@ export function sumEquipment(
   };
 
   for (const slot of [...job.visibleSlots, ...customSlots]) {
+    if (job.id === "aran" && slot === "projectile") continue;
     const item = equipment[slot];
     if (item === undefined) continue;
 

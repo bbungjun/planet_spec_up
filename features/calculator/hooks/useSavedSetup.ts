@@ -2,10 +2,10 @@
 
 import { useCallback } from "react";
 import type { CalculatorInput } from "../domain/types";
-import { CAPTAIN_BETA_STORAGE_KEY, deserializeSetup, serializeSetup, STORAGE_KEY } from "../storage";
+import { CAPTAIN_BETA_STORAGE_KEY, deserializeSetup, serializeSetup, STORAGE_KEY, DEVELOPMENT_STORAGE_KEY } from "../storage";
 
-export function useSavedSetup(captainBeta = false) {
-  const key = captainBeta ? CAPTAIN_BETA_STORAGE_KEY : STORAGE_KEY;
+export function useSavedSetup(captainBeta = false, development = false) {
+  const key = captainBeta ? CAPTAIN_BETA_STORAGE_KEY : development ? DEVELOPMENT_STORAGE_KEY : STORAGE_KEY;
   const load = useCallback(() => {
     const current = window.localStorage.getItem(key);
     // An explicit reset must not resurrect the untouched legacy setup.

@@ -29,4 +29,5 @@ export const WEAPON_LABELS = {
   crossbow: "석궁",
   gun: "건",
   claw: "아대",
+  polearm: "폴암",
 } as const;

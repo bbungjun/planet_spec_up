@@ -64,7 +64,7 @@ const categories: Record<string, EquipmentSlot[]> = {
   얼굴장식: ["face"], 눈장식: ["eye"], 펜던트: ["necklace", "pendant_2"], 목걸이: ["necklace", "pendant_2"],
   장갑: ["gloves"], 신발: ["shoes"], 한벌옷: ["overall"], 상의: ["top"], 하의: ["bottom"],
   반지: ["ring_1", "ring_2", "ring_3", "ring_4"], 훈장: ["title"],
-  건: ["weapon"], 석궁: ["weapon"], 아대: ["weapon"], 무기: ["weapon"],
+  건: ["weapon"], 석궁: ["weapon"], 아대: ["weapon"], 폴암: ["weapon"], 무기: ["weapon"],
 };
 
 export function matchingSlots<T extends {slot: EquipmentSlot; label: string}>(category: string | null, choices: T[]): T[] {

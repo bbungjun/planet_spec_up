@@ -37,7 +37,7 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   if(!input.character.pureMain?.trim() || !input.character.pureSub?.trim())return {...fail("캐릭터 설정에서 순수 주스탯·부스탯을 입력해주세요."),blocker:"missing-base-stats"};
   const choices=comparableSlots(input).map(slot=>({slot,label:getEquipmentSlotLabel(input,slot)}));
   const matches=matchingSlots(candidate.category,choices);
-  const weapons:Record<string,JobId>={건:"corsair",석궁:"marksman",아대:"night_lord"};
+  const weapons:Record<string,JobId>={건:"corsair",석궁:"marksman",아대:"night_lord",폴암:"aran"};
   if(candidate.category && (Object.hasOwn(weapons,candidate.category) && weapons[candidate.category]!==candidate.job))return fail("현재 직업에 맞는 무기 사진을 선택해주세요.");
   if(candidate.category && matches.length>0 && !matches.some(choice=>choice.slot===candidate.slot))return fail(`인식 부위(${candidate.category})와 비교 부위가 다릅니다.`);
   if(candidate.category && matches.length===0)return fail(`인식 부위(${candidate.category})에 맞는 장비 부위를 먼저 추가해주세요.`);

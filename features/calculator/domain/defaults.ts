@@ -21,6 +21,7 @@ export function createDefaultInput(job: JobId): CalculatorInput {
   return {
     character: {
       job,
+      ...(job === "aran" ? { aranWeaponConstant: "5", aranFlatAttack: "0", aranCombo: "0", aranComboCritical: false } : {}),
       level: "160",
       mapleWarrior: 20,
       skillPercent: String(rule.defaultSkillPercent),
@@ -43,7 +44,7 @@ export function createDefaultInput(job: JobId): CalculatorInput {
     equipment: Object.fromEntries(
       rule.visibleSlots.map((slot) => [slot, {
         ...emptyEquipment(),
-        ...(slot === "projectile" ? { attackFlat: DEFAULT_PROJECTILE_ATTACK } : {}),
+        ...(slot === "projectile" && job !== "aran" ? { attackFlat: DEFAULT_PROJECTILE_ATTACK } : {}),
       }]),
     ),
   };

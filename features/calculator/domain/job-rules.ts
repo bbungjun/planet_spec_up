@@ -6,8 +6,8 @@ export type JobRule = {
   groupLabel: string;
   mainStat: StatName;
   subStat: StatName;
-  weapon: "crossbow" | "gun" | "claw";
-  weaponConstant: 3.6;
+  weapon: "crossbow" | "gun" | "claw" | "polearm";
+  weaponConstant: number;
   minimumSub: number;
   baseCriticalRate: number;
   baseCriticalDamage: number;
@@ -22,6 +22,13 @@ const COMMON = [
 ] as const satisfies readonly BuiltinEquipmentSlot[];
 
 export const JOB_RULES: Record<JobId, JobRule> = {
+  aran: {
+    id: "aran", label: "아란", groupLabel: "전사 · 참고 모델",
+    mainStat: "STR", subStat: "DEX", weapon: "polearm",
+    weaponConstant: 5, minimumSub: 4,
+    baseCriticalRate: 0, baseCriticalDamage: 0, defaultSkillPercent: 100,
+    visibleSlots: [...COMMON, "top", "bottom"],
+  },
   marksman: {
     id: "marksman", label: "신궁", groupLabel: "궁수",
     mainStat: "DEX", subStat: "STR", weapon: "crossbow",

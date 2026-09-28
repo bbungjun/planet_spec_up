@@ -63,8 +63,8 @@ const loadErrorMessage = (message: string) => message === "unsupported-job"
   ? "이번 베타는 캡틴만 지원합니다. 기존 다른 직업의 저장값은 보존되며 캡틴 세팅은 별도로 저장합니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
-export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }) {
-  const { load, save, clear } = useSavedSetup(captainBeta);
+export function CalculatorApp({ captainBeta = false, development = false }: { captainBeta?: boolean; development?: boolean }) {
+  const { load, save, clear } = useSavedSetup(captainBeta, development);
   const [input, setInput] = useState<CalculatorInput>(
     () => createDefaultInput("corsair"),
   );
@@ -281,6 +281,8 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
   };
 
   const handleSave = () => {
+    const aranError = input.character.job === "aran" ? result.issues.find(issue => issue.severity === "error" && (issue.code === "ARAN_REFERENCE_REQUIRED" || issue.path.startsWith("character.aran") || issue.path === "character.skillPercent")) : undefined;
+    if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return; }
     const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED");
     if (criticalError) {
       setStorageError("전체 크리확률이 100%를 넘습니다. 입력값을 확인한 뒤 다시 저장해주세요.");
@@ -352,6 +354,8 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
   return (
     <main className="calculator-shell" aria-busy={initialLoading}>
       <MapleBackdrop />
+      {development && <p className="panel-description">개발 전용 · 별도 저장</p>}
+      {input.character.job === "aran" && <p className="panel-description" role="status">아란 참고 모델 · 콤보 크리20은 공식 효과를 자동 적용합니다. 폴암 계수 기본5·타격 배율 기본100%·추가공 기본0(효과 없음)·추가공의 공% 제외·공통 AP 범위는 참고 가정입니다. 스탯공·환산공·후보 상승률·효율은 게임 실측 미검증이며 전체 DPS가 아닙니다.</p>}
       <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
         captainBeta={captainBeta}

@@ -20,6 +20,10 @@ export type NormalizedCharacterInput = {
   job: CalculatorInput["character"]["job"];
   level: number;
   mapleWarrior: CalculatorInput["character"]["mapleWarrior"];
+  aranWeaponConstant: number;
+  aranFlatAttack: number;
+  aranCombo: number;
+  aranComboCritical: boolean;
   skillPercent: number;
   sharpEyes: CalculatorInput["character"]["sharpEyes"];
   monsterDefense: number;
@@ -100,12 +104,23 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
       path: "character.manualPureSub", min: 0, max: pureStatPool(level), integer: true,
     }, issues);
 
+  const aranNumber = (field: "aranWeaponConstant" | "aranFlatAttack" | "aranCombo", max: number, min = 0, integer = false) => {
+    if (input.character.job !== "aran") return 0;
+    const raw = input.character[field] ?? "";
+    if (!raw.trim()) issues.push({ severity: "error", code: "ARAN_REFERENCE_REQUIRED", path: `character.${field}`, message: "아란 참고 모델의 전투 조건을 입력해주세요. 빈칸은 자동 확정하지 않습니다." });
+    return readNumber(raw, { path: `character.${field}`, min, max, integer }, issues);
+  };
+  if (input.character.job === "aran" && !(Number(input.character.skillPercent) > 0)) issues.push({ severity: "error", code: "ARAN_REFERENCE_REQUIRED", path: "character.skillPercent", message: "아란 참고 환산공에 사용할 타격 배율을 입력해주세요." });
   const character: NormalizedCharacterInput = {
+    aranWeaponConstant: aranNumber("aranWeaponConstant", 10, 0.01),
+    aranFlatAttack: aranNumber("aranFlatAttack", 9999, 0, true),
+    aranCombo: aranNumber("aranCombo", 99999, 0, true),
+    aranComboCritical: input.character.job === "aran" && input.character.aranComboCritical === true,
     job: input.character.job,
     level,
     mapleWarrior: input.character.mapleWarrior,
     skillPercent: readNumber(input.character.skillPercent, {
-      path: "character.skillPercent", min: 0, max: 10000,
+      path: "character.skillPercent", min: input.character.job === "aran" ? 0.01 : 0, max: 10000,
     }, issues),
     sharpEyes: input.character.sharpEyes,
     monsterDefense: readNumber(input.character.monsterDefense, {

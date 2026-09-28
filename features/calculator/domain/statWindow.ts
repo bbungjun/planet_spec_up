@@ -10,7 +10,7 @@ const value = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >
 
 export function isStatWindowSnapshot(v: unknown): v is StatWindowSnapshot {
   if (!record(v) || !Object.keys(v).every(key => ["job", "level", "capturedAt", "pure", "total", ...observedFields].includes(key))) return false;
-  if (v.job !== "corsair" && v.job !== "marksman" && v.job !== "night_lord") return false;
+  if (v.job !== "corsair" && v.job !== "marksman" && v.job !== "night_lord" && v.job !== "aran") return false;
   if (!Number.isInteger(v.level) || Number(v.level) < 1 || Number(v.level) > MAX_CHARACTER_LEVEL || typeof v.capturedAt !== "string" || !Number.isFinite(Date.parse(v.capturedAt))) return false;
   if (!record(v.pure) || !record(v.total)) return false;
   for (const group of [v.pure, v.total]) if (!Object.keys(group).every(key => stats.includes(key as typeof stats[number])) || !Object.values(group).every(n => value(n) && Number.isInteger(n))) return false;

@@ -62,7 +62,7 @@ export function parseTooltipOption(raw: string): TooltipOption | null {
   };
 }
 
-const equipmentCategories = ["얼굴장식", "눈장식", "어깨장식", "펜던트", "목걸이", "귀고리", "귀걸이", "한벌옷", "모자", "망토", "장갑", "신발", "상의", "하의", "반지", "훈장", "벨트", "건", "석궁", "아대", "무기"];
+const equipmentCategories = ["얼굴장식", "눈장식", "어깨장식", "펜던트", "목걸이", "귀고리", "귀걸이", "한벌옷", "모자", "망토", "장갑", "신발", "상의", "하의", "반지", "훈장", "벨트", "건", "석궁", "아대", "폴암", "무기"];
 export function isKnownEquipmentCategory(value: string): boolean { return equipmentCategories.includes(value); }
 export function parseEquipmentCategory(raw: string): string | null {
   const match = raw.normalize("NFKC").match(/[장잠창참]비\s*분류\s*[:：;]\s*([가-힣A-Za-z·]{1,30})/);

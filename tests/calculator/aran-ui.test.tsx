@@ -1,0 +1,38 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { CalculatorApp } from "@/features/calculator/CalculatorApp";
+import { CAPTAIN_BETA_STORAGE_KEY, DEVELOPMENT_STORAGE_KEY, serializeSetup } from "@/features/calculator/storage";
+import { createDefaultInput } from "@/features/calculator/domain/defaults";
+
+afterEach(() => { window.localStorage.clear(); vi.restoreAllMocks(); });
+
+it("switches to Aran, auto derives combo critical and saves to an isolated development key", async () => {
+  const captain=serializeSetup(createDefaultInput("corsair"));
+  window.localStorage.setItem(CAPTAIN_BETA_STORAGE_KEY,captain);
+  vi.spyOn(window,"confirm").mockReturnValue(true);
+  render(<CalculatorApp development />);
+  const job=screen.getByLabelText("직업"); await waitFor(()=>expect(job).not.toBeDisabled());
+  fireEvent.change(job,{target:{value:"aran"}});
+  expect(screen.getByLabelText("순수 STR")).toBeInTheDocument();
+  expect(screen.queryByLabelText("불릿·표창 공격력")).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"800"}});
+  fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"4"}});
+  fireEvent.click(screen.getByLabelText("콤보 크리티컬20 적용"));
+  fireEvent.change(screen.getByLabelText("현재 콤보"),{target:{value:"100"}});
+  expect(screen.getByText("기본 70 + 추가 0 + 버프 0")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"저장"}));
+  await waitFor(()=>expect(window.localStorage.getItem(DEVELOPMENT_STORAGE_KEY)).toContain('"aranCombo":"100"'));
+  expect(window.localStorage.getItem(CAPTAIN_BETA_STORAGE_KEY)).toBe(captain);
+  const saved=window.localStorage.getItem(DEVELOPMENT_STORAGE_KEY);
+  const skill=screen.getByLabelText("참고 타격 배율%");
+  expect(document.querySelectorAll("#character-skillPercent")).toHaveLength(1);
+  fireEvent.change(skill,{target:{value:"10001"}});
+  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("—");
+  expect(screen.getByLabelText("혼테일 예상 스탯공")).toHaveTextContent("—");
+  fireEvent.click(screen.getByRole("button",{name:"저장"}));
+  expect(window.localStorage.getItem(DEVELOPMENT_STORAGE_KEY)).toBe(saved);
+  fireEvent.change(skill,{target:{value:"100"}});
+  expect(screen.getByLabelText("스탯 공격력 결과")).not.toHaveTextContent("—");
+  fireEvent.change(screen.getByLabelText("현재 콤보"),{target:{value:"0"}});
+  expect(screen.getByText("기본 10 + 추가 0 + 버프 0")).toBeInTheDocument();
+});

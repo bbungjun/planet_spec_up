@@ -1,3 +1,4 @@
+import { aranComboCritical } from "./aran";
 import { checkEquipmentRequirements } from "./requirements";
 import { allocatePureStats, sumEquipment } from "./equipment";
 import {
@@ -29,6 +30,11 @@ import type {
 
 export type CalculationSnapshot = {
   job: JobId;
+  /** Fixed Aran assumptions shared with candidates, efficiency and simulation. */
+  aranWeaponConstant?: number;
+  aranFlatAttack?: number;
+  aranCombo?: number;
+  aranComboCritical?: boolean;
   level: number;
   mapleWarrior: MapleWarrior;
   equipmentMain: number;
@@ -82,7 +88,10 @@ export function calculateFromSnapshot(
     snapshot.ignoreDefense + guildIgnore,
   );
   const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
-  const totalCriticalRate = rule.baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate;
+  const aranCritical = aranComboCritical(snapshot.aranCombo ?? 0, snapshot.aranComboCritical === true);
+  const baseCriticalRate = snapshot.job === "aran" ? aranCritical.rate : rule.baseCriticalRate;
+  const baseCriticalDamage = snapshot.job === "aran" ? aranCritical.damage : rule.baseCriticalDamage;
+  const totalCriticalRate = baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate;
   const issues: ValidationIssue[] = [...(snapshot.issues ?? [])];
   if (totalCriticalRate > 100) issues.push({
     severity: "error", code: "CRITICAL_RATE_EXCEEDED", path: "character.criticalRate",
@@ -90,7 +99,7 @@ export function calculateFromSnapshot(
   });
   const criticalMultiplier = calculateCriticalMultiplier(
     totalCriticalRate,
-    rule.baseCriticalDamage + sharpEyes.criticalDamage,
+    baseCriticalDamage + sharpEyes.criticalDamage,
     snapshot.skillPercent,
   );
   const bossAndTotalDamage = (snapshot.totalDamagePercent ?? 0) + (snapshot.isBoss === false ? 0 : snapshot.bossAndTotalDamage
@@ -145,14 +154,14 @@ export function calculateFromSnapshot(
     : 0;
   const totalAttack = calculateTotalAttack(
     snapshot.percentEligibleAttack,
-    snapshot.flatAttack + guildAttack + levelBonus.attack,
+    snapshot.flatAttack + guildAttack + levelBonus.attack + (snapshot.job === "aran" ? (snapshot.aranFlatAttack ?? 0) : 0),
     snapshot.attackPercent,
   );
   const statAttack = calculateStatAttack(
     mainStat,
     subStat,
     extraStr,
-    rule.weaponConstant,
+    snapshot.job === "aran" ? (snapshot.aranWeaponConstant ?? 0) : rule.weaponConstant,
     totalAttack,
   );
   const convertedAttack = calculateConvertedAttack(
@@ -176,7 +185,7 @@ export function calculateFromSnapshot(
     },
     pureMain,
     pureSub,
-    criticalStats: { baseRate: rule.baseCriticalRate, extraRate: snapshot.criticalRate ?? 0, buffRate: sharpEyes.criticalRate, baseDamage: rule.baseCriticalDamage, buffDamage: sharpEyes.criticalDamage },
+    criticalStats: { baseRate: baseCriticalRate, extraRate: snapshot.criticalRate ?? 0, buffRate: sharpEyes.criticalRate, baseDamage: baseCriticalDamage, buffDamage: sharpEyes.criticalDamage },
     windowStats: {
       totalDamagePercent: snapshot.totalDamagePercent ?? 0,
       bossDamagePercent: snapshot.bossAndTotalDamage + guildBoss + (snapshot.guildActiveBoss ? 10 : 0),
@@ -233,6 +242,10 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
 
   return {
     job: character.job,
+    aranWeaponConstant: character.aranWeaponConstant,
+    aranFlatAttack: character.aranFlatAttack,
+    aranCombo: character.aranCombo,
+    aranComboCritical: character.aranComboCritical,
     level: character.level,
     mapleWarrior: character.mapleWarrior,
     equipmentMain: equipment.mainFlat + cashBonus.allStat,

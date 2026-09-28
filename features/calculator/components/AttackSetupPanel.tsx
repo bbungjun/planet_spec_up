@@ -38,7 +38,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
           ["blessing_1", "정령의 축복"],
           ["blessing_2", "여제의 축복"],
           ["buff", "공격력 버프 직접 입력"],
-        ] as const).map(([slot, label]) => {
+        ] as const).filter(([slot]) => input.character.job !== "aran" || slot !== "projectile").map(([slot, label]) => {
           const path = `equipment.${slot}.attackFlat`;
           const error = issues.find(issue => issue.path === path && issue.severity === "error");
           return (

@@ -1,4 +1,4 @@
-export type JobId = "marksman" | "corsair" | "night_lord";
+export type JobId = "marksman" | "corsair" | "night_lord" | "aran";
 export type StatName = "STR" | "DEX" | "LUK";
 export type InputMode = "cards" | "bulk";
 export type SharpEyes = "none" | "usable" | "sharp_30";
@@ -36,6 +36,11 @@ export type EquipmentInput = {
 
 export type CharacterInput = {
   job: JobId;
+  /** Aran reference state; absent in previous jobs and saves. */
+  aranWeaponConstant?: string;
+  aranFlatAttack?: string;
+  aranCombo?: string;
+  aranComboCritical?: boolean;
   level: string;
   mapleWarrior: MapleWarrior;
   skillPercent: string;

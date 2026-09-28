@@ -11,13 +11,15 @@ export function PresetStatWindow({input,result,buffSummary,title,labelPrefix = "
   const critical=result.criticalStats;
   const fixed=!!input.character.pureMain?.trim() && !!input.character.pureSub?.trim();
   const invalid=result.issues.some(issue=>issue.severity==="error");
+  const holdAran = input.character.job === "aran" && invalid;
   const missingWeapon=result.issues.some(issue=>issue.code==="MISSING_WEAPON_ATTACK");
+  if (holdAran) return <section className="preset-stat-window" aria-label={title ?? "선택 프리셋 스탯창"}><header className="preset-stat-heading"><h2>{title ?? "프리셋 스탯창"}</h2><span>아란 · 참고 모델</span></header><p role="status">입력값 확인 필요 · 아란 계산 보류</p><output aria-label={`${labelPrefix}스탯 공격력 결과`}>—</output><output aria-label={`${labelPrefix}환산 공격력 결과`}>—</output></section>;
   return <section className="preset-stat-window" aria-label={title ?? "선택 프리셋 스탯창"}>
     <header className="preset-stat-heading"><div><h2>{title ?? "프리셋 스탯창"}</h2><span>{rule.label} · Lv. {input.character.level || "—"}</span></div><strong>{preset.label}</strong></header>
     <div className="preset-stat-sheet">
       <div className="preset-damage-results">
-        <div className="preset-primary-result"><span>최대 스탯 공격력</span><output aria-label={`${labelPrefix}스탯 공격력 결과`}>{number(result.statAttack)}</output></div>
-        <div><span>환산 공격력</span><output aria-label={`${labelPrefix}환산 공격력 결과`}>{number(result.convertedAttack)}</output></div>
+        <div className="preset-primary-result"><span>최대 스탯 공격력</span><output aria-label={`${labelPrefix}스탯 공격력 결과`}>{holdAran ? "—" : number(result.statAttack)}</output></div>
+        <div><span>환산 공격력</span><output aria-label={`${labelPrefix}환산 공격력 결과`}>{holdAran ? "—" : number(result.convertedAttack)}</output></div>
       </div>
       <dl className="preset-base-stats">
         {([[rule.mainStat,result.mainStat,result.pureMain],[rule.subStat,result.subStat,result.pureSub]] as const).map(([stat,total,pure])=><div key={stat}>

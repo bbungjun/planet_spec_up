@@ -92,6 +92,7 @@ export function CharacterIdentityFields({ character, issues, onChange, onJobChan
         {!captainBeta && <option value="marksman">신궁</option>}
         <option value="corsair">캡틴</option>
         {!captainBeta && <option value="night_lord">나이트로드</option>}
+        {!captainBeta && <option value="aran">아란 · 참고 모델</option>}
       </select>
     </div>
     <NumericField label="레벨" path="character.level" value={character.level} min={1} max={MAX_CHARACTER_LEVEL} step={1}
@@ -167,6 +168,15 @@ export function CharacterPanel({
         </div>
       </fieldset>
 
+      {character.job === "aran" && <fieldset className="settings-group">
+        <legend>아란 전투 조건</legend>
+        <label><input type="checkbox" checked={character.aranComboCritical ?? false} onChange={event => onChange("aranComboCritical", event.currentTarget.checked)} /> 콤보 크리티컬20 적용</label>
+        <div className="field-grid">
+          {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "패시브·콤보 추가 공격력", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"], ["skillPercent", "참고 타격 배율%", 0.01, 10000, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
+        </div>
+        <small>마스터20 기준: 크확10%·크리 증가분100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
+      </fieldset>}
+
       <dl className="job-summary" aria-label="현재 직업 규칙">
         <div>
           <dt>무기</dt>
@@ -187,7 +197,7 @@ export function CharacterPanel({
       <fieldset className="settings-group">
         <legend>전투 설정</legend>
         <div className="field-grid">
-          <NumericField
+          {character.job !== "aran" && <NumericField
             label="타격당 평균 데미지 비율"
             path="character.skillPercent"
             value={character.skillPercent}
@@ -195,7 +205,7 @@ export function CharacterPanel({
             max={10000}
             issues={issues}
             onChange={(value) => onChange("skillPercent", value)}
-          />
+          />}
           <NumericField
             label="몬스터 방어율"
             path="character.monsterDefense"
