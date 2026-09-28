@@ -213,6 +213,18 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .candidate-review-layout .equipment-ocr-proposal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .candidate-review-layout .equipment-ocr-review-heading h4{font-size:14px}
 .candidate-review-layout .equipment-ocr-review>p{font-size:12px;line-height:1.6}
+.ring-comparison-targets{min-width:0;margin:12px 0;padding:0;border:0}
+.ring-comparison-targets legend{padding:0;margin-bottom:10px;font-size:13px;font-weight:600;color:var(--text)}
+.ring-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.candidate-dialog .ring-target-card{display:block;min-width:0;padding:11px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--text);cursor:pointer}
+.candidate-dialog .ring-target-card.is-selected{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.ring-target-card:focus-within{outline:2px solid var(--focus);outline-offset:2px}
+.ring-target-heading{display:flex;align-items:center;gap:7px;margin-bottom:8px}.ring-target-heading>span{margin-left:auto;font-size:10px;color:var(--muted)}
+.candidate-dialog .ring-target-heading input[type=radio]{flex:none;width:18px;height:18px;min-height:18px;padding:0;margin:0;accent-color:var(--accent)}
+.ring-target-options{margin:0;display:grid;gap:4px;font-size:12px;font-variant-numeric:tabular-nums}
+.ring-target-options>div{display:flex;justify-content:space-between;gap:8px}.ring-target-options dt{color:var(--muted)}.ring-target-options dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.ring-target-card>small{font-size:11px;color:var(--muted)}
+@media(max-width:450px){.ring-target-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:700px){.candidate-review-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"status" "photo" "tools" "review"}.candidate-review-layout>.equipment-ocr-preview img{max-height:280px}.candidate-review-layout>.equipment-ocr-review{padding:12px}.candidate-review-layout .equipment-ocr-proposal-grid{gap:8px}}
 .candidate-source-preview:focus-visible,.equipment-slot:focus-visible{outline-color:var(--focus);outline-offset:3px}
 .ocr-batch,.ocr-batch-list>li,.equipment-ocr-review,.ocr-review-issue,.equipment-ocr-proposal-grid input{border-radius:5px}

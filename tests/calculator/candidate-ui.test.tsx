@@ -239,10 +239,20 @@ it("asks which of four rings to replace and does not assume identical options me
   const input=seed();for(const slot of ["ring_1","ring_2","ring_3","ring_4"] as const)input.equipment[slot]!.attackFlat="110";
   localStorage.setItem(STORAGE_KEY,serializeSetup(input));const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
   const {user,area}=await importPhoto(`장비분류: 반지\n${options}`);
-  const select=area.getByLabelText("교체할 장비 부위");expect(select).toHaveValue("");expect(within(select).getAllByRole("option")).toHaveLength(5);
+  const radios=area.getAllByRole("radio");expect(radios).toHaveLength(4);for(const radio of radios)expect(radio).not.toBeChecked();
+  expect(area.queryByLabelText("교체할 장비 부위")).not.toBeInTheDocument();
+  expect(area.getByRole("group",{name:"기존 반지 옵션 · 교체 대상 선택"})).toHaveTextContent("공격력110");
   const apply=area.getByRole("button",{name:"후보로 비교"});expect(apply).toBeDisabled();
-  await user.selectOptions(select,"ring_3");expect(apply).toBeEnabled();await user.click(apply);
+  await user.click(area.getByRole("radio",{name:"반지 3 비교 선택"}));expect(apply).toBeEnabled();await user.click(apply);
   const card=screen.getByRole("article",{name:"후보 1 비교 결과"});expect(card).toHaveTextContent("반지 3 교체 후");expect(within(card).getByLabelText("환산 공격력 비교")).toHaveTextContent("변화 없음");
+  await user.click(within(card).getByRole("button",{name:"후보 1 상세 보기"}));
+  const details=within(screen.getByRole("dialog",{name:"후보 1 상세"}));
+  expect(details.getByRole("radio",{name:"반지 3 비교 선택"})).toBeChecked();
+  await user.click(details.getByRole("radio",{name:"반지 1 비교 선택"}));
+  expect(details.getByLabelText("후보 비교 부위 수정")).toHaveValue("ring_1");
+  await user.click(details.getByRole("button",{name:"후보 1 상세 닫기"}));
+  expect(card).toHaveTextContent("반지 1 교체 후");
+  expect(within(card).getByLabelText("후보 1 구매 가격")).toHaveValue(.3);
   expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
 });
 
@@ -265,9 +275,9 @@ it("asks which of the two pendant slots to replace",async()=>{
 
 it("clears a manual ring choice when another photo replaces the draft, while keeping the price",async()=>{
   seed();render(<CalculatorApp/>);const {user,area}=await importPhoto(`장비분류: 반지\n${options}`);
-  await user.selectOptions(area.getByLabelText("교체할 장비 부위"),"ring_4");
+  await user.click(area.getByRole("radio",{name:"반지 4 비교 선택"}));
   await user.upload(area.getByLabelText("비교 후보 스크린샷"),image());
   await waitFor(()=>expect(area.getByLabelText("인식 공격력")).toHaveValue(110));
-  expect(area.getByLabelText("교체할 장비 부위")).toHaveValue("");expect(area.getByLabelText("새 후보 구매 가격")).toHaveValue(.3);
+  for(const radio of area.getAllByRole("radio"))expect(radio).not.toBeChecked();expect(area.getByLabelText("새 후보 구매 가격")).toHaveValue(.3);
   expect(area.getByLabelText("원본의 모든 옵션을 확인했습니다")).not.toBeChecked();expect(area.getByRole("button",{name:"후보로 비교"})).toBeDisabled();
 });

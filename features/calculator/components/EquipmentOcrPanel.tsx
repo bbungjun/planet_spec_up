@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { JOB_RULES } from "../domain/job-rules";
-import { matchingSlots } from "../domain/slots";
+import { matchingSlots, RING_SLOTS } from "../domain/slots";
 import { EQUIPMENT_SLOT_LABELS } from "../labels";
 import {
   createBrowserTooltipRecognizer,
@@ -31,6 +31,7 @@ import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
 import { tooltipIdentity, existingDuplicate, MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
 import { clipboardImages } from "../ocr/clipboard";
+import { RingComparisonTargets, type ComparisonSlotChoice } from "./RingComparisonTargets";
 
 export type EquipmentOcrPanelProps = {
   target: OcrTarget;
@@ -41,7 +42,7 @@ export type EquipmentOcrPanelProps = {
   createRecognizer?: () => TooltipRecognizer;
   slotChoices?: OcrSlotChoice[];
   /** Candidate destinations are resolved after OCR without changing the active OCR target. */
-  candidateSlots?: Pick<OcrSlotChoice, "slot" | "label">[];
+  candidateSlots?: ComparisonSlotChoice[];
   uploadFields?: ReactNode;
   onApplyBatch?: ApplyOcrBatch;
   captureDocumentPaste?: boolean;
@@ -484,10 +485,12 @@ export function EquipmentOcrPanel({
             <p role="status">{parsed.category
               ? candidateChoices.length ? `${parsed.category} 장착 칸이 여러 개입니다. 교체할 장비를 선택해주세요.` : `인식 부위(${parsed.category})에 맞는 장비 부위를 먼저 추가해주세요.`
               : "부위를 인식하지 못했습니다. 교체할 장비를 선택해주세요."}</p>
-            {candidateChoices.length > 0 && <label>교체할 장비<select aria-label="교체할 장비 부위" value={candidateDestination?.slot ?? ""} onChange={event => setCandidateSlot(event.target.value)}>
+            {candidateChoices.length > 0 && parsed.category !== "반지" && <label>교체할 장비<select aria-label="교체할 장비 부위" value={candidateDestination?.slot ?? ""} onChange={event => setCandidateSlot(event.target.value)}>
               <option value="" disabled>부위 선택</option>{candidateChoices.map(choice => <option key={choice.slot} value={choice.slot}>{choice.label}</option>)}
             </select></label>}
           </div>}
+          {purpose === "candidate" && candidateSlots && (parsed.category === "반지" || (candidateDestination && RING_SLOTS.includes(candidateDestination.slot))) &&
+            <RingComparisonTargets choices={candidateSlots} selected={candidateDestination?.slot ?? ""} job={target.job} onSelect={setCandidateSlot} />}
           <p>{purpose === "candidate" ? "미입력 옵션은 0으로 비교합니다. 요구 레벨·스탯은 확인해주세요." : "미인식 값은 유지됩니다. 삭제하려면 0을 입력하세요."}</p>
           {reviewingPendant && <PendantSelect label="인식 펜던트 종류" value={pendantId} onChange={value => { setPendantChoice(value); setCandidateConfirmed(false); }} />}
           {needsPendantTarget && <p role="alert">펜던트 1·2 카드를 선택한 뒤 사진을 넣어주세요.</p>}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { calculateDamageResult } from "../domain/calculate";
 import { compareCandidate, compareCandidatePresets, comparableSlots, candidateEquipment, parseCandidatePrice, candidatePriceEfficiency, type PurchaseCandidate, type CandidateComparison, type MetricChange } from "../domain/candidates";
-import { getEquipmentSlotLabel } from "../domain/slots";
+import { getEquipmentSlotLabel, RING_SLOTS } from "../domain/slots";
 import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 import { JOB_RULES } from "../domain/job-rules";
 import type { CalculatorInput, EquipmentSlot, EquipmentInput, WeaponPresetId } from "../domain/types";
@@ -13,6 +13,7 @@ import { isPendantSlot, pendantLabel } from "../domain/pendants";
 import { isWearBlocked } from "../domain/requirements";
 import { PendantSelect } from "./PendantSelect";
 import { HuntingSkillComparison } from "./HuntingSkillComparison";
+import { RingComparisonTargets } from "./RingComparisonTargets";
 
 const format = (n: number) => n.toLocaleString("ko-KR", { maximumFractionDigits: 2 });
 const signed = (n: number) => `${n > 0 ? "+" : ""}${format(n)}`;
@@ -145,6 +146,9 @@ function CandidateDetails({ input, candidate, onChange }: { input: CalculatorInp
     {candidate.image && <CandidatePhoto file={candidate.image}/>}
     <div className="candidate-import-fields">
       <label>비교 부위<select aria-label="후보 비교 부위 수정" value={comparableSlots(input).includes(candidate.slot) ? candidate.slot : ""} onChange={event => onChange({ ...candidate, slot: event.target.value as EquipmentSlot })}><option value="" disabled>부위 선택</option>{comparableSlots(input).map(slot => <option key={slot} value={slot}>{getEquipmentSlotLabel(input, slot)}</option>)}</select></label></div>
+    {RING_SLOTS.includes(candidate.slot) && <RingComparisonTargets job={input.character.job} selected={candidate.slot}
+      choices={RING_SLOTS.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
+      onSelect={slot => onChange({ ...candidate, slot })} />}
     {isPendantSlot(input, candidate.slot) && <PendantSelect label="후보 펜던트 종류" value={candidate.equipment.pendantId} onChange={pendantId => onChange({ ...candidate, name: pendantLabel(pendantId) ?? candidate.name, equipment: { ...candidate.equipment, pendantId } })} />}
     <div className="candidate-option-grid">{fields.map(({ field, suffix, max, step }) => <label key={field}>{suffix(rule.mainStat, rule.subStat)}<small>현재 {input.equipment[candidate.slot]?.[field]?.trim() || "—"}</small><input type="number" min="0" max={max} step={step} value={candidate.equipment[field] ?? ""} aria-label={`${candidate.name} ${suffix(rule.mainStat, rule.subStat)}`} placeholder={field.startsWith("required") ? "확인 필요" : "0"} onChange={event => onChange({ ...candidate, equipment: { ...candidate.equipment, [field]: event.target.value } as EquipmentInput })}/></label>)}</div>
     <details className="candidate-other-presets"><summary>다른 프리셋에서 비교</summary>{compareCandidatePresets(input, candidate).filter(value => value.preset !== current.preset).map(value => <section key={value.preset}><h4>{WEAPON_PRESETS.find(preset => preset.id === value.preset)!.label}</h4><div className="candidate-detail-metrics"><Metric label="최대 스탯공" value={value.stat}/><Metric label="환산 공격력" value={value.converted}/></div><ComparisonNotice value={value}/></section>)}</details>
@@ -181,7 +185,7 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
     <p className="comparison-footnote">구매 후보·사진·가격은 임시 비교용이며, 새로고침하거나 페이지를 닫으면 사라집니다.</p>
     {importOpen && <CandidateDialog title="비교할 장비 추가" onClose={() => setImportOpen(false)}>
       <EquipmentOcrPanel key={`${draftSlot}:${activeWeaponPreset(input)}`} target={{ job: input.character.job, slot: draftSlot }} slotLabel="구매 후보" purpose="candidate"
-        candidateSlots={slots.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot) }))}
+        candidateSlots={slots.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
         uploadFields={<div className="candidate-import-fields candidate-import-price"><label>가격 (억 메소)<input aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label></div>}
         onApply={(target, replacement, source) => {
         if (target.job !== input.character.job || !slots.includes(target.slot)) return;
