@@ -5,6 +5,7 @@ import type {
   ValidationIssue,
 } from "./types";
 import { MAX_CHARACTER_LEVEL, pureStatPool } from "./level";
+import { createDefaultCashEquipment, type NormalizedCashEquipmentInput } from "./cash-equipment";
 
 export type NumberRule = {
   path: string;
@@ -44,6 +45,7 @@ export type NormalizedCharacterInput = {
 export type NormalizedCalculatorInput = {
   character: NormalizedCharacterInput;
   equipment: Partial<Record<EquipmentSlot, NormalizedEquipmentInput>>;
+  cashEquipment: NormalizedCashEquipmentInput;
 };
 
 export type NormalizedInputResult = {
@@ -142,7 +144,7 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     pureSub: input.character.pureSub?.trim() ? readNumber(input.character.pureSub, { path: "character.pureSub", min: 0, max: pureStatPool(level), integer: true }, issues) : null,
   };
 
-  if ((character.pureMain === null) !== (character.pureSub === null)) issues.push({ severity: "error", code: "INCOMPLETE_PURE_STATS", path: "character.pureMain", message: "능력창의 순수 주스탯·부스탯을 함께 확인해주세요." });
+  if ((character.pureMain === null) !== (character.pureSub === null)) issues.push({ severity: "error", code: "INCOMPLETE_PURE_STATS", path: character.pureMain === null ? "character.pureMain" : "character.pureSub", message: "순수 주스탯·부스탯을 함께 입력해주세요." });
   if (character.pureMain !== null && character.pureSub !== null && character.pureMain + character.pureSub > pureStatPool(level)) issues.push({ severity: "error", code: "INVALID_PURE_STATS", path: "character.pureMain", message: "순수 스탯 합계가 레벨의 AP 범위를 초과합니다. 최종 스탯과 혼동하지 않았는지 확인해주세요." });
 
   const equipment: NormalizedCalculatorInput["equipment"] = {};
@@ -185,5 +187,15 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     };
   }
 
-  return { value: { character, equipment }, issues };
+  const cashSelection = input.cashEquipment ?? createDefaultCashEquipment();
+  const auroraRingCount = cashSelection.auroraRing ? readNumber(cashSelection.auroraRingCount, {
+    path: "cashEquipment.auroraRingCount", min: 0, max: 4, integer: true,
+  }, issues) : 0;
+  if (cashSelection.auroraRing && cashSelection.auroraRingCount.trim() === "") {
+    issues.push({ severity: "error", path: "cashEquipment.auroraRingCount", code: "INVALID_NUMBER",
+      message: "오로라 반지 개수를 0~4 사이의 정수로 입력해주세요." });
+  }
+  const cashEquipment = { ...cashSelection, auroraRingCount };
+
+  return { value: { character, equipment, cashEquipment }, issues };
 }

@@ -18,7 +18,7 @@ vi.mock("@/features/calculator/ocr/recognizeTooltip.client", async importOrigina
 
 beforeEach(() => {
   localStorage.clear();
-  recognize.mockReset().mockResolvedValue("장비분류 : 어깨장식\n공격력 +5\nSTR +2");
+  recognize.mockReset().mockResolvedValue("장비분류 : 어깨장식\n공격력 +5\n공격력 +3%\nSTR +2");
 });
 
 it("counts independent unknown and repeated gear slots and persists them without rejecting old setups", () => {
@@ -59,16 +59,22 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
   await user.click(screen.getByRole("button", {name: "장비 추가"}));
   expect(screen.getByRole("heading", {name: "어깨장식 옵션"})).toBeInTheDocument();
   await user.type(screen.getByLabelText("어깨장식 DEX", {exact: true}), "5");
+  await user.type(screen.getByLabelText("어깨장식 공격력", {exact: true}), "7");
+  await user.type(screen.getByLabelText("어깨장식 공격력%", {exact: true}), "2.5");
   expect(screen.getByLabelText("스탯 공격력 결과").textContent).not.toBe(before);
 
   await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
   expect(screen.getByLabelText("일괄 입력 어깨장식 DEX", {exact: true})).toHaveValue(5);
+  expect(screen.getByLabelText("일괄 입력 어깨장식 공격력", {exact: true})).toHaveValue(7);
+  expect(screen.getByLabelText("일괄 입력 어깨장식 공격력%", {exact: true})).toHaveValue(2.5);
   await user.click(screen.getByRole("button", {name: /^저장$/}));
   view.unmount();
   render(<CalculatorApp />);
   await waitFor(() => expect(screen.getByRole("button", {name: "어깨장식 편집"})).toBeInTheDocument());
   await user.click(screen.getByRole("button", {name: "어깨장식 편집"}));
   expect(screen.getByLabelText("어깨장식 DEX", {exact: true})).toHaveValue(5);
+  expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(7);
+  expect(screen.getByLabelText("어깨장식 공격력%", {exact: true})).toHaveValue(2.5);
 });
 
 it("creates an extra slot from a reviewed OCR category without overwriting the selected card", async () => {
@@ -79,10 +85,11 @@ it("creates an extra slot from a reviewed OCR category without overwriting the s
   expect(await screen.findByRole("button", {name: "어깨장식 새 장비로 추가"})).toBeInTheDocument();
   await user.click(screen.getByRole("button", {name: "어깨장식 새 장비로 추가"}));
   expect(screen.getByRole("heading", {name: "어깨장식 옵션"})).toBeInTheDocument();
-  expect(screen.queryByLabelText("어깨장식 공격력", {exact: true})).not.toBeInTheDocument();
+  expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
+  expect(screen.getByLabelText("어깨장식 공격력%", {exact: true})).toHaveValue(3);
   expect(screen.getByLabelText("어깨장식 STR", {exact: true})).toHaveValue(2);
   await user.click(screen.getByRole("button", {name: "펜던트 1 편집"}));
-  expect(screen.queryByLabelText("펜던트 1 공격력", {exact: true})).not.toBeInTheDocument();
+  expect(screen.getByLabelText("펜던트 1 공격력", {exact: true})).toHaveValue(null);
   await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
   expect(screen.getByLabelText("일괄 입력 어깨장식 공격력", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력", {exact: true})).toHaveValue(null);
@@ -102,7 +109,7 @@ it("imports a multi-image batch into a new slot and an empty existing slot in on
   await screen.findByText("2/2장 인식 완료");
   await user.click(screen.getByRole("button", {name: "검토한 2개 장비 적용"}));
   await user.click(screen.getByRole("button", {name: "어깨장식 편집"}));
-  expect(screen.queryByLabelText("어깨장식 공격력", {exact: true})).not.toBeInTheDocument();
+  expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
   await user.click(screen.getByRole("button", {name: "망토 편집"}));
   expect(screen.getByLabelText("망토 DEX", {exact: true})).toHaveValue(8);
   expect(screen.getAllByText("적용 완료")).toHaveLength(2);

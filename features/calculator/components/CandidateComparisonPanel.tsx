@@ -6,13 +6,13 @@ import { compareCandidate, compareCandidatePresets, comparableSlots, candidateEq
 import { getEquipmentSlotLabel } from "../domain/slots";
 import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 import { JOB_RULES } from "../domain/job-rules";
-import type { CalculatorInput, EquipmentSlot, EquipmentInput, WeaponPresetId, StatWindowSnapshot } from "../domain/types";
-import { CharacterStatWindowPanel } from "./CharacterStatWindowPanel";
+import type { CalculatorInput, EquipmentSlot, EquipmentInput, WeaponPresetId } from "../domain/types";
 import { EquipmentOcrPanel } from "./EquipmentOcrPanel";
 import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
 import { isPendantSlot, pendantLabel } from "../domain/pendants";
 import { isWearBlocked } from "../domain/requirements";
 import { PendantSelect } from "./PendantSelect";
+import { HuntingSkillComparison } from "./HuntingSkillComparison";
 
 const format = (n: number) => n.toLocaleString("ko-KR", { maximumFractionDigits: 2 });
 const signed = (n: number) => `${n > 0 ? "+" : ""}${format(n)}`;
@@ -105,7 +105,7 @@ function BaselineCard({ input, onRegisterStats }: { input: CalculatorInput; onRe
     <div className="candidate-metric"><span className="candidate-metric-label">환산 공격력</span><div className="candidate-metric-value"><strong>{valid ? format(result.convertedAttack) : "—"}</strong></div><span className="baseline-marker">기준값</span></div>
     </div>
     <div className="comparison-base-stats"><span>{rule.mainStat}<b>{format(result.mainStat)}</b></span><span>{rule.subStat}<b>{format(result.subStat)}</b></span><span>공격력<b>{format(result.totalAttack)}</b></span></div>
-    <div className="comparison-baseline-footer">{fixed ? "순수 스탯 고정" : <button type="button" className="candidate-register-stats" onClick={onRegisterStats}>능력창 사진 등록</button>}</div>
+    <div className="comparison-baseline-footer">{fixed ? "순수 스탯 고정" : <button type="button" className="candidate-register-stats" onClick={onRegisterStats}>순수 스탯 입력</button>}</div>
   </div>;
 }
 
@@ -118,8 +118,9 @@ function CandidateCard({ input, candidate, index, onChange, onRemove, onDetails,
     <div className="comparison-card-top"><span className="comparison-card-label">후보 {String(index + 1).padStart(2, "0")}</span><div className="comparison-card-actions"><button type="button" className="candidate-icon-button" onClick={onDetails} aria-label={`${candidate.name} 상세 보기`} title="원본·옵션"><More/></button><button type="button" className="candidate-icon-button" onClick={onRemove} aria-label={`${candidate.name} 삭제`}><Close/></button></div></div>
     <div className="comparison-item-heading"><h3 title={candidate.name}>{candidate.name}</h3><p>{getEquipmentSlotLabel(input, candidate.slot)} 교체 후</p></div>
     <div className="comparison-key-metrics" aria-label="선택 프리셋 비교"><Metric label="최대 스탯공" value={current.stat} emphasized/><Metric label="환산 공격력" value={current.converted}/></div>
-    {current.blocker === "missing-base-stats" ? <div className="candidate-registration-notice"><p>기준 캐릭터의 순수 스탯이 필요합니다.</p><button type="button" className="candidate-register-stats" onClick={onRegisterStats}>능력창 사진 등록</button></div> : current.status !== "ready" && <div className="candidate-card-status" role="status"><span title={current.reasons.join("\n")}>{current.status === "blocked" ? "비교 불가" : "조건 확인 필요"} · {current.reasons[0]}</span></div>}
+    {current.blocker === "missing-base-stats" ? <div className="candidate-registration-notice"><p>기준 캐릭터의 순수 스탯이 필요합니다.</p><button type="button" className="candidate-register-stats" onClick={onRegisterStats}>순수 스탯 입력</button></div> : current.status !== "ready" && <div className="candidate-card-status" role="status"><span title={current.reasons.join("\n")}>{current.status === "blocked" ? "비교 불가" : "조건 확인 필요"} · {current.reasons[0]}</span></div>}
     <CharacterStatChanges value={current} input={input}/>
+    {input.character.job === "corsair" && current.preset === "hunting" && <HuntingSkillComparison comparison={current}/>}
     {candidate.image && <button type="button" className="candidate-source-preview" aria-label={`${candidate.name} 원본 이미지 확대`} onClick={() => setImageOpen(true)}>
       <span>원본 이미지 <small>확대 ↗</small></span><CandidatePhoto file={candidate.previewImage ?? candidate.image} alt={`${candidate.name} 원본 이미지`}/>
     </button>}
@@ -150,10 +151,9 @@ function CandidateDetails({ input, candidate, onChange }: { input: CalculatorInp
   </>;
 }
 
-export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, onSaveStatWindow }: { input: CalculatorInput; initialSlot: EquipmentSlot; onPresetSelect?: (id: WeaponPresetId) => void; onSaveStatWindow: (snapshot: StatWindowSnapshot) => string | null }) {
+export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, onEditBaseStats }: { input: CalculatorInput; initialSlot: EquipmentSlot; onPresetSelect?: (id: WeaponPresetId) => void; onEditBaseStats: () => void }) {
   const [candidates, setCandidates] = useState<PurchaseCandidate[]>([]);
   const [importOpen, setImportOpen] = useState(false);
-  const [statWindowOpen, setStatWindowOpen] = useState(false);
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [draftSlot, setDraftSlot] = useState<EquipmentSlot>(() => comparableSlots(input).includes(initialSlot) ? initialSlot : "weapon");
   const [name, setName] = useState(""), [price, setPrice] = useState("");
@@ -174,8 +174,8 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
       <div className="comparison-toolbar-actions"><select aria-label="비교 전투 프리셋" value={activeWeaponPreset(input)} disabled={!onPresetSelect} onChange={event => onPresetSelect?.(event.target.value as WeaponPresetId)}>{WEAPON_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select><button type="button" className="comparison-add-button" onClick={openImport} aria-label="비교 후보 추가"><Plus/></button></div>
     </div>
     <div className="comparison-board" ref={board} role="group" aria-label="장비 비교 카드 목록" tabIndex={0}>
-      <BaselineCard input={input} onRegisterStats={() => setStatWindowOpen(true)}/>
-      {candidates.map((candidate, index) => <CandidateCard key={candidate.id} input={input} candidate={candidate} index={index} onChange={changeCandidate} onRemove={() => setCandidates(current => current.filter(item => item.id !== candidate.id))} onDetails={() => setDetailsId(candidate.id)} onRegisterStats={() => setStatWindowOpen(true)}/>)}
+      <BaselineCard input={input} onRegisterStats={onEditBaseStats}/>
+      {candidates.map((candidate, index) => <CandidateCard key={candidate.id} input={input} candidate={candidate} index={index} onChange={changeCandidate} onRemove={() => setCandidates(current => current.filter(item => item.id !== candidate.id))} onDetails={() => setDetailsId(candidate.id)} onRegisterStats={onEditBaseStats}/>)}
       <button type="button" className="comparison-add-card" onClick={openImport} aria-label="비교 카드 추가"><span className="comparison-add-symbol"><Plus/></span><strong>비교 대상 추가</strong></button>
     </div>
     <p className="comparison-footnote">후보는 임시 비교용입니다.</p>
@@ -189,13 +189,6 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
         nextNumber.current += 1;
         setCandidates(current => [...current, { id, name: candidateName, price, job: target.job, slot: target.slot, category: source?.category ?? null, equipment: candidateEquipment({ ...replacement, ...(isPendantSlot(input, target.slot) && source?.pendantId !== undefined ? { pendantId: source.pendantId } : {}) }), image: source?.file ?? undefined, previewImage: source?.previewFile ?? undefined }]);
         setImportOpen(false); setLastAddedId(id);
-      }}/>
-    </CandidateDialog>}
-    {statWindowOpen && <CandidateDialog title="능력창 등록" onClose={() => setStatWindowOpen(false)}>
-      <CharacterStatWindowPanel embedded input={input} result={calculateDamageResult(input)} onSave={snapshot => {
-        const error = onSaveStatWindow(snapshot);
-        if (!error) setStatWindowOpen(false);
-        return error;
       }}/>
     </CandidateDialog>}
     {detailCandidate && <CandidateDialog title={`${detailCandidate.name} 상세`} onClose={() => setDetailsId(null)}><CandidateDetails input={input} candidate={detailCandidate} onChange={changeCandidate}/></CandidateDialog>}

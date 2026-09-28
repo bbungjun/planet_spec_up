@@ -210,8 +210,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(null);
     expect(screen.getByLabelText("한벌옷 STR%"))
       .toHaveValue(88);
-    expect(screen.queryByLabelText("한벌옷 공격력")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("한벌옷 공격력%")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
     expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
 
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
@@ -220,8 +220,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("한벌옷 STR")).toHaveValue(10);
     expect(screen.getByLabelText("한벌옷 DEX%")).toHaveValue(21);
     expect(screen.getByLabelText("한벌옷 STR%")).toHaveValue(null);
-    expect(screen.queryByLabelText("한벌옷 공격력")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("한벌옷 공격력%")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("한벌옷 공격력")).toHaveValue(123);
+    expect(screen.getByLabelText("한벌옷 공격력%")).toHaveValue(9);
     expect(screen.getByLabelText("한벌옷 요구 STR")).toHaveValue(45);
     expect(screen.getByLabelText("레벨")).toHaveValue(180);
     expect(screen.getByLabelText("타격당 평균 데미지 비율")).toHaveValue(420);
@@ -243,8 +243,8 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("펜던트 1 STR")).toHaveValue(12);
     expect(screen.getByLabelText("펜던트 1 DEX%")).toHaveValue(13);
     expect(screen.getByLabelText("펜던트 1 STR%")).toHaveValue(14);
-    expect(screen.queryByLabelText("펜던트 1 공격력")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("펜던트 1 공격력%")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("펜던트 1 공격력")).toHaveValue(15);
+    expect(screen.getByLabelText("펜던트 1 공격력%")).toHaveValue(16);
     expect(screen.getByLabelText("펜던트 1 요구 STR")).toHaveValue(17);
     expect(screen.getByRole("button", { name: "펜던트 1 편집" })).toHaveClass("is-complete");
   }, 15000); // Full card → OCR → bulk flow performs dozens of user interactions.
@@ -427,7 +427,7 @@ describe("calculator app", () => {
     await user.clear(level);
     await user.type(level, "70");
     expect(level).toHaveValue(70);
-    expect(screen.getByLabelText("순수 부스탯 수동값")).toHaveAttribute(
+    expect(screen.getByLabelText("순수 STR")).toHaveAttribute(
       "max",
       "367",
     );
@@ -441,7 +441,8 @@ describe("calculator app", () => {
       "기타 총데미지%",
       "방어율 무시",
       "추가 크리티컬 확률",
-      "순수 부스탯 수동값",
+      "순수 DEX",
+      "순수 STR",
       "길드 보스 공격력 (%)",
       "길드 방어율 무시 (%)",
       "길드 공격력",

@@ -29,6 +29,7 @@ type NumericFieldProps = {
   min: number;
   max: number;
   step?: number | "any";
+  hint?: string;
   issues: readonly ValidationIssue[];
   onChange: (value: string) => void;
 };
@@ -47,6 +48,7 @@ function NumericField({
   min,
   max,
   step = "any",
+  hint,
   issues,
   onChange,
 }: NumericFieldProps) {
@@ -66,9 +68,10 @@ function NumericField({
         value={value}
         data-field-path={path}
         aria-invalid={error === undefined ? undefined : true}
-        aria-describedby={error === undefined ? undefined : errorId}
+        aria-describedby={[error ? errorId : null, hint ? `${id}-hint` : null].filter(Boolean).join(" ") || undefined}
         onChange={(event) => onChange(event.currentTarget.value)}
       />
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
       {error === undefined ? null : (
         <span id={errorId} className="field-error">
           <span className="field-error-icon" aria-hidden="true">!</span>
@@ -153,6 +156,16 @@ export function CharacterPanel({
         </div>
       </div>
 
+      <fieldset className="settings-group">
+        <legend>순수 스탯 <small>장비·버프 제외</small></legend>
+        <div className="field-grid">
+          <NumericField label={`순수 ${rule.mainStat}`} path="character.pureMain" value={character.pureMain ?? ""}
+            min={0} max={pureStatPool(Number(character.level))} step={1} issues={issues} onChange={value => onChange("pureMain", value)} />
+          <NumericField label={`순수 ${rule.subStat}`} path="character.pureSub" value={character.pureSub ?? ""}
+            min={0} max={pureStatPool(Number(character.level))} step={1} issues={issues} onChange={value => onChange("pureSub", value)} />
+        </div>
+      </fieldset>
+
       <dl className="job-summary" aria-label="현재 직업 규칙">
         <div>
           <dt>무기</dt>
@@ -222,7 +235,7 @@ export function CharacterPanel({
             issues={issues}
             onChange={(value) => onChange("criticalRate", value)}
           />
-          {character.pureMain?.trim() && character.pureSub?.trim() ? <p className="panel-description">능력창 기준 순수 {rule.mainStat} {character.pureMain} · {rule.subStat} {character.pureSub} 고정</p> : <NumericField
+          {character.manualPureSub.trim() && !(character.pureMain?.trim() && character.pureSub?.trim()) && <NumericField
             label="순수 부스탯 수동값"
             path="character.manualPureSub"
             value={character.manualPureSub}
@@ -235,6 +248,7 @@ export function CharacterPanel({
           {character.job === "night_lord" ? (
             <NumericField
               label="나이트로드 스탯창 STR"
+              hint="캐시 장비를 제외한 STR"
               path="character.nightLordStrStat"
               value={character.nightLordStrStat}
               min={0}

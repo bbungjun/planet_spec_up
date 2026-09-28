@@ -3,6 +3,7 @@ import { levelAchievementBonus } from "./level";
 import { calculateTotalStat, mapleWarriorRate } from "./formulas";
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "./slots";
 import { checkPendantRequirements } from "./pendants";
+import { cashEquipmentBonus } from "./cash-equipment";
 import type { NormalizedCalculatorInput } from "./normalize";
 import type { CalculatorInput, EquipmentSlot, ValidationIssue } from "./types";
 
@@ -24,9 +25,10 @@ export function checkEquipmentRequirements(input: CalculatorInput, normalized: N
   const pureSub = character.pureSub ?? character.manualPureSub;
   const hasPureSub = pureSub !== null && known(rawPureSub) && Number(rawPureSub) === pureSub;
   const worn = new Set<EquipmentSlot>();
+  const cashAllStat = cashEquipmentBonus(normalized.cashEquipment).allStat;
   const levelPasses = (slot: EquipmentSlot) => !known(input.equipment[slot]?.requiredLevel) || normalized.equipment[slot]!.requiredLevel <= character.level;
   const available = () => calculateTotalStat(pureSub ?? 0,
-    levelAchievementBonus(character.level).allStat + [...worn].reduce((sum, slot) => sum + (normalized.equipment[slot]?.subFlat ?? 0), 0),
+    cashAllStat + levelAchievementBonus(character.level).allStat + [...worn].reduce((sum, slot) => sum + (normalized.equipment[slot]?.subFlat ?? 0), 0),
     [...worn].reduce((sum, slot) => sum + (normalized.equipment[slot]?.subPercent ?? 0), 0), mapleWarriorRate(character.mapleWarrior));
   if (hasPureSub) {
     let changed = true;

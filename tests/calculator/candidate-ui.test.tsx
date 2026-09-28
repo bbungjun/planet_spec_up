@@ -5,11 +5,31 @@ import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { STORAGE_KEY,serializeSetup } from "@/features/calculator/storage";
 import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client";
-import type { StatRecognition } from "@/features/calculator/ocr/parseStatWindow";
 const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
 function seed(){const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
 const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
+it("shows hunting skill changes, sources and blocked placeholders while preserving candidate and saved gear",async()=>{
+ const input=seed();input.equipment.weapon!.totalDamagePercent="21";
+ input.weaponPresets={active:"hunting",entries:{boss:{weapon:{...input.equipment.weapon!},monsterDefense:"0"}}};
+ localStorage.setItem(STORAGE_KEY,serializeSetup(input));const saved=localStorage.getItem(STORAGE_KEY);
+ recognize.mockResolvedValue("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110\n총데미지 +9%");
+ render(<CalculatorApp/>);const user=await add();
+ const card=screen.getByRole("article",{name:"후보 A 비교 결과"});
+ const skills=within(card).getByRole("region",{name:"사냥 스킬 피해 비교"});
+ expect(within(skills).getAllByRole("row")).toHaveLength(5);
+ expect(within(skills).getByRole("row",{name:/서포터 옥토퍼스/})).toHaveTextContent("-9.93%");
+ expect(skills).toHaveTextContent("속성강화 포함 390%");
+ await user.click(within(skills).getByText("계산 가정·출처"));
+ expect(within(skills).getByRole("link",{name:"빅뱅 전 공격·소환수 공식"})).toHaveAttribute("href","https://www.southperry.net/showthread.php?tid=1033");
+ await user.selectOptions(within(panel()).getByLabelText("비교 전투 프리셋"),"boss");
+ expect(within(card).queryByRole("region",{name:"사냥 스킬 피해 비교"})).not.toBeInTheDocument();
+ await user.selectOptions(within(panel()).getByLabelText("비교 전투 프리셋"),"hunting");
+ await user.clear(screen.getByLabelText("순수 STR"));
+ const blocked=within(card).getByRole("region",{name:"사냥 스킬 피해 비교"});
+ expect(blocked).toHaveTextContent("비교 조건 확인 후 표시");expect(blocked).not.toHaveTextContent("-9.93%");
+ expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
+});
 beforeEach(()=>{localStorage.clear();recognize.mockReset().mockResolvedValue("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");vi.spyOn(recognition,"createBrowserTooltipRecognizer").mockImplementation(()=>({recognize,terminate:vi.fn().mockResolvedValue(undefined)}));});
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});
 async function add(name="후보 A"){
@@ -79,70 +99,53 @@ it("closes an unfinished import with Escape and ignores its late result",async()
  await waitFor(()=>expect(screen.queryByRole("dialog")).not.toBeInTheDocument());expect(screen.queryByRole("article")).not.toBeInTheDocument();expect(trigger).toHaveFocus();
 });
 
-async function statRegistrationCase() {
+async function manualStatsCase() {
   const input=seed();delete input.character.pureMain;delete input.character.pureSub;
   localStorage.setItem(STORAGE_KEY,serializeSetup(input));
-  const stat=await import("@/features/calculator/ocr/recognizeStatWindow.client");
-  vi.spyOn(stat,"recognizeStatWindow").mockResolvedValue({automatic:true,warnings:[],draft:{job:"corsair",level:120,pure:{DEX:600,STR:22,INT:4,LUK:4},total:{DEX:600,STR:22,INT:4,LUK:4},maxAttack:2182}});
-  vi.stubGlobal("URL",class extends URL {static createObjectURL=vi.fn(()=>"blob:stat-test");static revokeObjectURL=vi.fn();});
   render(<CalculatorApp/>);const user=await add("대기 후보");const card=screen.getByRole("article",{name:"대기 후보 비교 결과"});
   await user.type(within(card).getByLabelText("대기 후보 구매 가격"),"4.1");
-  expect(within(card).getByLabelText("최대 스탯공 비교")).not.toHaveTextContent("확인 필요");
   expect(within(card).getByText("기준 캐릭터의 순수 스탯이 필요합니다.")).toBeInTheDocument();
-  expect(within(screen.getByRole("group",{name:"현재 장비 비교 기준"})).getByText("추정 기준")).toBeInTheDocument();
-  await user.click(within(card).getByRole("button",{name:"능력창 사진 등록"}));
-  return {card,user,dialog:screen.getByRole("dialog",{name:"능력창 등록"})};
+  await user.click(within(card).getByRole("button",{name:"순수 스탯 입력"}));
+  expect(screen.getByLabelText("순수 DEX")).toHaveFocus();
+  expect(screen.queryByRole("dialog",{name:"능력창 등록"})).not.toBeInTheDocument();
+  return {card,user};
 }
-it("registers the character from the blocked candidate and resumes that same comparison",async()=>{
-  const {card,user,dialog}=await statRegistrationCase();
-  await user.upload(within(dialog).getByLabelText("능력창 사진 선택"),image());
-  await waitFor(()=>expect(screen.queryByRole("dialog",{name:"능력창 등록"})).not.toBeInTheDocument());
+it("resumes the same candidate after directly entering base stats and saves only the setup",async()=>{
+  const {card,user}=await manualStatsCase();
+  fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"600"}});
+  await user.click(within(card).getByRole("button",{name:"순수 스탯 입력"}));
+  expect(screen.getByLabelText("순수 STR")).toHaveFocus();
+  fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"22"}});
   expect(screen.getByRole("article",{name:"대기 후보 비교 결과"})).toBe(card);
   expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
-  expect(within(card).queryByRole("button",{name:"능력창 사진 등록"})).not.toBeInTheDocument();
+  expect(within(card).queryByRole("button",{name:"순수 스탯 입력"})).not.toBeInTheDocument();
   expect(within(card).getByLabelText("대기 후보 구매 가격")).toHaveValue(4.1);
   expect(within(card).getByLabelText("대기 후보 1억 메소당 환산공 상승률")).not.toHaveTextContent("—");
-  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)!);expect(saved.input.character).toMatchObject({pureMain:"600",pureSub:"22"});expect(saved.input.equipment.weapon.attackFlat).toBe("100");expect(saved.input.candidates).toBeUndefined();
+  await user.click(screen.getByRole("button",{name:"저장"}));
+  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+  expect(saved.input.character).toMatchObject({pureMain:"600",pureSub:"22"});
+  expect(saved.input.equipment.weapon.attackFlat).toBe("100");expect(saved.input.candidates).toBeUndefined();
 });
-it("keeps the candidate and stat registration review open if saving fails",async()=>{
-  const {card,user,dialog}=await statRegistrationCase();const original=localStorage.getItem(STORAGE_KEY);
+it("keeps the candidate, price and direct input when saving fails",async()=>{
+  const {card,user}=await manualStatsCase();const original=localStorage.getItem(STORAGE_KEY);
+  fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"600"}});
+  fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"22"}});
   const fail=vi.spyOn(Storage.prototype,"setItem").mockImplementation(()=>{throw new Error("quota");});
-  await user.upload(within(dialog).getByLabelText("능력창 사진 선택"),image());
-  await waitFor(()=>expect(within(dialog).getByLabelText("능력창 인식 상태")).toHaveTextContent("저장하지 못했습니다"));
-  expect(localStorage.getItem(STORAGE_KEY)).toBe(original);expect(within(card).getByLabelText("대기 후보 구매 가격")).toHaveValue(4.1);
-  fail.mockRestore();await user.click(within(dialog).getByRole("button",{name:"확인하고 능력창 저장"}));
-  expect(screen.queryByRole("dialog",{name:"능력창 등록"})).not.toBeInTheDocument();expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
-});
-
-it("pastes into the open stat dialog from its close-button focus and resumes the same candidate",async()=>{
-  const {card,dialog}=await statRegistrationCase();
-  const stat=await import("@/features/calculator/ocr/recognizeStatWindow.client");
-  within(dialog).getByRole("button",{name:"능력창 등록 닫기"}).focus();
-  fireEvent.paste(document,{clipboardData:{items:[],files:[image()]}});
-  await waitFor(()=>expect(screen.queryByRole("dialog",{name:"능력창 등록"})).not.toBeInTheDocument());
-  expect(stat.recognizeStatWindow).toHaveBeenCalledTimes(1);
-  expect(recognize).toHaveBeenCalledTimes(1);
-  expect(screen.queryByRole("region",{name:"여러 장비 인식 목록"})).not.toBeInTheDocument();
-  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
+  await user.click(screen.getByRole("button",{name:"저장"}));
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
+  expect(screen.getByLabelText("순수 DEX")).toHaveValue(600);
   expect(within(card).getByLabelText("대기 후보 구매 가격")).toHaveValue(4.1);
+  fail.mockRestore();await user.click(screen.getByRole("button",{name:"저장"}));
+  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
 });
-
-it("releases the stat paste handler when the dialog closes and ignores its late OCR",async()=>{
-  const {card,user,dialog}=await statRegistrationCase();
-  const stat=await import("@/features/calculator/ocr/recognizeStatWindow.client");
-  let finish!:(value:StatRecognition)=>void;
-  vi.mocked(stat.recognizeStatWindow).mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
-  const original=localStorage.getItem(STORAGE_KEY);
-  fireEvent.paste(document,{clipboardData:{items:[],files:[image()]}});
-  const signal=vi.mocked(stat.recognizeStatWindow).mock.calls[0][1];
-  await user.click(within(dialog).getByRole("button",{name:"능력창 등록 닫기"}));
-  expect(signal.aborted).toBe(true);
-  finish({automatic:true,warnings:[],draft:{job:"corsair",level:120,pure:{DEX:600,STR:22},total:{DEX:600,STR:22},maxAttack:2182}});
-  await Promise.resolve();expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
-  expect(within(card).getByText("기준 캐릭터의 순수 스탯이 필요합니다.")).toBeInTheDocument();
-  fireEvent.paste(document,{clipboardData:{items:[],files:[image()]}});
-  await screen.findByRole("region",{name:"여러 장비 인식 목록"});
-  expect(stat.recognizeStatWindow).toHaveBeenCalledTimes(1);
+it("blocks comparison for invalid direct stats without losing the candidate",async()=>{
+  const {card}=await manualStatsCase();
+  fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"600"}});
+  fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"100"}});
+  expect(card).toHaveTextContent("비교 불가");
+  expect(within(card).getByLabelText("대기 후보 구매 가격")).toHaveValue(4.1);
+  fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"22"}});
+  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
 });
 
 it("shows character main/sub/attack before-after values from the selected preset and candidate edits",async()=>{

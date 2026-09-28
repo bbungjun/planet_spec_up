@@ -175,6 +175,17 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .candidate-efficiency>span{font-size:10px}.candidate-efficiency output{font:700 20px Consolas,monospace;color:var(--success)}.candidate-efficiency.is-down output{color:var(--danger)}
 .candidate-source-preview{border-radius:4px;background:var(--surface-raised);padding:8px}.candidate-source-preview .candidate-photo{height:160px;border-radius:3px}
 .candidate-stat-comparison{font-size:11px}.candidate-stat-comparison caption{font-size:11px}.candidate-stat-comparison th,.candidate-stat-comparison td{padding:7px 3px}
+.hunting-skill-comparison{margin:10px 0 14px;min-width:0}
+.hunting-skill-table{width:100%;table-layout:fixed;font-variant-numeric:tabular-nums}
+.hunting-skill-table th:first-child{width:34%}
+.hunting-skill-table caption span{float:right;color:var(--muted);font-weight:400}
+.hunting-skill-table small{display:block;font-size:10px;font-weight:400;line-height:1.4;margin-top:4px;overflow-wrap:anywhere}
+.hunting-skill-table td{overflow-wrap:anywhere;vertical-align:top}
+.hunting-skill-table td.is-down{color:var(--danger)}
+.hunting-skill-caption,.hunting-skill-assumptions{font-size:11px;line-height:1.6;color:var(--muted)}
+.hunting-skill-caption{margin:6px 0}.hunting-skill-assumptions summary{cursor:pointer}
+.hunting-skill-assumptions p{margin:8px 0}.hunting-skill-assumptions ul{padding-left:16px}
+.hunting-skill-assumptions a{color:var(--text);text-decoration:underline}
 .candidate-stat-comparison td.is-up{color:var(--success)}.comparison-add-card{border-radius:5px;flex-basis:190px;min-height:300px;align-self:stretch;background:repeating-linear-gradient(135deg,transparent 0 4px,color-mix(in srgb,var(--line) 10%,transparent) 4px 8px)}
 .comparison-add-symbol{border:1px solid var(--line);background:var(--surface);color:var(--muted)}.comparison-add-card strong{font-size:12px}
 .candidate-dialog,.ocr-region-selector{border:1px solid var(--window-edge);border-radius:7px;box-shadow:var(--panel-shadow),0 24px 80px #142d4860;background:var(--surface)}
@@ -190,6 +201,16 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .stat-window-paste-zone{min-height:44px;padding:10px;font-size:11px;border-radius:4px}
 .stat-review-fields,.stat-reconciliation{font-size:12px}.stat-reconciliation th,.stat-reconciliation td{font-size:11px;padding:8px}
 .guild-skills-panel{margin-bottom:14px}.guild-skills-fields .field label{font-size:11px}.guild-skills-fields .field small{font-size:10px}
+.cash-equipment-panel{margin-bottom:14px}.cash-equipment-note{font-size:11px;color:var(--muted)}
+.cash-equipment-rings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cash-equipment-item{min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--paper)}
+.cash-equipment-item .check-field{padding:0;margin:0}.cash-equipment-item strong{display:block;font-size:12px}.cash-equipment-item small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.cash-equipment-count{display:grid;grid-template-columns:minmax(0,1fr) 72px auto;align-items:center;gap:8px;margin-top:8px}.cash-equipment-count label{font-size:11px}.cash-equipment-count small{margin:0}.cash-equipment-count input:disabled{opacity:.5}
+.cash-equipment-set{min-width:0;border:0;padding:0;margin:16px 0 0}.cash-equipment-set legend{width:100%;margin-bottom:10px;font-size:12px;font-weight:700}.cash-equipment-set legend span{float:right;font-size:11px;font-weight:400;color:var(--muted)}
+.cash-equipment-lord-items{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.cash-equipment-lord-items .check-field{margin:0}
+.cash-equipment-set-bonuses{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:11px}.cash-equipment-set-bonuses>span{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}.cash-equipment-set-bonuses .is-active{color:var(--accent);background:var(--accent-soft)}.cash-equipment-set-bonuses b{font-size:10px}
+.cash-equipment-total{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.cash-equipment-total strong{color:var(--text)}
+@media(max-width:650px){.cash-equipment-rings,.cash-equipment-lord-items{grid-template-columns:1fr;gap:8px}.cash-equipment-note{font-size:10px}.cash-equipment-count{grid-template-columns:minmax(0,1fr) 64px auto}}
 .character-panel .job-summary{font-size:11px}.character-advanced summary{font-size:12px}
 .buff-presets button{border-radius:4px;font-size:12px;background:var(--surface-raised)}.buff-presets button[aria-pressed="true"]{background:var(--accent-soft)}
 .attack-setup-hint{font-size:10px}.attack-source-fields label{font-size:11px}.stackable-buffs button{border-radius:4px;font-size:11px}

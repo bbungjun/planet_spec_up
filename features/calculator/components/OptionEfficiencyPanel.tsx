@@ -41,7 +41,7 @@ export function OptionEfficiencyPanel({ input }: { input: CalculatorInput }) {
           <summary>효율 계산 기준</summary>
           <p>선택 프리셋·버프·순수 스탯을 고정하고 옵션을 각각 1씩 추가합니다. % 옵션은 1%p 추가하며, 기존 버림을 반영한 환산공 상승률입니다.</p>
           <p>주스탯 환산 = 옵션의 환산공 상승량 ÷ 장비 {mainStat} +1의 환산공 상승량. 공격력%는 장비 공격력에만 적용하고 사냥에서는 보공을 제외합니다.</p>
-          {efficiency.estimated && <p>능력창 미등록: 현재 추정 순수 스탯을 기준으로 계산합니다.</p>}
+          {efficiency.estimated && <p>순수 스탯 미입력: 현재 추정값을 기준으로 계산합니다.</p>}
         </details>
       </>}
     </div>

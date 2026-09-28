@@ -23,7 +23,7 @@ export function PresetStatWindow({input,result,buffSummary}:Props) {
         {([[rule.mainStat,result.mainStat,result.pureMain],[rule.subStat,result.subStat,result.pureSub]] as const).map(([stat,total,pure])=><div key={stat}>
           <dt>{stat}</dt><dd><strong>{number(total)}</strong><small aria-label={`${stat} 순수 및 추가 스탯`}>순수 {number(pure)} + 추가 {number(total-pure)}</small></dd>
         </div>)}
-        {input.character.job==="night_lord" && <div><dt>STR</dt><dd><strong>{number(result.extraStr)}</strong><small>능력창 입력</small></dd></div>}
+        {input.character.job==="night_lord" && <div><dt>STR</dt><dd><strong>{number(result.extraStr)}</strong><small>능력창 입력 + 캐시 장비</small></dd></div>}
         <div><dt>공격력</dt><dd><strong>{number(result.totalAttack)}</strong></dd></div>
       </dl>
       <div className="preset-stat-context"><span>{fixed?"순수 스탯 고정":"순수 스탯 추정"}</span><span aria-label="현재 적용 버프">{buffSummary}</span></div>

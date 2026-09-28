@@ -55,7 +55,7 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
 ];
 
 const WEAPON_ONLY_CARD_FIELDS = new Set<string>([
-  "attackFlat", "attackPercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent",
+  "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent",
 ]);
 
 export function isEquipmentCardFieldVisible(slot: EquipmentSlot, field: string): boolean {

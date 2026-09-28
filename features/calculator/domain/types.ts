@@ -62,11 +62,22 @@ export type CharacterInput = {
   pureSub?: string;
 };
 
+export type CashEquipmentInput = {
+  auroraRing: boolean;
+  auroraRingCount: string;
+  weddingRing: boolean;
+  lordHat: boolean;
+  lordShoes: boolean;
+  lordOverall: boolean;
+};
+
 export type CalculatorInput = {
   character: CharacterInput;
   equipment: Partial<Record<EquipmentSlot, EquipmentInput>>;
   /** Independent attack buffs; absent in older saves means disabled. */
   attackBuffs?: { sprinkling: boolean; rage: boolean };
+  /** Shared cash equipment; absent in older saves means unequipped. */
+  cashEquipment?: CashEquipmentInput;
   /** Older saved setups have no custom slots. */
   customSlots?: CustomSlot[];
   weaponPresets?: {

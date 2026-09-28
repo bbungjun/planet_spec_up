@@ -4,11 +4,12 @@ import { getVisibleEquipmentSlots, getEquipmentSlotLabel, matchingSlots } from "
 import { activeWeaponPreset, switchWeaponPreset, WEAPON_PRESETS } from "./weapon-presets";
 import { isPendantCategory, occupiedPendantSlots } from "./pendants";
 import { isWearBlocked } from "./requirements";
+import { compareHuntingSkills, type HuntingSkillChange } from "./huntingSkills";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId, CalculationResult } from "./types";
 
 export type PurchaseCandidate = { id: string; name: string; job: JobId; slot: EquipmentSlot; category: string|null; equipment: EquipmentInput; price: string; image?: File; previewImage?: File };
 export type MetricChange = { before: number; after: number; difference: number; percent: number|null };
-export type CandidateComparison = { preset: WeaponPresetId; status: "ready"|"review"|"blocked"; blocker?: "missing-base-stats"; reasons: string[]; before?: CalculationResult; after?: CalculationResult; stat?: MetricChange; converted?: MetricChange };
+export type CandidateComparison = { preset: WeaponPresetId; status: "ready"|"review"|"blocked"; blocker?: "missing-base-stats"; reasons: string[]; before?: CalculationResult; after?: CalculationResult; stat?: MetricChange; converted?: MetricChange; huntingSkills?: HuntingSkillChange[] };
 export const comparableSlots = (input: CalculatorInput) => getVisibleEquipmentSlots(input).filter(slot=>!["projectile","blessing_1","blessing_2","buff"].includes(slot));
 export function candidateEquipment(values: Partial<EquipmentInput>): EquipmentInput {
   // A new item starts empty. Never inherit omitted stats from the currently equipped item.
@@ -33,7 +34,7 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   const fail=(...reasons:string[]):CandidateComparison=>({preset,status:"blocked",reasons});
   if(input.character.job==="night_lord")return fail("나이트로드 장비 교체 비교는 아직 지원하지 않습니다.");
   if(candidate.job!==input.character.job || !comparableSlots(input).includes(candidate.slot))return fail("비교 부위를 다시 선택해주세요.");
-  if(!input.character.pureMain?.trim() || !input.character.pureSub?.trim())return {...fail("능력창을 등록해 순수 스탯을 고정해주세요."),blocker:"missing-base-stats"};
+  if(!input.character.pureMain?.trim() || !input.character.pureSub?.trim())return {...fail("캐릭터 설정에서 순수 주스탯·부스탯을 입력해주세요."),blocker:"missing-base-stats"};
   const choices=comparableSlots(input).map(slot=>({slot,label:getEquipmentSlotLabel(input,slot)}));
   const matches=matchingSlots(candidate.category,choices);
   const weapons:Record<string,JobId>={건:"corsair",석궁:"marksman",아대:"night_lord"};
@@ -60,6 +61,8 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   if(before.statAttack<=0 || before.convertedAttack<=0)reasons.push("현재 공격력이 0인 항목은 상승률을 계산할 수 없습니다.");
   const ready=reasons.length===0;
   return {preset,status:ready?"ready":"review",reasons,before,after,
+    ...(ready && preset === "hunting" && input.character.job === "corsair"
+      ? { huntingSkills: compareHuntingSkills(baseline, before, after) } : {}),
     stat:change(before.statAttack,after.statAttack,ready),converted:change(before.convertedAttack,after.convertedAttack,ready)};
 }
 export function compareCandidatePresets(input:CalculatorInput,candidate:PurchaseCandidate) {

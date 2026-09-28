@@ -14,10 +14,9 @@ type Props = {
   savedAt: string | null;
   onApplyAndSave: ApplyOcrBatch;
   children: ReactNode;
-  onOpenCharacter?: () => void;
 };
 
-export function SetupImportPanel({ input, disabled, onApplyAndSave, children, onOpenCharacter }: Props) {
+export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const successMessage = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<File[] | null>(null);
@@ -83,7 +82,6 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, children, on
     <div className="workshop-character-bar">
       <span className="workshop-character-icon"><CharacterIcon job={input.character.job} /></span>
       {children}
-      {onOpenCharacter && <button type="button" className="secondary-button character-photo-shortcut" onClick={onOpenCharacter}><GameIcon name="camera" />능력창 사진</button>}
     </div>
     {error && <p role="alert" className="setup-import-error">{error}</p>}
     {files && <EquipmentOcrBatchPanel files={files} job={input.character.job}

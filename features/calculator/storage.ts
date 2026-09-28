@@ -1,7 +1,7 @@
 import { JOB_RULES } from "./domain/job-rules";
 import { MAX_CUSTOM_SLOTS } from "./domain/slots";
 import { captureWeaponPreset } from "./domain/weapon-presets";
-import type { CalculatorInput, CharacterInput, EquipmentInput } from "./domain/types";
+import type { CalculatorInput, CashEquipmentInput, CharacterInput, EquipmentInput } from "./domain/types";
 import { isStatWindowSnapshot } from "./domain/statWindow";
 import { emptyEquipment } from "./domain/defaults";
 import { isPendantCategory, isPendantId } from "./domain/pendants";
@@ -112,7 +112,8 @@ function isCustomSlots(value: unknown): value is NonNullable<CalculatorInput["cu
 
 function isCalculatorInput(value: unknown): value is CalculatorInput {
   if (!isRecord(value) || !Object.hasOwn(value, "character") || !Object.hasOwn(value, "equipment")
-    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets", "statWindow", "attackBuffs"].includes(key))) return false;
+    || !Object.keys(value).every(key => ["character", "equipment", "customSlots", "weaponPresets", "statWindow", "attackBuffs", "cashEquipment"].includes(key))) return false;
+  if (Object.hasOwn(value, "cashEquipment") && !isCashEquipmentInput(value.cashEquipment)) return false;
   if (Object.hasOwn(value, "attackBuffs") && (!isRecord(value.attackBuffs)
     || !hasOnlyKeys(value.attackBuffs, ["sprinkling", "rage"])
     || typeof value.attackBuffs.sprinkling !== "boolean"
@@ -129,6 +130,13 @@ function isCalculatorInput(value: unknown): value is CalculatorInput {
   const allSlots = [...visibleSlots, ...((value.customSlots ?? []) as NonNullable<CalculatorInput["customSlots"]>).map(({ id }) => id)];
   return hasOnlyKeys(equipment, allSlots)
     && allSlots.every((slot) => isEquipmentInput(equipment[slot]));
+}
+
+function isCashEquipmentInput(value: unknown): value is CashEquipmentInput {
+  const toggles = ["auroraRing", "weddingRing", "lordHat", "lordShoes", "lordOverall"];
+  return isRecord(value) && hasOnlyKeys(value, [...toggles, "auroraRingCount"])
+    && toggles.every(key => typeof value[key] === "boolean")
+    && typeof value.auroraRingCount === "string";
 }
 
 export function serializeSetup(input: CalculatorInput, savedAt = new Date().toISOString()): string {

@@ -33,20 +33,20 @@ import {
   type EquipmentChangeHandler,
 } from "./components/EquipmentEditor";
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
-import { CandidateComparisonPanel, CandidateDialog } from "./components/CandidateComparisonPanel";
+import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
-import { CharacterStatWindowPanel } from "./components/CharacterStatWindowPanel";
-import { applyStatWindow } from "./domain/statWindow";
-import type { StatWindowSnapshot } from "./domain/types";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
+import { CashEquipmentPanel, type CashEquipmentChangeHandler } from "./components/CashEquipmentPanel";
+import { createDefaultCashEquipment } from "./domain/cash-equipment";
 import { WeaponPresetsPanel } from "./components/WeaponPresetsPanel";
 import { SetupImportPanel } from "./components/SetupImportPanel";
 import { activeWeaponPreset, captureWeaponPreset, switchWeaponPreset } from "./domain/weapon-presets";
 import type { WeaponPresetId } from "./domain/types";
 
 function hasEquipmentValues(input: CalculatorInput): boolean {
-  return Object.values(input.weaponPresets?.entries ?? {}).some(preset => Object.values(preset.weapon).some(value => value.trim() !== ""))
+  return Object.values(input.cashEquipment ?? {}).some(value => value === true)
+    || Object.values(input.weaponPresets?.entries ?? {}).some(preset => Object.values(preset.weapon).some(value => value.trim() !== ""))
     || (input.customSlots?.length ?? 0) > 0 || Object.entries(input.equipment).some(
     ([slot, equipment]) => equipment !== undefined
       && Object.entries(equipment).some(([field, value]) => value.trim() !== ""
@@ -73,7 +73,6 @@ export function CalculatorApp() {
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
-  const [statRegistrationOpen, setStatRegistrationOpen] = useState(false);
   const result = useMemo(() => calculateDamageResult(input), [input]);
 
   const handleStackableBuffChange = (buff: StackableAttackBuffId, enabled: boolean) => {
@@ -154,6 +153,13 @@ export function CalculatorApp() {
     });
   };
 
+  const handleCashEquipmentChange: CashEquipmentChangeHandler = (field, value) => {
+    setInput(current => ({
+      ...current,
+      cashEquipment: { ...(current.cashEquipment ?? createDefaultCashEquipment()), [field]: value },
+    }));
+  };
+
   const handleOcrApply = (target: OcrTarget, replacement: StatReplacement, source?: OcrSource) => {
     setInput((current) => {
       if (current.character.job !== target.job) return current;
@@ -192,10 +198,13 @@ export function CalculatorApp() {
     const outcome = applyOcrBatch(input, job, entries);
     if (outcome.error) return outcome.error;
     if (!outcome.input) return "인식 결과를 다시 확인하세요.";
-    const characterError = calculateDamageResult(outcome.input).issues.find(issue => issue.severity === "error" && issue.path.startsWith("character."));
+    const characterError = calculateDamageResult(outcome.input).issues.find(issue => issue.severity === "error"
+      && (issue.path.startsWith("character.") || issue.path.startsWith("cashEquipment.")));
     if (characterError) {
       handleNavigate(characterError.path);
-      return "캐릭터 설정에 잘못된 값이 있습니다. 표시된 입력값을 수정한 뒤 저장하세요.";
+      return characterError.path.startsWith("cashEquipment.")
+        ? "캐시 장비 입력값을 수정한 뒤 저장하세요."
+        : "캐릭터 설정에 잘못된 값이 있습니다. 표시된 입력값을 수정한 뒤 저장하세요.";
     }
     const next = captureWeaponPreset(outcome.input);
     try {
@@ -208,20 +217,6 @@ export function CalculatorApp() {
       return null;
     } catch {
       return "브라우저에 저장하지 못했습니다. 인식 목록은 유지됩니다. 브라우저 저장 공간·설정을 확인한 뒤 다시 눌러주세요.";
-    }
-  };
-
-  const handleStatWindowSave = (snapshot: StatWindowSnapshot): string | null => {
-    if (initialLoading) return "저장된 캐릭터를 불러오는 중입니다.";
-    try {
-      const next = captureWeaponPreset(applyStatWindow(input, snapshot));
-      const error = calculateDamageResult(next).issues.find(issue => issue.severity === "error" && issue.path.startsWith("character."));
-      if (error) return "캐릭터 설정을 확인해주세요: " + error.message;
-      const timestamp = save(next);
-      setInput(next); setSavedAt(timestamp); setStorageError(null);
-      return null;
-    } catch (error) {
-      return error instanceof Error && error.message.startsWith("능력창") ? error.message : "브라우저에 저장하지 못했습니다. 기존 세팅과 인식값은 유지됩니다.";
     }
   };
 
@@ -280,6 +275,19 @@ export function CalculatorApp() {
   };
 
   const handleSave = () => {
+    const cashError = result.issues.find(issue => issue.severity === "error" && issue.path.startsWith("cashEquipment."));
+    if (cashError) {
+      setStorageError("캐시 장비 입력값을 확인한 뒤 다시 저장해주세요.");
+      handleNavigate(cashError.path);
+      return;
+    }
+    const baseStatError = result.issues.find(issue => issue.severity === "error"
+      && (issue.path === "character.pureMain" || issue.path === "character.pureSub"));
+    if (baseStatError) {
+      setStorageError("순수 스탯을 확인한 뒤 다시 저장해주세요.");
+      handleNavigate(baseStatError.path);
+      return;
+    }
     try {
       setSavedAt(save(captureWeaponPreset(input)));
       setStorageError(null);
@@ -349,14 +357,14 @@ export function CalculatorApp() {
         onReset={handleReset}
       />
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
-        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}
-        onOpenCharacter={() => setStatRegistrationOpen(true)}>
+        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}>
         <div className="setup-import-identity">
           <CharacterIdentityFields character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
       <div className="character-settings-content" id="character-settings">
       <GuildSkillsPanel character={input.character} issues={result.issues} onChange={handleCharacterChange} />
+      <CashEquipmentPanel input={input} issues={result.issues} onChange={handleCashEquipmentChange} />
       <div className="calculator-setup">
           <CharacterPanel
             showIdentity={false}
@@ -370,14 +378,6 @@ export function CalculatorApp() {
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      {statRegistrationOpen && <CandidateDialog title="능력창 등록" onClose={() => setStatRegistrationOpen(false)}>
-        <CharacterStatWindowPanel embedded key={`stat:${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`} input={input} result={result}
-          onSave={snapshot => {
-            const error = handleStatWindowSave(snapshot);
-            if (!error) setStatRegistrationOpen(false);
-            return error;
-          }} />
-      </CandidateDialog>}
       <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave} />
       <div className="calculator-workspace" id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
@@ -421,7 +421,8 @@ export function CalculatorApp() {
           />
         </div>
       </div>
-      <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect} onSaveStatWindow={handleStatWindowSave} />
+      <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}
+        onEditBaseStats={() => handleNavigate(input.character.pureMain?.trim() ? "character.pureSub" : "character.pureMain")} />
       <footer className="app-footer"><span>플래닛 <span>장비 계산기</span></span><p>이 브라우저에 저장 · 이미지 외부 전송 없음</p><a className="asset-credit" href="https://maplestory.io/" target="_blank" rel="noreferrer">장비 아이콘: MapleStory.io · © NEXON</a><a href="#page-top">맨 위로 ↑</a></footer>
       </fieldset>
     </main>

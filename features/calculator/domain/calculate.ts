@@ -15,6 +15,7 @@ import { activeWeaponPreset } from "./weapon-presets";
 import { getVisibleEquipmentSlots } from "./slots";
 import { levelAchievementBonus, MAX_CHARACTER_LEVEL } from "./level";
 import { stackableAttackBonus } from "./attack-buffs";
+import { cashEquipmentBonus } from "./cash-equipment";
 import type {
   CalculatorInput,
   CalculationResult,
@@ -34,6 +35,7 @@ export type CalculationSnapshot = {
   mainPercent: number;
   subPercent: number;
   nightLordStrStat: number;
+  cashAllStat?: number;
   percentEligibleAttack: number;
   flatAttack: number;
   attackPercent: number;
@@ -132,7 +134,7 @@ export function calculateFromSnapshot(
     warriorRate,
   );
   const extraStr = snapshot.job === "night_lord"
-    ? snapshot.nightLordStrStat
+    ? snapshot.nightLordStrStat + (snapshot.cashAllStat ?? 0)
     : 0;
   const totalAttack = calculateTotalAttack(
     snapshot.percentEligibleAttack,
@@ -199,6 +201,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     rule,
     (input.customSlots ?? []).map(({ id }) => id),
   );
+  const cashBonus = cashEquipmentBonus(normalized.value.cashEquipment);
   const isWeaponAttackMissing =
     (input.equipment.weapon?.attackFlat ?? "").trim() === "";
   const missingWeaponAttackIssues: ValidationIssue[] =
@@ -215,7 +218,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     level: character.level,
     mapleWarriorRate: warriorRate,
     minimumSub: rule.minimumSub,
-    equipmentSub: equipment.subFlat + levelAchievementBonus(character.level).allStat,
+    equipmentSub: equipment.subFlat + cashBonus.allStat + levelAchievementBonus(character.level).allStat,
     equipmentSubPercent: equipment.subPercent,
     requirements: equipment.requirements,
     manualPureSub: character.pureSub ?? character.manualPureSub,
@@ -225,12 +228,13 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     job: character.job,
     level: character.level,
     mapleWarrior: character.mapleWarrior,
-    equipmentMain: equipment.mainFlat,
-    equipmentSub: equipment.subFlat,
+    equipmentMain: equipment.mainFlat + cashBonus.allStat,
+    equipmentSub: equipment.subFlat + cashBonus.allStat,
     mainPercent: equipment.mainPercent,
     subPercent: equipment.subPercent,
     nightLordStrStat: character.nightLordStrStat,
-    percentEligibleAttack: equipment.percentEligibleAttack,
+    cashAllStat: cashBonus.allStat,
+    percentEligibleAttack: equipment.percentEligibleAttack + cashBonus.attack,
     flatAttack: equipment.flatAttack + stackableAttackBonus(input),
     attackPercent: equipment.attackPercent,
     bossAndTotalDamage: character.bossAndTotalDamage + character.bossDamagePercent + sumOption("damagePercent") + sumOption("bossDamagePercent"),

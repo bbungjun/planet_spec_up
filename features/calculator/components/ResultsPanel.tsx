@@ -21,6 +21,7 @@ import { PresetStatWindow } from "./PresetStatWindow";
 import { OptionEfficiencyPanel } from "./OptionEfficiencyPanel";
 import { StackableBuffControls } from "./StackableBuffControls";
 import { levelAchievementBonus } from "../domain/level";
+import { cashEquipmentBonus } from "../domain/cash-equipment";
 
 type ResultsPanelProps = {
   job: JobId;
@@ -45,8 +46,8 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   ignoreDefense: "방어율 무시",
   criticalRate: "추가 크리티컬 확률",
   manualPureSub: "순수 부스탯 수동값",
-  pureMain: "능력창 순수 주스탯",
-  pureSub: "능력창 순수 부스탯",
+  pureMain: "순수 주스탯",
+  pureSub: "순수 부스탯",
   guildBossPercent: "길드 보스 공격력",
   guildIgnorePercent: "길드 방어율 무시",
   guildAttackFlat: "길드 공격력",
@@ -56,6 +57,7 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
 
 function issueContext(path: string, rule: JobRule, input: CalculatorInput): string {
   const [group, candidate, fieldCandidate] = path.split(".");
+  if (path === "cashEquipment.auroraRingCount") return "오로라 반지 개수";
 
   if (group === "equipment") {
     const slot = candidate as EquipmentSlot;
@@ -110,8 +112,11 @@ export function ResultsPanel({
   const attackSources = useMemo(() => {
     const normalized = normalizeInput(input).value;
     const totals = sumEquipment(normalized.equipment, JOB_RULES[input.character.job], (input.customSlots ?? []).map(({id}) => id));
+    const cashAttack = cashEquipmentBonus(normalized.cashEquipment).attack;
+    const equipmentAttack = calculateTotalAttack(totals.percentEligibleAttack, 0, totals.attackPercent);
     return [
-      ["장비 (% 적용 후)", calculateTotalAttack(totals.percentEligibleAttack, 0, totals.attackPercent)],
+      ["장비 (% 적용 후)", equipmentAttack],
+      ["캐시 장비 (% 적용 후)", calculateTotalAttack(totals.percentEligibleAttack + cashAttack, 0, totals.attackPercent) - equipmentAttack],
       ["불릿·표창", normalized.equipment.projectile?.attackFlat ?? 0],
       ["정령의 축복", normalized.equipment.blessing_1?.attackFlat ?? 0],
       ["여제의 축복", normalized.equipment.blessing_2?.attackFlat ?? 0],
