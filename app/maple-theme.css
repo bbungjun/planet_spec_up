@@ -193,6 +193,25 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .candidate-dialog-heading{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}.candidate-dialog-heading h3{font-size:16px}
 .candidate-dialog input,.candidate-dialog select,.candidate-dialog textarea{border-radius:4px;background:var(--paper);font-size:13px}
 .candidate-dialog .equipment-ocr-file-input{width:1px;min-height:0;padding:0;border:0}
+.candidate-dialog .equipment-ocr-panel{border:0;margin-top:0;padding-top:0}
+.candidate-dialog:has(.candidate-review-layout){width:min(1040px,calc(100vw - 32px))}
+.equipment-recognition-content{display:grid;gap:12px;min-width:0}
+.candidate-import-panel{grid-template-columns:minmax(0,1fr) 220px;align-items:end}
+.candidate-import-panel>.candidate-review-layout,.candidate-import-panel>.equipment-recognition-content{grid-column:1/-1}
+.candidate-import-panel>.candidate-import-price{margin:0}
+@media(max-width:700px){.candidate-import-panel{grid-template-columns:minmax(0,1fr)}}
+.candidate-review-layout{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(0,1.15fr);grid-template-areas:"status status" "photo review" "tools review";gap:14px;align-items:start}
+.candidate-review-layout>.equipment-ocr-status{grid-area:status;margin:0}
+.candidate-review-layout>.equipment-ocr-preview{grid-area:photo;margin:0;padding:12px;max-height:none;background:var(--surface-raised)}
+.candidate-review-layout>.equipment-ocr-preview img{max-height:530px;object-fit:contain}
+.candidate-review-layout figcaption{font-size:12px;color:var(--muted);margin-bottom:8px}
+.candidate-review-layout>.equipment-ocr-review{grid-area:review;margin:0;padding:14px;border:1px solid var(--line)}
+.candidate-review-layout>.equipment-ocr-actions{grid-area:tools;margin:0;gap:6px}
+.candidate-review-layout>.equipment-ocr-actions button{font-size:11px;flex:1}
+.candidate-review-layout .equipment-ocr-proposal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.candidate-review-layout .equipment-ocr-review-heading h4{font-size:14px}
+.candidate-review-layout .equipment-ocr-review>p{font-size:12px;line-height:1.6}
+@media(max-width:700px){.candidate-review-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"status" "photo" "tools" "review"}.candidate-review-layout>.equipment-ocr-preview img{max-height:280px}.candidate-review-layout>.equipment-ocr-review{padding:12px}.candidate-review-layout .equipment-ocr-proposal-grid{gap:8px}}
 .candidate-source-preview:focus-visible,.equipment-slot:focus-visible{outline-color:var(--focus);outline-offset:3px}
 .ocr-batch,.ocr-batch-list>li,.equipment-ocr-review,.ocr-review-issue,.equipment-ocr-proposal-grid input{border-radius:5px}
 .ocr-batch,.equipment-ocr-review{background:var(--surface)}.ocr-batch{margin-top:16px}

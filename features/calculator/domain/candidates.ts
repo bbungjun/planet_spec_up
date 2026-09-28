@@ -57,7 +57,7 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   // Proven duplicate/over-limit loadouts still fail through isWearBlocked above.
   if (isPendantCategory(candidate.category) && pendants.some(slot => !next.equipment[slot]?.pendantId)) reasons.push("펜던트 종류를 확인해주세요. 고유 아이템 중복 착용 여부를 확인해야 합니다.");
   if(!candidate.equipment.requiredLevel?.trim())reasons.push("후보 사진의 REQ LEV 인식값이 없습니다. 원본의 요구 레벨을 확인해주세요.");
-  if(!candidate.equipment.requiredSub.trim())reasons.push("후보 사진의 요구 스탯 인식값이 없습니다. OCR 검토값을 확인해주세요.");
+  if(!candidate.equipment.requiredSub.trim())reasons.push("후보 사진의 요구 스탯 인식값이 없습니다. 인식값을 확인해주세요.");
   if(before.statAttack<=0 || before.convertedAttack<=0)reasons.push("현재 공격력이 0인 항목은 상승률을 계산할 수 없습니다.");
   const ready=reasons.length===0;
   return {preset,status:ready?"ready":"review",reasons,before,after,

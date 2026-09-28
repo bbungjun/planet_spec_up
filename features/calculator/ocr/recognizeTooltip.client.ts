@@ -131,7 +131,7 @@ export function recognitionErrorMessage(error: unknown): string {
     case "IMAGE_DIMENSIONS_TOO_LARGE": return "이미지 해상도가 너무 큽니다. 2,400만 픽셀 이하 또는 게임 창만 캡처해 넣어주세요.";
     case "UNSUPPORTED_FILE": return "지원되지 않는 이미지 형식입니다. PNG, JPEG, WebP를 선택하세요.";
     case "FILE_TOO_LARGE": return "이미지가 너무 큽니다. 12MB 이하의 이미지를 선택하세요.";
-    case "CANCELLED": return "OCR을 취소했습니다.";
+    case "CANCELLED": return "인식을 취소했습니다.";
     case "OCR_UNAVAILABLE": return "인식 기능을 준비하지 못했습니다. 사이트 연결을 확인하고 다시 시도해주세요.";
     default: return "문자 인식 중 오류가 발생했습니다. 다시 시도하거나 설명창 영역을 지정해주세요.";
   }

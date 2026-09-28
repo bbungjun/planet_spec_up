@@ -36,8 +36,8 @@ it("retries only a selected failure and preserves edits in completed photos", as
     createRecognizer={() => ({ recognize, terminate: vi.fn().mockResolvedValue(undefined) })} />);
   await screen.findByText("2/2장 인식 완료");
   await user.click(screen.getByText("1번 이미지·인식값 확인 및 수정"));
-  await user.clear(screen.getByLabelText("1번 OCR DEX", { exact: true }));
-  await user.type(screen.getByLabelText("1번 OCR DEX", { exact: true }), "17");
+  await user.clear(screen.getByLabelText("1번 인식 DEX", { exact: true }));
+  await user.type(screen.getByLabelText("1번 인식 DEX", { exact: true }), "17");
   recognize.mockResolvedValue("장비분류: 모자\nDEX +4");
   await user.click(screen.getByRole("button", { name: "2번 영역 직접 선택" }));
   await user.click(screen.getByText("키보드로 영역 조정"));
@@ -48,7 +48,7 @@ it("retries only a selected failure and preserves edits in completed photos", as
   await waitFor(() => expect(recognize).toHaveBeenCalledTimes(3));
   expect(recognize.mock.calls[2][0].name).toBe("failed.png");
   expect(recognize.mock.calls[2][1].region).toEqual({ x: .1, y: .2, width: .3, height: .4 });
-  expect(screen.getByLabelText("1번 OCR DEX", { exact: true })).toHaveValue(17);
+  expect(screen.getByLabelText("1번 인식 DEX", { exact: true })).toHaveValue(17);
   expect(screen.getByLabelText("2번 적용 위치")).toHaveValue("hat");
 });
 

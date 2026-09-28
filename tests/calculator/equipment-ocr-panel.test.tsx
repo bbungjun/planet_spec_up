@@ -56,7 +56,7 @@ afterEach(() => {
 
 describe("EquipmentOcrPanel", () => {
   const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
-  it("reviews attacks and damage dynamically and reparses corrected or new options", async () => {
+  it("reviews and edits numeric fields without exposing full option lists or raw text editing", async () => {
     const user = userEvent.setup();
     const recognizer = createRecognizer(vi.fn().mockResolvedValue(
       "STR +3\nDEX +7\n공격력 +106\n흑수정 강화 공격력 +2\n총 데미지 +9%\n총 데미지 +6%\n총 데미지 +6%\nREQ STR : 120\n명중률 +5",
@@ -64,16 +64,19 @@ describe("EquipmentOcrPanel", () => {
     const onApply = vi.fn();
     renderPanel(recognizer, onApply, {job: "corsair", slot: "weapon"});
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["weapon"], "weapon.png", {type: "image/png"}));
-    expect(await screen.findByLabelText("OCR 공격력")).toHaveValue(106);
-    expect(screen.getByLabelText("OCR 총데미지%")).toHaveValue(21);
-    expect(screen.getByLabelText("OCR 요구 STR")).toHaveValue(120);
-    expect(screen.getByText(/명중률: 5 — 참고용/)).toBeInTheDocument();
-    expect(screen.getByText(/흑수정 강화 공격력: 2 — 참고용/)).toBeInTheDocument();
+    expect(await screen.findByLabelText("인식 공격력")).toHaveValue(106);
+    expect(screen.getByLabelText("인식 총데미지%")).toHaveValue(21);
+    expect(screen.getByLabelText("인식 요구 STR")).toHaveValue(120);
+    expect(screen.queryByText(/인식한 전체 옵션/)).not.toBeInTheDocument();
+    expect(screen.queryByText("인식 텍스트 확인·수정 / 옵션 추가")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/OCR/);
     expect(onApply).not.toHaveBeenCalled();
-    await user.click(screen.getByText("인식 텍스트 확인·수정 / 옵션 추가"));
-    fireEvent.change(screen.getByLabelText("인식 텍스트"), {target: {value: "STR +8\nDEX +19\n공격력 +143\n공격력 +9%\n총데미지 +30%\nREQ STR: 100"}});
-    expect(screen.getByLabelText("OCR 공격력")).toHaveValue(143);
-    expect(screen.getByLabelText("OCR 공격력%")).toHaveValue(9);
+    for (const [label,value] of [["STR","8"],["DEX","19"],["공격력","143"],["공격력%","9"],["총데미지%","30"],["요구 STR","100"]]) {
+      fireEvent.change(screen.getByLabelText(`인식 ${label}`), {target:{value}});
+    }
+    expect(screen.getByLabelText("인식 공격력")).toHaveValue(143);
+    expect(screen.getByLabelText("인식 공격력%")).toHaveValue(9);
     await user.click(screen.getByRole("button", {name: "인식값 적용"}));
     expect(onApply).toHaveBeenCalledWith({job: "corsair", slot: "weapon"}, {
       ...clearedDamage,
@@ -88,6 +91,8 @@ describe("EquipmentOcrPanel", () => {
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["unknown"], "unknown.png", {type: "image/png"}));
     expect(await screen.findByRole("button", {name: "인식값 적용"})).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent("계산에 적용할 옵션을 찾지 못했습니다");
+    await user.type(screen.getByLabelText("인식 공격력"), "12");
+    expect(screen.getByRole("button", {name: "인식값 적용"})).toBeEnabled();
   });
 
   it("recognizes a selected screenshot and shows the editable stat proposal", async () => {
@@ -110,10 +115,10 @@ describe("EquipmentOcrPanel", () => {
       );
     });
     await waitFor(() => {
-      expect(screen.getByLabelText("OCR DEX")).toHaveValue(21);
-      expect(screen.getByLabelText("OCR STR")).toHaveValue(10);
-      expect(screen.getByLabelText("OCR DEX%")).toHaveValue(21);
-      expect(screen.getByLabelText("OCR STR%")).toHaveValue(null);
+      expect(screen.getByLabelText("인식 DEX")).toHaveValue(21);
+      expect(screen.getByLabelText("인식 STR")).toHaveValue(10);
+      expect(screen.getByLabelText("인식 DEX%")).toHaveValue(21);
+      expect(screen.getByLabelText("인식 STR%")).toHaveValue(null);
     });
   });
 
@@ -127,7 +132,7 @@ describe("EquipmentOcrPanel", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["screenshot"], "overall.png", { type: "image/png" }),
     );
-    await screen.findByLabelText("OCR DEX");
+    await screen.findByLabelText("인식 DEX");
     expect(onApply).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
@@ -223,9 +228,9 @@ describe("EquipmentOcrPanel", () => {
     await waitFor(() => expect(pending).toHaveLength(1));
     const firstSignal = pending[0].signal;
 
-    await user.click(screen.getByRole("button", { name: "OCR 취소" }));
+    await user.click(screen.getByRole("button", { name: "인식 취소" }));
     expect(firstSignal.aborted).toBe(true);
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
 
     const secondFile = new File(["second"], "second.png", {
       type: "image/png",
@@ -235,14 +240,14 @@ describe("EquipmentOcrPanel", () => {
 
     pending[0].resolve(attachedTooltipText);
     await Promise.resolve();
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
 
     pending[1].resolve(
       ["STR +4", "DEX +30", "DEX +12%"].join("\n"),
     );
-    await waitFor(() => expect(screen.getByLabelText("OCR DEX")).toHaveValue(30));
-    expect(screen.getByLabelText("OCR STR")).toHaveValue(4);
-    expect(screen.getByLabelText("OCR DEX%")).toHaveValue(12);
+    await waitFor(() => expect(screen.getByLabelText("인식 DEX")).toHaveValue(30));
+    expect(screen.getByLabelText("인식 STR")).toHaveValue(4);
+    expect(screen.getByLabelText("인식 DEX%")).toHaveValue(12);
   });
 
   it("supersedes a pending job when a second image is selected and only applies the second result", async () => {
@@ -271,11 +276,11 @@ describe("EquipmentOcrPanel", () => {
 
     pending[0].resolve(attachedTooltipText);
     await Promise.resolve();
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
     expect(onApply).not.toHaveBeenCalled();
 
     pending[1].resolve(["STR +4", "DEX +30", "DEX +12%"].join("\n"));
-    await waitFor(() => expect(screen.getByLabelText("OCR DEX")).toHaveValue(30));
+    await waitFor(() => expect(screen.getByLabelText("인식 DEX")).toHaveValue(30));
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
 
     expect(onApply).toHaveBeenCalledWith(target, {
@@ -303,12 +308,12 @@ describe("EquipmentOcrPanel", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["pending"], "pending.png", { type: "image/png" }),
     );
-    await user.click(screen.getByRole("button", { name: "OCR 취소" }));
+    await user.click(screen.getByRole("button", { name: "인식 취소" }));
     resolveRecognition?.(attachedTooltipText);
     await Promise.resolve();
 
     expect(onApply).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
   });
 
   it("resets the file input so selecting the same screenshot starts a second job", async () => {
@@ -336,7 +341,7 @@ describe("EquipmentOcrPanel", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["preview"], "preview.png", { type: "image/png" }),
     );
-    await screen.findByLabelText("OCR DEX");
+    await screen.findByLabelText("인식 DEX");
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).not.toHaveBeenCalled();
@@ -379,7 +384,7 @@ describe("EquipmentOcrPanel", () => {
       new File(["cancel-preview"], "cancel-preview.png", { type: "image/png" }),
     );
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
-    await user.click(screen.getByRole("button", { name: "OCR 취소" }));
+    await user.click(screen.getByRole("button", { name: "인식 취소" }));
 
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:cancelled-ocr");
@@ -409,7 +414,7 @@ describe("EquipmentOcrPanel", () => {
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).toHaveBeenNthCalledWith(1, "blob:first-ocr");
     pending[1](attachedTooltipText);
-    await screen.findByLabelText("OCR DEX");
+    await screen.findByLabelText("인식 DEX");
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
     view.unmount();
     expect(revokeObjectURL).toHaveBeenCalledTimes(2);
@@ -430,7 +435,7 @@ describe("EquipmentOcrPanel", () => {
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), file);
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("문자 인식 중 오류가 발생했습니다"));
     await user.click(screen.getByRole("button", { name: "다시 시도" }));
-    await waitFor(() => expect(screen.getByLabelText("OCR DEX")).toHaveValue(21));
+    await waitFor(() => expect(screen.getByLabelText("인식 DEX")).toHaveValue(21));
     expect(recognizer.recognize).toHaveBeenCalledTimes(2);
   });
 
@@ -444,11 +449,11 @@ describe("EquipmentOcrPanel", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["edit"], "edit.png", { type: "image/png" }),
     );
-    await screen.findByLabelText("OCR DEX");
-    await user.clear(screen.getByLabelText("OCR DEX"));
-    await user.type(screen.getByLabelText("OCR DEX"), "99");
-    await user.clear(screen.getByLabelText("OCR STR%"));
-    await user.type(screen.getByLabelText("OCR STR%"), "7.5");
+    await screen.findByLabelText("인식 DEX");
+    await user.clear(screen.getByLabelText("인식 DEX"));
+    await user.type(screen.getByLabelText("인식 DEX"), "99");
+    await user.clear(screen.getByLabelText("인식 STR%"));
+    await user.type(screen.getByLabelText("인식 STR%"), "7.5");
     await user.click(screen.getByRole("button", { name: "인식값 적용" }));
 
     expect(onApply).toHaveBeenCalledWith(target, {
@@ -490,8 +495,8 @@ describe("EquipmentOcrPanel", () => {
     pending[0].resolve(attachedTooltipText);
     await Promise.resolve();
 
-    expect(screen.queryByLabelText("OCR LUK")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 LUK")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
     expect(onApply).not.toHaveBeenCalled();
   });
 
@@ -505,7 +510,7 @@ describe("EquipmentOcrPanel", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["ready-target"], "ready-target.png", { type: "image/png" }),
     );
-    await screen.findByLabelText("OCR DEX");
+    await screen.findByLabelText("인식 DEX");
     expect(screen.getByRole("button", { name: "인식값 적용" })).toBeInTheDocument();
 
     const nextTarget: OcrTarget = { job: "night_lord", slot: "hat" };
@@ -517,8 +522,8 @@ describe("EquipmentOcrPanel", () => {
       />,
     );
 
-    expect(screen.queryByLabelText("OCR DEX")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("OCR LUK")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 DEX")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 LUK")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "인식값 적용" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "취소" })).not.toBeInTheDocument();
     expect(onApply).not.toHaveBeenCalled();

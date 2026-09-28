@@ -9,7 +9,7 @@ import { createBrowserTooltipRecognizer, recognitionErrorMessage, type TooltipRe
 import { existingDuplicate, imageFingerprint, matchingSlots, occupied, tooltipIdentity, validReplacement, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
 import { batchConcurrency, recognizeBatch, type BatchRecognitionResult } from "../ocr/recognizeBatch.client";
 import type { OcrBounds, OcrReview, StatReplacement } from "../ocr/types";
-import { editedTextReview, mapReviewedStats, reviewBlocked, reviewQuestions, reviewText } from "../ocr/reviewRecognition";
+import { mapReviewedStats, reviewBlocked, reviewQuestions, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import type { OcrDestination } from "../ocr/batch";
@@ -151,9 +151,9 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
   const selected = rows.filter(row => isIncluded(row) && row.state === "ready" && row.replacement);
   const completed = rows.filter(row => row.state !== "waiting" && row.state !== "working").length;
   const edit = (index: number, patch: Partial<Row>) => setRows(current => current.map((row, i) => i === index ? {...row, ...patch} : row));
-  const setReview = (index: number, review: OcrReview, clearOverrides = false) => setRows(current => current.map((row, i) => i !== index ? row : {
-    ...row, review, text: reviewText(review), overrides: clearOverrides ? {} : row.overrides,
-    replacement: { ...mapReviewedStats(review, job), ...(clearOverrides ? {} : row.overrides) },
+  const setReview = (index: number, review: OcrReview) => setRows(current => current.map((row, i) => i !== index ? row : {
+    ...row, review, text: reviewText(review),
+    replacement: { ...mapReviewedStats(review, job), ...row.overrides },
   }));
   const retry = async (index: number, region?: OcrBounds, replacementFile?: File) => {
     if (busy || rows[index].state === "applied") return;
@@ -277,16 +277,10 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
               {!saveOnApply && <ImagePreview file={row.preview} original={row.file} />}
 
               <div className="equipment-ocr-proposal-grid">{fields.map(([key, label]) => <div className="field" key={key}>
-                <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 OCR {label}</label>
+                <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 인식 {label}</label>
                 <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
                   value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied"} onChange={event => edit(index, {replacement: {...row.replacement!, [key]: event.currentTarget.value}, overrides: { ...row.overrides, [key]: event.currentTarget.value }})} />
               </div>)}</div>
-              <label htmlFor={`${id}-batch-text-${index}`}>{index + 1}번 인식 텍스트</label>
-              <textarea id={`${id}-batch-text-${index}`} rows={6} value={row.text} disabled={row.state === "applied"} onChange={event => {
-                const text = event.currentTarget.value;
-                if (row.review) setReview(index, editedTextReview(text), true);
-                else edit(index, {text, replacement: mapRecognizedStats(parseMapleTooltip(text), job)});
-              }} />
             </details>
           </>}
         </li>;

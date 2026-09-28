@@ -62,12 +62,12 @@ it("requires a pendant destination for single OCR and applies the reviewed kind 
   await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.click(screen.getByRole("button", { name: "망토 편집" }));
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), photo("gordon"));
-  await screen.findByLabelText("OCR 펜던트 종류");
+  await screen.findByLabelText("인식 펜던트 종류");
   expect(screen.getByRole("button", { name: "인식값 적용" })).toBeDisabled();
   expect(screen.queryByRole("button", { name: "펜던트 새 장비로 추가" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), photo("gordon"));
-  await waitFor(() => expect(screen.getByLabelText("OCR 펜던트 종류")).toHaveValue("gordon"));
+  await waitFor(() => expect(screen.getByLabelText("인식 펜던트 종류")).toHaveValue("gordon"));
   await user.click(screen.getByRole("button", { name: "인식값 적용" }));
   expect(screen.getByLabelText("펜던트 1 종류")).toHaveValue("gordon");
   expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(20);
@@ -86,7 +86,7 @@ it("blocks a candidate that duplicates the retained pendant, then compares after
   await user.click(screen.getByRole("button", { name: "비교 카드 추가" }));
   const dialog = within(screen.getByRole("dialog", { name: "비교할 장비 추가" }));
   await user.upload(dialog.getByLabelText("비교 후보 스크린샷"), photo("candidate"));
-  await waitFor(() => expect(dialog.getByLabelText("OCR 펜던트 종류")).toHaveValue("yokai"));
+  await waitFor(() => expect(dialog.getByLabelText("인식 펜던트 종류")).toHaveValue("yokai"));
   await user.selectOptions(dialog.getByLabelText("교체할 장비 부위"), "necklace");
   await user.click(dialog.getByLabelText("원본의 모든 옵션을 확인했습니다"));
   await user.click(dialog.getByRole("button", { name: "후보로 비교" }));

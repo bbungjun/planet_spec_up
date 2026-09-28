@@ -44,7 +44,7 @@ it("uses OCR REQ STR automatically and warns only when the supporting STR falls 
   localStorage.setItem(STORAGE_KEY,serializeSetup(input));render(<CalculatorApp/>);const user=userEvent.setup();
   await waitFor(()=>expect(screen.getByLabelText("레벨",{exact:true})).toHaveValue(120));await user.click(screen.getByRole("button",{name:"무기 편집"}));
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"),new File(["mock"],"weapon.png",{type:"image/png"}));
-  expect(await screen.findByLabelText("OCR 요구 STR")).toHaveValue(50);expect(screen.getByLabelText("OCR 요구 레벨")).toHaveValue(120);
+  expect(await screen.findByLabelText("인식 요구 STR")).toHaveValue(50);expect(screen.getByLabelText("인식 요구 레벨")).toHaveValue(120);
   await user.click(screen.getByRole("button",{name:"인식값 적용"}));
   expect(screen.getByLabelText("무기 요구 STR")).toHaveValue(50);expect(screen.getByRole("button",{name:"무기 편집"})).not.toHaveTextContent("착용 불가");
   await user.click(screen.getByRole("button",{name:"모자 편집"}));fireEvent.change(screen.getByLabelText("모자 STR"),{target:{value:"27"}});

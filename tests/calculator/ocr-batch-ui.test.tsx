@@ -66,7 +66,7 @@ it("cancels pending recognition and ignores late results", async () => {
   resolve?.(ringA);
   await Promise.resolve();
   expect(screen.getByRole("region", {name: "여러 장비 인식 목록"})).toBeInTheDocument();
-  expect(screen.getAllByText("OCR을 취소했습니다.")).toHaveLength(2);
+  expect(screen.getAllByText("인식을 취소했습니다.")).toHaveLength(2);
   expect(screen.getByRole("button", {name: "검토한 0개 장비 적용"})).toBeDisabled();
   expect(recognize).toHaveBeenCalledTimes(2);
 });

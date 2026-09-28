@@ -47,5 +47,5 @@ it("leaves an unread numeric value empty instead of prefilling an alphabetic tok
   render(<OcrReviewIssues review={review} job="corsair" image={new File(["image"], "item.png", { type: "image/png" })} onChange={vi.fn()} />);
   expect(screen.getByLabelText("원본에 보이는 옵션")).toHaveValue("REQ STR : ");
   expect(screen.getByRole("button", { name: "이 옵션 확인" })).toBeDisabled();
-  expect(screen.getByText("OCR 원문")).toBeInTheDocument();
+  expect(screen.getByText("인식 원문")).toBeInTheDocument();
 });

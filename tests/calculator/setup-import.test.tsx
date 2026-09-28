@@ -138,7 +138,7 @@ it("requires a destination when OCR cannot read the equipment category", async (
   expect(screen.getByText("부위 확인 필요")).toBeVisible();
   await user.selectOptions(screen.getByLabelText("1번 적용 위치"), "preset:boss");
   await user.click(screen.getByText("1번 이미지·인식값 확인 및 수정"));
-  await user.type(screen.getByLabelText("1번 OCR 공격력", { exact: true }), "100");
+  await user.type(screen.getByLabelText("1번 인식 공격력", { exact: true }), "100");
   await user.click(saveButton());
   expect(deserializeSetup(localStorage.getItem(STORAGE_KEY)!)).toMatchObject({ ok: true, value: { input: { equipment: { weapon: { mainFlat: "18", attackFlat: "100" } } } } });
 });

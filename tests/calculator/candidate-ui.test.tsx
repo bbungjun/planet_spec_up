@@ -9,6 +9,23 @@ const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
 function seed(){const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
 const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
+it("keeps candidate review numeric and requires confirmation again after a manual edit",async()=>{
+ seed();const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
+ const {user,area}=await importPhoto("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");
+ const dialog=screen.getByRole("dialog",{name:"비교할 장비 추가"});
+ expect(dialog.textContent).not.toMatch(/OCR|인식한 전체 옵션|인식 텍스트 확인/);
+ expect(dialog.querySelector("textarea")).toBeNull();
+ expect([...dialog.querySelectorAll("[aria-label]")].some(element=>element.getAttribute("aria-label")?.includes("OCR"))).toBe(false);
+ const apply=area.getByRole("button",{name:"후보로 비교"});expect(apply).toBeEnabled();
+ fireEvent.change(area.getByLabelText("인식 총데미지%"),{target:{value:"21"}});
+ expect(apply).toBeDisabled();
+ expect(area.getByLabelText("원본의 모든 옵션을 확인했습니다")).not.toBeChecked();
+ await user.click(area.getByLabelText("원본의 모든 옵션을 확인했습니다"));await user.click(apply);
+ expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
+ const card=screen.getByRole("article",{name:"후보 1 비교 결과"});
+ await user.click(within(card).getByRole("button",{name:"후보 1 상세 보기"}));
+ expect(screen.getByLabelText("후보 1 총데미지%")).toHaveValue(21);
+});
 it("shows hunting skill changes, sources and blocked placeholders while preserving candidate and saved gear",async()=>{
  const input=seed();input.equipment.weapon!.totalDamagePercent="21";
  input.weaponPresets={active:"hunting",entries:{boss:{weapon:{...input.equipment.weapon!},monsterDefense:"0"}}};
@@ -41,7 +58,7 @@ async function add(name="후보 A"){
  const implementation=recognize.getMockImplementation()!;
  recognize.mockImplementationOnce(async(...args)=>`${name}\n(에픽 아이템)\n${await implementation(...args)}`);
  await user.upload(area.getByLabelText("비교 후보 스크린샷"),image());
- await waitFor(()=>expect(area.getByLabelText("OCR 공격력")).toHaveValue(110));expect(area.getByRole("button",{name:"후보로 비교"})).toBeDisabled();
+ await waitFor(()=>expect(area.getByLabelText("인식 공격력")).toHaveValue(110));expect(area.getByRole("button",{name:"후보로 비교"})).toBeDisabled();
  await user.click(area.getByLabelText("원본의 모든 옵션을 확인했습니다"));await user.click(area.getByRole("button",{name:"후보로 비교"}));return user;
 }
 it("OCR review creates temporary before/after comparisons and preserves original gear and saves",async()=>{
@@ -199,7 +216,7 @@ async function importPhoto(text:string,price="0.3") {
   expect(area.queryByRole("textbox")).not.toBeInTheDocument();
   await user.type(area.getByLabelText("새 후보 구매 가격"),price);
   await user.upload(area.getByLabelText("비교 후보 스크린샷"),image());
-  await waitFor(()=>expect(area.getByLabelText("OCR 공격력")).toHaveValue(110));
+  await waitFor(()=>expect(area.getByLabelText("인식 공격력")).toHaveValue(110));
   await user.click(area.getByLabelText("원본의 모든 옵션을 확인했습니다"));
   return {user,area};
 }
@@ -250,7 +267,7 @@ it("clears a manual ring choice when another photo replaces the draft, while kee
   seed();render(<CalculatorApp/>);const {user,area}=await importPhoto(`장비분류: 반지\n${options}`);
   await user.selectOptions(area.getByLabelText("교체할 장비 부위"),"ring_4");
   await user.upload(area.getByLabelText("비교 후보 스크린샷"),image());
-  await waitFor(()=>expect(area.getByLabelText("OCR 공격력")).toHaveValue(110));
+  await waitFor(()=>expect(area.getByLabelText("인식 공격력")).toHaveValue(110));
   expect(area.getByLabelText("교체할 장비 부위")).toHaveValue("");expect(area.getByLabelText("새 후보 구매 가격")).toHaveValue(.3);
   expect(area.getByLabelText("원본의 모든 옵션을 확인했습니다")).not.toBeChecked();expect(area.getByRole("button",{name:"후보로 비교"})).toBeDisabled();
 });

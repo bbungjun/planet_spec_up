@@ -25,7 +25,7 @@ import { parseMapleTooltip } from "../ocr/parseMapleTooltip";
 import type { OcrBounds, OcrReview, OcrTarget, OcrSource, StatReplacement } from "../ocr/types";
 import { isPendantCategory, pendantFromName, PENDANT_SLOTS } from "../domain/pendants";
 import { PendantSelect } from "./PendantSelect";
-import { editedTextReview, mapReviewedStats, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
+import { mapReviewedStats, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
@@ -75,7 +75,7 @@ const progressMessage = (
 ): string => {
   const percent = Math.round(progress * 100);
   return status === "loading"
-    ? `OCR 언어 데이터를 준비하는 중입니다 (${percent}%).`
+    ? `인식 기능을 준비하는 중입니다 (${percent}%).`
     : `장비 옵션을 인식하는 중입니다 (${percent}%).`;
 };
 
@@ -343,17 +343,17 @@ export function EquipmentOcrPanel({
     max: number;
     step: number | "any";
   }> = [
-    { field: "mainFlat", label: `OCR ${rule.mainStat}`, max: 9999, step: 1 },
-    { field: "subFlat", label: `OCR ${rule.subStat}`, max: 9999, step: 1 },
-    { field: "mainPercent", label: `OCR ${rule.mainStat}%`, max: 999, step: "any" },
-    { field: "subPercent", label: `OCR ${rule.subStat}%`, max: 999, step: "any" },
-    { field: "attackFlat", label: "OCR 공격력", max: 9999, step: 1 },
-    { field: "attackPercent", label: "OCR 공격력%", max: 999, step: "any" },
-    { field: "requiredLevel", label: "OCR 요구 레벨", max: 9999, step: 1 },
-    { field: "requiredSub", label: `OCR 요구 ${rule.subStat}`, max: 9999, step: 1 },
-    { field: "totalDamagePercent", label: "OCR 총데미지%", max: 999, step: "any" },
-    { field: "bossDamagePercent", label: "OCR 보스공격력%", max: 999, step: "any" },
-    { field: "ignoreDefensePercent", label: "OCR 방어율 무시%", max: 100, step: "any" },
+    { field: "mainFlat", label: `인식 ${rule.mainStat}`, max: 9999, step: 1 },
+    { field: "subFlat", label: `인식 ${rule.subStat}`, max: 9999, step: 1 },
+    { field: "mainPercent", label: `인식 ${rule.mainStat}%`, max: 999, step: "any" },
+    { field: "subPercent", label: `인식 ${rule.subStat}%`, max: 999, step: "any" },
+    { field: "attackFlat", label: "인식 공격력", max: 9999, step: 1 },
+    { field: "attackPercent", label: "인식 공격력%", max: 999, step: "any" },
+    { field: "requiredLevel", label: "인식 요구 레벨", max: 9999, step: 1 },
+    { field: "requiredSub", label: `인식 요구 ${rule.subStat}`, max: 9999, step: 1 },
+    { field: "totalDamagePercent", label: "인식 총데미지%", max: 999, step: "any" },
+    { field: "bossDamagePercent", label: "인식 보스공격력%", max: 999, step: "any" },
+    { field: "ignoreDefensePercent", label: "인식 방어율 무시%", max: 100, step: "any" },
   ];
   const parsed = { ...parseMapleTooltip(recognizedText), ...(review ? { category: review.category } : {}) };
   const candidateMatches = matchingSlots(parsed.category, candidateSlots ?? []);
@@ -367,10 +367,7 @@ export function EquipmentOcrPanel({
   const duplicate = existingDuplicate(parsed, target.job, slotChoices);
   const duplicateBlocked = duplicate !== null && !allowDuplicate;
   const needsReview = review ? reviewBlocked(review, target.job) : false;
-  const hasApplicableOptions = review ? Object.values(proposal ?? {}).some(value => value !== undefined && value !== "") : parsed.options.some(option => {
-    const mapped = mapRecognizedStats(parseMapleTooltip(option.raw), target.job);
-    return Object.values(mapped).some(value => value !== "");
-  });
+  const hasApplicableOptions = Object.values(proposal ?? {}).some(value => value !== undefined && value !== "");
   const proposalValid = fieldDefinitions.every(({field, max, step}) => {
     const raw = proposal?.[field];
     if (raw === undefined || raw === "") return true;
@@ -380,14 +377,14 @@ export function EquipmentOcrPanel({
 
   return (
     <section
-      className="equipment-ocr-panel"
+      className={`equipment-ocr-panel${purpose === "candidate" ? " candidate-import-panel" : ""}`}
       aria-labelledby={`${panelId}-heading`}
       tabIndex={purpose === "candidate" ? 0 : undefined}
       onPaste={event => { if(purpose!=="candidate")return; const files=clipboardImages(event.clipboardData);if(files.length){event.preventDefault();event.stopPropagation();processFiles(files);} }}
       onDragOver={event=>{if(purpose==="candidate")event.preventDefault();}}
       onDrop={event=>{if(purpose==="candidate"){event.preventDefault();event.stopPropagation();processFiles(Array.from(event.dataTransfer.files));}}}
     >
-      <div className="equipment-ocr-heading">
+      <div className={purpose === "candidate" ? "candidate-sr-only" : "equipment-ocr-heading"}>
         <div>
 
           <h3 id={`${panelId}-heading`}>{batch && batch.job === target.job ? "여러 장비" : slotLabel} 스크린샷 인식</h3>
@@ -401,7 +398,7 @@ export function EquipmentOcrPanel({
           className="equipment-ocr-select-button"
           onClick={() => fileInputRef.current?.click()}
         >
-          스크린샷 선택
+          {purpose === "candidate" ? lastFile ? "사진 변경" : "장비 사진 선택" : "스크린샷 선택"}
         </button>
         <input
           ref={fileInputRef}
@@ -427,8 +424,10 @@ export function EquipmentOcrPanel({
         files={batch.files} job={batch.job} choices={slotChoices} onApply={onApplyBatch}
         createRecognizer={createRecognizer} onClose={() => setBatch(null)} />}
 
+      <div className={purpose === "candidate" && proposal !== null ? "candidate-review-layout" : "equipment-recognition-content"}>
       {previewUrl === null ? null : (
         <figure className="equipment-ocr-preview">
+          {purpose === "candidate" && <figcaption>장비 사진</figcaption>}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={previewUrl} alt="선택한 장비 스크린샷 미리보기" />
         </figure>
@@ -447,7 +446,7 @@ export function EquipmentOcrPanel({
           className="equipment-ocr-cancel"
           onClick={() => cancelCurrent()}
         >
-          OCR 취소
+          인식 취소
         </button>
       ) : null}
 
@@ -490,7 +489,7 @@ export function EquipmentOcrPanel({
             </select></label>}
           </div>}
           <p>{purpose === "candidate" ? "미입력 옵션은 0으로 비교합니다. 요구 레벨·스탯은 확인해주세요." : "미인식 값은 유지됩니다. 삭제하려면 0을 입력하세요."}</p>
-          {reviewingPendant && <PendantSelect label="OCR 펜던트 종류" value={pendantId} onChange={value => { setPendantChoice(value); setCandidateConfirmed(false); }} />}
+          {reviewingPendant && <PendantSelect label="인식 펜던트 종류" value={pendantId} onChange={value => { setPendantChoice(value); setCandidateConfirmed(false); }} />}
           {needsPendantTarget && <p role="alert">펜던트 1·2 카드를 선택한 뒤 사진을 넣어주세요.</p>}
           {review && reviewImage && <OcrReviewIssues review={review} job={target.job} image={reviewImage} onChange={updateReview} />}
           {duplicate && <div className="ocr-duplicate-message" role="alert">
@@ -500,49 +499,22 @@ export function EquipmentOcrPanel({
           <div className="equipment-ocr-proposal-grid">
             {fieldDefinitions.map(({ field, label, max, step }) => (
               <div className="field" key={field}>
-                <label htmlFor={`${panelId}-${field}`}>{label}</label>
+                <label htmlFor={`${panelId}-${field}`}>{purpose === "candidate" ? label.replace(/^인식 /, "") : label}</label>
                 <input
                   id={`${panelId}-${field}`}
+                  aria-label={label}
                   type="number"
                   min={0}
                   max={max}
                   step={step}
                   value={proposal[field] ?? ""}
-                  placeholder={review && proposal[field] === undefined ? "미인식 · 기존 값 유지" : undefined}
+                  placeholder={review && proposal[field] === undefined ? purpose === "candidate" ? "미인식 · 직접 입력" : "미인식 · 기존 값 유지" : undefined}
                   onChange={(event) => updateProposal(field, event.currentTarget.value)}
                 />
               </div>
             ))}
           </div>
-          <details className="equipment-ocr-details" open>
-            <summary>인식한 전체 옵션 ({parsed.options.length})</summary>
-            <ul>
-              {parsed.options.map((option, index) => {
-                const supported = Object.values(mapRecognizedStats(parseMapleTooltip(option.raw), target.job)).some(value => value !== "");
-                return <li key={index}>{option.requirement ? "요구 " : ""}{option.label}: {option.value}{option.percent ? "%" : ""} — {supported ? "계산 반영" : "참고용 · 현재 계산식 미반영"}</li>;
-              })}
-            </ul>
-          </details>
-          <details className="equipment-ocr-details">
-            <summary>인식 텍스트 확인·수정 / 옵션 추가</summary>
-            <p>누락된 옵션은 한 줄씩 추가할 수 있습니다. 예: 공격력 +106, 총데미지 +9%, REQ STR: 120</p>
-            <label htmlFor={`${panelId}-text`}>인식 텍스트</label>
-            <textarea id={`${panelId}-text`} rows={10} value={recognizedText} onChange={event => {
-              setCandidateConfirmed(false);
-              setCandidateSlot("");
-              setPendantChoice(null);
-              const text = event.currentTarget.value;
-              setRecognizedText(text);
-              if (review) {
-                const edited = editedTextReview(text);
-                setReview(edited);
-                setOverrides({});
-                setProposal(mapReviewedStats(edited, target.job));
-              } else setProposal(mapRecognizedStats(parseMapleTooltip(text), target.job));
-            }} />
-
-          </details>
-          {!hasApplicableOptions && <p role="alert">계산에 적용할 옵션을 찾지 못했습니다. 인식 텍스트를 확인하거나 다른 캡처를 넣어주세요.</p>}
+          {!hasApplicableOptions && <p role="alert">계산에 적용할 옵션을 찾지 못했습니다. 위 항목에 직접 입력하거나 다른 사진을 넣어주세요.</p>}
           {!proposalValid && <p role="alert">검토값의 범위를 확인하세요. 스탯·공격력은 0~9999, 비율은 0~999입니다.</p>}
           {purpose === "candidate" && <label className="check-field"><input type="checkbox" checked={candidateConfirmed} onChange={event=>setCandidateConfirmed(event.target.checked)} />원본의 모든 옵션을 확인했습니다</label>}
           <div className="equipment-ocr-actions">
@@ -582,6 +554,7 @@ export function EquipmentOcrPanel({
           </div>
         </div>
       )}
+      </div>
     </section>
   );
 }

@@ -207,7 +207,7 @@ it("cancels pending OCR when switching weapon presets and ignores its late resul
     expect(signal?.aborted).toBe(true);
     finish("공격력 +200\n보스공격력 +60%");
     await Promise.resolve();
-    expect(screen.queryByLabelText("OCR 공격력")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("인식 공격력")).not.toBeInTheDocument();
     expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(null);
   } finally { spy.mockRestore(); }
 });

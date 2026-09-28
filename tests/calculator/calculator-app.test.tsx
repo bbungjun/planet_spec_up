@@ -203,7 +203,7 @@ describe("calculator app", () => {
       screen.getByLabelText("장비 스크린샷 파일"),
       new File(["screenshot"], "overall.png", { type: "image/png" }),
     );
-    await screen.findByLabelText("OCR DEX");
+    await screen.findByLabelText("인식 DEX");
 
     expect(screen.getByLabelText("한벌옷 DEX")).toHaveValue(99);
     expect(screen.getByLabelText("한벌옷 STR")).toHaveValue(null);

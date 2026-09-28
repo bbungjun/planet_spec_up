@@ -44,7 +44,7 @@ function Issue({ line, image, onResolve }: { line: OcrReviewLine; image: File; o
       <input id={id} value={draft} onChange={event => setDraft(event.currentTarget.value)} placeholder="예: DEX +6%" />
     </div>
 
-    <details><summary>OCR 원문</summary><ul>{[...new Set(line.readings.map(reading => reading.text.trim()))].map((text, index) => <li key={index}>{text}</li>)}</ul></details>
+    <details><summary>인식 원문</summary><ul>{[...new Set(line.readings.map(reading => reading.text.trim()))].map((text, index) => <li key={index}>{text}</li>)}</ul></details>
     <div className="equipment-ocr-actions">
       <button type="button" className="equipment-ocr-apply" disabled={!canConfirmReviewText(draft)} onClick={() => onResolve(draft)}>이 옵션 확인</button>
       <button type="button" className="secondary-button" onClick={() => onResolve(null)}>이 줄 제외</button>
