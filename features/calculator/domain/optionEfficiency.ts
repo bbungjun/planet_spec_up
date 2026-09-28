@@ -29,7 +29,7 @@ export function calculateOptionEfficiency(input: CalculatorInput): OptionEfficie
 }
 
 /** Shared by the saved setup and temporary manual simulations. */
-export function calculateSnapshotEfficiency(snapshot: CalculationSnapshot, estimated: boolean, respectCriticalLimit = false): OptionEfficiency {
+export function calculateSnapshotEfficiency(snapshot: CalculationSnapshot, estimated: boolean): OptionEfficiency {
   const current = calculateFromSnapshot(snapshot);
   const unavailableReason = current.issues.some(issue => issue.severity === "error")
     ? "입력값을 확인하면 옵션 효율을 계산합니다."
@@ -43,7 +43,7 @@ export function calculateSnapshotEfficiency(snapshot: CalculationSnapshot, estim
   if (unavailableReason) return { estimated, unavailableReason, rows: [] };
 
   const gains = OPTION_FIELDS.map(option => {
-    if (respectCriticalLimit && option === "criticalRate" && (current.windowStats?.criticalRate ?? 0) + 1 > 100)
+    if (option === "criticalRate" && (current.windowStats?.criticalRate ?? 0) + 1 > 100)
       return { option, convertedAttackGain: 0, unavailableReason: "전체 크리확률 100% 초과" };
     const next = calculateFromSnapshot({ ...snapshot, [option]: (snapshot[option] ?? 0) + 1 });
     return { option, convertedAttackGain: next.convertedAttack - current.convertedAttack };

@@ -4,6 +4,7 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import RootLayout from "@/app/layout";
 import { PRODUCT_METADATA } from "@/features/site/metadata";
 import Page from "@/app/page";
+import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import type { EquipmentOcrPanelProps } from "@/features/calculator/components/EquipmentOcrPanel";
 import userEvent from "@testing-library/user-event";
 import {
@@ -285,9 +286,9 @@ describe("calculator app", () => {
 
   it("publishes the Korean product metadata and document language", () => {
     expect(PRODUCT_METADATA).toMatchObject({
-      title: "플래닛 데미지 계산기",
+      title: "플래닛 캡틴 장비 계산기 | 베타",
       description:
-        "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.",
+        "캡틴 전용 베타. 장비 스크린샷으로 세팅을 등록하고 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다.",
     });
 
     const layout = RootLayout({ children: <main>계산기</main> });
@@ -406,19 +407,19 @@ describe("calculator app", () => {
     expect(convertedAttack).toHaveTextContent(/^0$/);
   });
 
-  it("offers only the three MVP jobs", () => {
+  it("offers only Captain on the public beta page", () => {
     render(<Page />);
 
     const job = screen.getByLabelText("직업");
-    expect(within(job).getAllByRole("option")).toHaveLength(3);
-    expect(job).toHaveTextContent("신궁");
+    expect(within(job).getAllByRole("option")).toHaveLength(1);
     expect(job).toHaveTextContent("캡틴");
-    expect(job).toHaveTextContent("나이트로드");
+    expect(job).toBeDisabled();
+    expect(screen.getByText("캡틴 전용 베타")).toBeInTheDocument();
   });
 
   it("exposes every character setting and keeps level editable from 1 to 220", async () => {
     const user = userEvent.setup();
-    render(<Page />);
+    render(<CalculatorApp />);
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     const level = screen.getByLabelText("레벨");
@@ -494,7 +495,7 @@ describe("calculator app", () => {
   it("asks before changing jobs when equipment contains a value", async () => {
     const user = userEvent.setup();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<Page />);
+    render(<CalculatorApp />);
 
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");

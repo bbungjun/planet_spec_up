@@ -4,13 +4,13 @@ import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMetadata } from "@/features/site/metadata";
 
-const title = "플래닛 데미지 계산기";
+const title = "플래닛 캡틴 장비 계산기 | 베타";
 const description =
-  "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.";
+  "캡틴 전용 베타. 장비 스크린샷으로 세팅을 등록하고 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다.";
 const canonicalOrigin =
   "https://planet.example.com/";
 const canonicalImage =
-  "https://planet.example.com/og.png";
+  "https://planet.example.com/og-captain.png";
 
 beforeEach(() => { vi.stubEnv("SITE_URL", canonicalOrigin); vi.stubEnv("VERCEL_ENV", "production"); });
 afterEach(() => vi.unstubAllEnvs());
@@ -64,8 +64,8 @@ describe("social metadata", () => {
         url: canonicalOrigin,
         images: [{
           url: canonicalImage,
-          width: 1536,
-          height: 1024,
+          width: 1200,
+          height: 630,
           alt: title,
         }],
       },
@@ -96,11 +96,11 @@ describe("social metadata", () => {
   });
 
   it.each([
-    ["localhost", "http://localhost/", "http://localhost/og.png"],
-    ["localhost:443", "http://localhost:443/", "http://localhost:443/og.png"],
-    ["localhost:65535", "http://localhost:65535/", "http://localhost:65535/og.png"],
-    ["127.0.0.1:3000", "http://127.0.0.1:3000/", "http://127.0.0.1:3000/og.png"],
-    ["[::1]:3100", "http://[::1]:3100/", "http://[::1]:3100/og.png"],
+    ["localhost", "http://localhost/", "http://localhost/og-captain.png"],
+    ["localhost:443", "http://localhost:443/", "http://localhost:443/og-captain.png"],
+    ["localhost:65535", "http://localhost:65535/", "http://localhost:65535/og-captain.png"],
+    ["127.0.0.1:3000", "http://127.0.0.1:3000/", "http://127.0.0.1:3000/og-captain.png"],
+    ["[::1]:3100", "http://[::1]:3100/", "http://[::1]:3100/og-captain.png"],
   ])("uses HTTP only for the explicit local Host %s", (host, origin, imageUrl) => {
     const metadata = createMetadata(new Headers({
       "host": host,
@@ -201,5 +201,12 @@ describe("social metadata", () => {
     expect(createHash("sha256").update(bytes).digest("hex")).toBe(
       "fde8386fe889c7670219911d39f72c226c81b19404a22976366a4c6bec9c11f2",
     );
+  });
+
+  it("ships the captain beta share image at the metadata dimensions", () => {
+    const bytes = readFileSync(resolve(process.cwd(), "public", "og-captain.png"));
+    expect(bytes.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    expect(bytes.readUInt32BE(16)).toBe(1200);
+    expect(bytes.readUInt32BE(20)).toBe(630);
   });
 });

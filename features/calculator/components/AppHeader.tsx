@@ -4,6 +4,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { GameIcon } from "./GameVisuals";
 
 type AppHeaderProps = {
+  captainBeta?: boolean;
   inputMode: InputMode;
   savedAt: string | null;
   storageError: string | null;
@@ -14,6 +15,7 @@ type AppHeaderProps = {
 };
 
 export function AppHeader({
+  captainBeta = false,
   inputMode,
   savedAt,
   storageError,
@@ -54,7 +56,7 @@ export function AppHeader({
         <div className="app-topbar">
           <a className="app-brand" href="#page-top" aria-label="플래닛 계산기 처음으로">
             <span className="brand-symbol"><GameIcon name="leaf" /></span>
-            <span>플래닛<span className="brand-secondary">EQUIPMENT LAB</span></span>
+            <span>플래닛<span className={`brand-secondary${captainBeta ? " beta-release-label" : ""}`}>{captainBeta ? "캡틴 전용 베타" : "EQUIPMENT LAB"}</span></span>
             <span className="beta-badge">BETA</span>
           </a>
           <ThemeToggle />

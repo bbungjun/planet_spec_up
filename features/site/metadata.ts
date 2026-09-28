@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const PRODUCT_METADATA = {
-  title: "플래닛 데미지 계산기",
+  title: "플래닛 캡틴 장비 계산기 | 베타",
   description:
-    "신궁, 캡틴, 나이트로드의 장비 스탯과 환산 공격력을 빠르게 계산합니다.",
+    "캡틴 전용 베타. 장비 스크린샷으로 세팅을 등록하고 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -157,7 +157,7 @@ function requestOrigin(requestHeaders: HeaderReader): URL | null {
 
 export function createMetadata(requestHeaders: HeaderReader): Metadata {
   const origin = requestOrigin(requestHeaders);
-  const imageUrl = origin ? new URL("/og.png", origin).toString() : undefined;
+  const imageUrl = origin ? new URL("/og-captain.png", origin).toString() : undefined;
   const published = process.env.VERCEL_ENV === "production" && productionOrigin() !== null;
 
   return {
@@ -174,8 +174,8 @@ export function createMetadata(requestHeaders: HeaderReader): Metadata {
       images: imageUrl ? [
         {
           url: imageUrl,
-          width: 1536,
-          height: 1024,
+          width: 1200,
+          height: 630,
           alt: PRODUCT_METADATA.title,
         },
       ] : [],

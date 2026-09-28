@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#8bc9e4"/><stop offset="1" stop-color="#d8ece5"/></linearGradient>
+    <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#ffdf8c"/><stop offset="1" stop-color="#ffc763"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#sky)"/>
+  <g fill="#fff" opacity=".3"><ellipse cx="1150" cy="140" rx="160" ry="50"/><circle cx="1100" cy="105" r="65"/><circle cx="1170" cy="85" r="75"/><ellipse cx="15" cy="530" rx="150" ry="50"/></g>
+  <rect x="36" y="34" width="1128" height="562" rx="18" fill="#f6fafc" stroke="#82a5b8" stroke-width="2"/>
+  <rect x="42" y="40" width="1116" height="550" rx="14" fill="none" stroke="#dbe8ef" stroke-width="3"/>
+  <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" fill="#34566c">
+    <text x="86" y="102" font-size="24" font-weight="700" letter-spacing="3">PLANET EQUIPMENT LAB</text>
+    <rect x="909" y="67" width="205" height="46" rx="9" fill="url(#gold)" stroke="#c39749"/>
+    <text x="1011" y="97" font-size="20" font-weight="700" text-anchor="middle" fill="#73501c">캡틴 전용 베타</text>
+    <text x="82" y="217" font-size="66" font-weight="800" letter-spacing="-3">캡틴 장비 계산기</text>
+    <text x="86" y="271" font-size="27" fill="#587789">스크린샷으로 등록하고, 구매 전에 비교하세요.</text>
+    <g fill="#eef5f8" stroke="#acc2cf"><rect x="86" y="324" width="320" height="153" rx="10"/><rect x="440" y="324" width="320" height="153" rx="10"/><rect x="794" y="324" width="320" height="153" rx="10"/></g>
+    <g font-size="15" font-weight="700" fill="#628ba2" letter-spacing="2"><text x="110" y="362">01 / REGISTER</text><text x="464" y="362">02 / REVIEW</text><text x="818" y="362">03 / COMPARE</text></g>
+    <g font-size="29" font-weight="700"><text x="110" y="409">장비 사진 등록</text><text x="464" y="409">옵션 확인·저장</text><text x="818" y="409">구매 후보 비교</text></g>
+    <g font-size="18" fill="#587789"><text x="110" y="448">여러 장을 한 번에</text><text x="464" y="448">순수 스탯·무기 프리셋</text><text x="818" y="448">교체 전후·가격 대비 효율</text></g>
+    <text x="86" y="544" font-size="22" font-weight="700">최대 스탯공 · 환산공</text>
+    <text x="1114" y="544" font-size="18" text-anchor="end" fill="#587789">브라우저 내 OCR · 로그인 없이 이용</text>
+  </g>
+</svg>

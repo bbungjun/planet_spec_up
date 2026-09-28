@@ -59,8 +59,12 @@ function firstSlot(job: JobId): EquipmentSlot {
   return JOB_RULES[job].visibleSlots[0];
 }
 
-export function CalculatorApp() {
-  const { load, save, clear } = useSavedSetup();
+const loadErrorMessage = (message: string) => message === "unsupported-job"
+  ? "이번 베타는 캡틴만 지원합니다. 기존 다른 직업의 저장값은 보존되며 캡틴 세팅은 별도로 저장합니다."
+  : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
+
+export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }) {
+  const { load, save, clear } = useSavedSetup(captainBeta);
   const [input, setInput] = useState<CalculatorInput>(
     () => createDefaultInput("corsair"),
   );
@@ -89,7 +93,7 @@ export function CalculatorApp() {
         const saved = load();
         if (!saved.ok) {
           if (saved.message !== "empty") {
-            setStorageError("저장 데이터를 불러올 수 없습니다.");
+            setStorageError(loadErrorMessage(saved.message));
           }
           return;
         }
@@ -246,6 +250,7 @@ export function CalculatorApp() {
   };
 
   const handleJobChange = (job: JobId) => {
+    if (captainBeta && job !== "corsair") return;
     if (job === input.character.job) return;
     if (
       hasEquipmentValues(input)
@@ -276,6 +281,12 @@ export function CalculatorApp() {
   };
 
   const handleSave = () => {
+    const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED");
+    if (criticalError) {
+      setStorageError("전체 크리확률이 100%를 넘습니다. 입력값을 확인한 뒤 다시 저장해주세요.");
+      handleNavigate(criticalError.path);
+      return;
+    }
     const cashError = result.issues.find(issue => issue.severity === "error" && issue.path.startsWith("cashEquipment."));
     if (cashError) {
       setStorageError("캐시 장비 입력값을 확인한 뒤 다시 저장해주세요.");
@@ -307,11 +318,7 @@ export function CalculatorApp() {
     try {
       const saved = load();
       if (!saved.ok) {
-        setStorageError(
-          saved.message === "empty"
-            ? "저장된 세팅이 없습니다."
-            : "저장 데이터를 불러올 수 없습니다.",
-        );
+        setStorageError(loadErrorMessage(saved.message));
         return;
       }
 
@@ -347,6 +354,7 @@ export function CalculatorApp() {
       <MapleBackdrop />
       <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
+        captainBeta={captainBeta}
         inputMode={inputMode}
         savedAt={savedAt}
         storageError={storageError}
@@ -360,7 +368,7 @@ export function CalculatorApp() {
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}>
         <div className="setup-import-identity">
-          <CharacterIdentityFields character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
+          <CharacterIdentityFields captainBeta={captainBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
       <div className="character-settings-content" id="character-settings">

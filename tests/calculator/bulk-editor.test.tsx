@@ -12,8 +12,9 @@ import {
   vi,
 } from "vitest";
 import Page from "@/app/page";
+import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
-import { deserializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
+import { CAPTAIN_BETA_STORAGE_KEY, deserializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -48,7 +49,7 @@ it("shares raw string values between card and bulk modes in both directions", as
 
 it("renders only the current job slots and stat columns", async () => {
   const user = userEvent.setup();
-  render(<Page />);
+  render(<CalculatorApp />);
 
   await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
   expect(screen.getByLabelText("일괄 입력 한벌옷 DEX")).toBeInTheDocument();
@@ -81,7 +82,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
   await user.click(screen.getByRole("button", { name: "저장" }));
 
   expect(window.localStorage).toHaveLength(1);
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = window.localStorage.getItem(CAPTAIN_BETA_STORAGE_KEY);
   expect(raw).not.toBeNull();
   expect(deserializeSetup(raw!)).toMatchObject({
     ok: true,
@@ -151,10 +152,10 @@ it("requires confirmation before reset and clears the persisted slot only when c
   await user.click(screen.getByRole("button", { name: "초기화" }));
   expect(confirm).toHaveBeenCalledTimes(1);
   expect(necklace).toHaveValue(22);
-  expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  expect(JSON.parse(window.localStorage.getItem(CAPTAIN_BETA_STORAGE_KEY)!)).not.toBeNull();
 
   confirm.mockReturnValue(true);
   await user.click(screen.getByRole("button", { name: "초기화" }));
   expect(necklace).toHaveValue(null);
-  expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+  expect(JSON.parse(window.localStorage.getItem(CAPTAIN_BETA_STORAGE_KEY)!)).toBeNull();
 });

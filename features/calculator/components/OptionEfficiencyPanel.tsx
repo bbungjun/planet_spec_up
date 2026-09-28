@@ -9,7 +9,7 @@ const gain = (value: number) => value === 0 ? "0%" : value < 0.001 ? "+0.001% ып
 
 export function OptionEfficiencyPanel({ input, snapshot }: { input: CalculatorInput; snapshot?: CalculationSnapshot }) {
   const efficiency = useMemo(() => snapshot
-    ? calculateSnapshotEfficiency(snapshot, !input.character.pureMain?.trim() || !input.character.pureSub?.trim(), true)
+    ? calculateSnapshotEfficiency(snapshot, !input.character.pureMain?.trim() || !input.character.pureSub?.trim())
     : calculateOptionEfficiency(input), [input, snapshot]);
   const mainStat = JOB_RULES[input.character.job].mainStat;
   const labels: Record<EfficiencyOption, string> = {

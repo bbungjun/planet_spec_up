@@ -47,6 +47,7 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .brand-symbol{background:none;width:43px;height:43px;border-radius:0;filter:drop-shadow(0 2px #ffffff75)}
 .brand-symbol .game-icon{width:43px;height:43px}.brand-secondary{display:block;font:700 8px/2.3 Arial,sans-serif;letter-spacing:2.2px;margin:0;color:var(--muted)}
 .beta-badge{font-size:8px;background:color-mix(in srgb,var(--surface) 55%,transparent);align-self:flex-start;margin-top:7px}
+.app-brand .beta-release-label{font-size:10px;letter-spacing:.5px;white-space:nowrap}
 .app-toolbar{position:sticky;top:0;z-index:20;min-height:60px;padding:6px 0;border-bottom:1px solid var(--line);gap:8px 16px;background:var(--bg);box-shadow:0 3px 8px #2a4c6014}
 .app-nav{gap:20px}.app-nav a{font-size:12px;min-height:44px}.app-header-actions{gap:6px}.app-header-actions p{font-size:10px}
 .app-header-actions .secondary-button{font-size:11px;padding:7px 10px;background:linear-gradient(var(--chrome-top),var(--chrome-bottom));color:#263e4d}

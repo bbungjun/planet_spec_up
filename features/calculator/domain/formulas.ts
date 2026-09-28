@@ -21,11 +21,13 @@ export const calculateTotalAttack = (
 export const calculateDefenseMultiplier = (monster: number, ignore: number) =>
   Math.max(0, 1 - Math.max(0, monster - ignore) / 100);
 
+export const effectiveCriticalRate = (rate: number) => Math.max(0, Math.min(100, rate));
+
 export const calculateCriticalMultiplier = (
   rate: number,
   damage: number,
   skillPercent: number,
-) => skillPercent > 0 ? 1 + (rate / 100) * (damage / skillPercent) : 1;
+) => skillPercent > 0 ? 1 + (effectiveCriticalRate(rate) / 100) * (damage / skillPercent) : 1;
 
 export const calculateStatAttack = (
   main: number,

@@ -28,7 +28,7 @@ export function PresetStatWindow({input,result,buffSummary,title,labelPrefix = "
       </dl>
       <div className="preset-stat-context"><span>{fixed?"순수 스탯 고정":"순수 스탯 추정"}</span><span aria-label={`${labelPrefix}현재 적용 버프`}>{buffSummary}</span></div>
       <dl className="preset-combat-stats">
-        <div><dt>크리확률</dt><dd><strong>{critical?`${number(critical.baseRate+critical.extraRate+critical.buffRate)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseRate)} + 추가 {number(critical.extraRate)} + 버프 {number(critical.buffRate)}</small>}</dd></div>
+        <div><dt>크리확률</dt><dd><strong>{result.windowStats?`${number(result.windowStats.criticalRate)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseRate)} + 추가 {number(critical.extraRate)} + 버프 {number(critical.buffRate)}{critical.baseRate+critical.extraRate+critical.buffRate>100?" · 100% 상한, 입력 확인 필요":""}</small>}</dd></div>
         <div><dt>크리데미지</dt><dd><strong>{critical?`${number(critical.baseDamage+critical.buffDamage)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseDamage)} + 버프 {number(critical.buffDamage)}</small>}</dd></div>
         <div><dt>크리 배율</dt><dd><strong>×{result.criticalMultiplier.toFixed(3)}</strong></dd></div>
         <div><dt>보공·총뎀 적용값</dt><dd><strong>{number(result.formulaInputs.bossAndTotalDamage)}%</strong></dd></div>

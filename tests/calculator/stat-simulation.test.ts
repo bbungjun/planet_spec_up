@@ -54,7 +54,7 @@ it("rejects invalid changes and negative pools without adjusting or saving the o
   input.character.sharpEyes = "sharp_30"; input.character.criticalRate = "80";
   expect(simulateStats(input, { ...emptySimulation(), criticalRate: "6" }).errors.criticalRate).toContain("100%");
   const capped = simulateStats(input, { ...emptySimulation(), criticalRate: "5" });
-  expect(calculateSnapshotEfficiency(capped.snapshot!, false, true).rows.find(row => row.option === "criticalRate")?.unavailableReason).toContain("100%");
+  expect(calculateSnapshotEfficiency(capped.snapshot!, false).rows.find(row => row.option === "criticalRate")?.unavailableReason).toContain("100%");
 });
 
 it("blocks bad baselines and does not turn zero damage into a fabricated percentage", () => {

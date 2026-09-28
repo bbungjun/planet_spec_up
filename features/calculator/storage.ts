@@ -7,6 +7,7 @@ import { emptyEquipment } from "./domain/defaults";
 import { isPendantCategory, isPendantId } from "./domain/pendants";
 
 export const STORAGE_KEY = "planet-lab:damage-setup:v1";
+export const CAPTAIN_BETA_STORAGE_KEY = "planet-lab:damage-setup:corsair-beta:v1";
 
 export type SavedSetupV1 = {
   schemaVersion: 1;
