@@ -70,6 +70,7 @@ export function AppHeader({
           <a href="#equipment-workspace">장비 계산</a>
           <a href="#stat-simulator">수동 비교</a>
           <a href="#candidate-comparison">후보 비교</a>
+          <a href="/feedback" target="_blank" rel="noopener noreferrer" aria-label="오류 제보 (새 탭)">오류 제보</a>
         </nav>
         <div className="app-header-actions">
           {storageError === null ? (
