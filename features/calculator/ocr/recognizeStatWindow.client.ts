@@ -2,6 +2,9 @@
 import { paddleReadings } from "./recognizePaddle.client";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES } from "./recognizeTooltip.client";
 import { parseStatWindow, reconcileStatReads, statRows, type StatRecognition } from "./parseStatWindow";
+import { sameStatNumberRow, statNumberMissing, statNumberRegions, statNumberRows } from "./statNumberRegions";
+import { prepareStatNumbers, STAT_NUMBER_VIEWS } from "./prepareStatNumbers.client";
+import type { OcrReading } from "./types";
 
 /** Separate white stat-panel path: tooltip masking would erase these glyphs. */
 export async function recognizeStatWindow(file: File, signal: AbortSignal, progress: (message: string)=>void): Promise<StatRecognition> {
@@ -35,7 +38,9 @@ export async function recognizeStatWindow(file: File, signal: AbortSignal, progr
       const top=Math.max(0,Math.min(...anchors.map(r=>r.bounds!.y))-.03);
       const right=Math.min(1,Math.max(...anchors.map(r=>r.bounds!.x+r.bounds!.width))+.12);
       const bottom=Math.min(1,Math.max(...anchors.map(r=>r.bounds!.y+r.bounds!.height))+.03);
-      const passes=[];
+      const passes: StatRecognition[] = [];
+      const passLines: string[][] = [];
+      const numberAnchors: OcrReading[][] = [];
       for(const scale of [2,3]) {
         active(); progress(`능력창 숫자를 대조하고 있습니다 (${passes.length+1}/2).`);
         const canvas=document.createElement("canvas"), w=(right-left)*bitmap.width,h=(bottom-top)*bitmap.height;
@@ -46,9 +51,31 @@ export async function recognizeStatWindow(file: File, signal: AbortSignal, progr
         const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/png"));
         if(!blob)throw new Error("이미지를 처리하지 못했습니다.");
         active();const [output]=await engine.predict(new File([blob],"stat-window.png",{type:"image/png"}));active();
-        passes.push(parseStatWindow(statRows(paddleReadings(output.items,canvas.width,canvas.height,passes.length))));
+        const positioned = paddleReadings(output.items,canvas.width,canvas.height,passes.length);
+        numberAnchors.push(positioned.map(reading => ({ ...reading, bounds: reading.bounds && {
+          x: left + reading.bounds.x * (right-left), y: top + reading.bounds.y * (bottom-top),
+          width: reading.bounds.width * (right-left), height: reading.bounds.height * (bottom-top),
+        } })));
+        const lines = statRows(positioned);
+        passLines.push(lines); passes.push(parseStatWindow(lines));
       }
-      return reconcileStatReads(passes[0],passes[1]);
+      const original = reconcileStatReads(passes[0],passes[1]);
+      const regionPasses = numberAnchors.map(pass => statNumberRegions(pass, bitmap.width / bitmap.height));
+      const regions = regionPasses[0].filter(region => regionPasses[1].some(other => sameStatNumberRow(region, other))
+        && passes.some(pass => statNumberMissing(region.label, pass.draft)));
+      if (!regions.length) return original;
+      try {
+        const focused: string[][] = [];
+        for (const view of STAT_NUMBER_VIEWS) {
+          active(); progress("미인식 숫자 영역을 좁혀 대조하고 있습니다.");
+          const prepared = await prepareStatNumbers(bitmap, regions, view); active();
+          if (!prepared) return original;
+          const [output] = await engine.predict(prepared.file); active();
+          focused.push(statNumberRows(paddleReadings(output.items,prepared.width,prepared.height,focused.length), prepared.regions));
+        }
+        // Retain the original evidence: focused reads cannot outvote numeric conflicts.
+        return reconcileStatReads(parseStatWindow([...passLines[0], ...focused[0]]), parseStatWindow([...passLines[1], ...focused[1]]));
+      } catch { active(); return original; }
     } finally { bitmap.close(); }
   } finally { signal.removeEventListener("abort",cancel);await dispose(); }
 }
