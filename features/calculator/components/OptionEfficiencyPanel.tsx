@@ -1,13 +1,16 @@
 import { useMemo } from "react";
-import { calculateOptionEfficiency, type EfficiencyOption } from "../domain/optionEfficiency";
+import { calculateOptionEfficiency, calculateSnapshotEfficiency, type EfficiencyOption } from "../domain/optionEfficiency";
+import type { CalculationSnapshot } from "../domain/calculate";
 import { JOB_RULES } from "../domain/job-rules";
 import type { CalculatorInput } from "../domain/types";
 
 const number = (value: number) => value.toLocaleString("ko-KR", { maximumFractionDigits: 3 });
 const gain = (value: number) => value === 0 ? "0%" : value < 0.001 ? "+0.001% 미만" : `+${number(value)}%`;
 
-export function OptionEfficiencyPanel({ input }: { input: CalculatorInput }) {
-  const efficiency = useMemo(() => calculateOptionEfficiency(input), [input]);
+export function OptionEfficiencyPanel({ input, snapshot }: { input: CalculatorInput; snapshot?: CalculationSnapshot }) {
+  const efficiency = useMemo(() => snapshot
+    ? calculateSnapshotEfficiency(snapshot, !input.character.pureMain?.trim() || !input.character.pureSub?.trim(), true)
+    : calculateOptionEfficiency(input), [input, snapshot]);
   const mainStat = JOB_RULES[input.character.job].mainStat;
   const labels: Record<EfficiencyOption, string> = {
     equipmentMain: `${mainStat}(장비) +1`,
@@ -21,17 +24,17 @@ export function OptionEfficiencyPanel({ input }: { input: CalculatorInput }) {
   };
   const noMainGain = efficiency.rows[0]?.equivalentMainStat === null;
 
-  return <section className="option-efficiency" aria-label="옵션 효율">
+  return <section className="option-efficiency" aria-label={snapshot ? "적용 후 옵션 효율" : "옵션 효율"}>
     <header className="option-efficiency-heading">
-      <h3>옵션 효율</h3><span>{mainStat} 환산{efficiency.estimated ? " · 추정" : ""}</span>
+      <h3>{snapshot ? "적용 후 옵션 효율" : "옵션 효율"}</h3><span>{mainStat} 환산{efficiency.estimated ? " · 추정" : ""}</span>
     </header>
     <div className="option-efficiency-sheet">
       {efficiency.unavailableReason ? <p className="option-efficiency-notice" role="status">{efficiency.unavailableReason}</p> : <>
         <div className="option-efficiency-columns" aria-hidden="true"><span>옵션 · 환산공 상승률</span><span>장비 {mainStat} 환산</span></div>
         <dl className="option-efficiency-rows">
           {efficiency.rows.map(row => <div key={row.option}>
-            <dt>{labels[row.option]} <span>({gain(row.increasePercent)})</span></dt>
-            <dd><output aria-label={`${labels[row.option]} 주스탯 환산`}>
+            <dt>{labels[row.option]} <span>({row.unavailableReason ?? gain(row.increasePercent)})</span></dt>
+            <dd><output aria-label={`${snapshot ? "적용 후 " : ""}${labels[row.option]} 주스탯 환산`}>
               {row.equivalentMainStat === null ? "—" : row.option === "equipmentMain" ? "기준" : <>{number(row.equivalentMainStat)} <small>{mainStat}</small></>}
             </output></dd>
           </div>)}

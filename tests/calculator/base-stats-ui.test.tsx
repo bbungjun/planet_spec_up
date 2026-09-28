@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
@@ -31,7 +31,7 @@ it("offers direct base stats without photo registration or inventing stats from 
   expect(screen.getByLabelText("순수 DEX")).toHaveValue(null);
   expect(screen.getByLabelText("순수 STR")).toHaveValue(null);
   expect(screen.queryByLabelText("순수 부스탯 수동값")).not.toBeInTheDocument();
-  expect(screen.getByText("순수 스탯 추정")).toBeInTheDocument();
+  expect(within(screen.getByRole("region", { name: "선택 프리셋 스탯창" })).getByText("순수 스탯 추정")).toBeInTheDocument();
 });
 
 it("saves direct values and keeps them fixed across equipment and preset changes", async () => {

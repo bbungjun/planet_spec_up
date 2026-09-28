@@ -285,3 +285,27 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 }
 @media(max-width:370px){.calculator-shell{padding-inline:10px}.brand-secondary{font-size:6px}.theme-toggle button{font-size:9px;padding-inline:6px}.theme-toggle svg{width:14px;height:14px}.app-brand{font-size:23px}.app-nav{gap:4px}.app-nav a{font-size:9px}.equipment-list{gap:4px;padding:6px}.equipment-slot{min-height:61px}.equipment-slot-name{font-size:8px}.equipment-slot .game-icon{width:27px;height:27px}.game-window-heading>div:first-child{gap:5px}.game-window-label{font-size:8px}.field label{font-size:11px}.candidate-metric.is-main .candidate-metric-value{font-size:26px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.maple-world *,button,input,select{transition:none!important}}
+
+.stat-simulator{width:100%;max-width:1370px;margin:24px auto;scroll-margin-top:calc(var(--app-toolbar-height,60px) + 16px)}
+.simulator-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.simulator-heading h2{margin:0 0 7px;font-size:20px}.simulator-heading p,.simulator-note,.simulator-formula{font-size:12px;line-height:1.6;color:var(--muted)}
+.simulator-heading p{margin:0}.simulator-heading button{white-space:nowrap}
+.simulator-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.simulator-inputs,.simulator-results{min-width:0}.simulator-columns,.simulator-field{display:grid;grid-template-columns:minmax(110px,1fr) 150px minmax(100px,.75fr);gap:12px;align-items:center}
+.simulator-columns{font-size:11px;color:var(--muted);margin-bottom:10px}.simulator-columns span:last-child{text-align:right}
+.simulator-field{padding:10px 0;border-bottom:1px solid var(--line)}
+.simulator-field>label{font-size:13px;font-weight:600}.simulator-field>label small{margin-left:5px;font-size:10px;color:var(--muted)}
+.simulator-stepper{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px}
+.simulator-stepper button,.simulator-stepper input{min-height:44px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--text)}
+.simulator-stepper button{font-size:20px;cursor:pointer}.simulator-stepper input{width:100%;min-width:0;padding:6px;text-align:center;font:600 14px Consolas,monospace;appearance:textfield}
+.simulator-stepper input::-webkit-inner-spin-button{appearance:none}.simulator-stepper input[aria-invalid=true]{border-color:var(--danger)}
+.simulator-field>output{text-align:right;font:700 15px Consolas,monospace;color:var(--text)}
+.stat-simulator .is-up{color:var(--success)}.stat-simulator .is-down{color:var(--danger)}
+.simulator-field-error{grid-column:1/-1;margin:0;color:var(--danger);font-size:12px}.simulator-notice{padding:12px;border:1px solid var(--line);background:var(--surface-raised);font-size:13px;line-height:1.6}
+.simulator-total-table{width:100%;margin-top:20px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;table-layout:fixed}
+.simulator-total-table caption{text-align:left;font-weight:700;margin-bottom:10px}.simulator-total-table th,.simulator-total-table td{padding:12px 4px;text-align:right;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.simulator-total-table th:first-child{text-align:left}.simulator-total-table thead{font-size:11px;color:var(--muted)}.simulator-total-table small{display:block;margin-top:4px}
+.simulator-results .option-efficiency{margin-top:18px}.simulator-formula{margin-top:16px}.simulator-formula summary{cursor:pointer;min-height:32px}
+@media(max-width:1100px){.simulator-grid{gap:18px}.simulator-columns,.simulator-field{grid-template-columns:minmax(90px,1fr) 140px 88px;gap:8px}}
+@media(max-width:900px){.simulator-grid{grid-template-columns:minmax(0,1fr)}.simulator-heading{align-items:flex-start;flex-wrap:wrap}.simulator-heading h2{font-size:18px}.simulator-columns,.simulator-field{grid-template-columns:minmax(80px,1fr) 140px 80px}}
+@media(max-width:400px){.simulator-columns,.simulator-field{grid-template-columns:minmax(0,1fr) 136px;gap:6px}.simulator-columns span:last-child{display:none}.simulator-field>output{grid-column:2;font-size:13px}.simulator-field>label{font-size:12px}.simulator-total-table{font-size:12px}}

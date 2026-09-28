@@ -34,6 +34,7 @@ import {
 } from "./components/EquipmentEditor";
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
+import { StatSimulator } from "./components/StatSimulator";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
@@ -421,6 +422,7 @@ export function CalculatorApp() {
           />
         </div>
       </div>
+      <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}
         onEditBaseStats={() => handleNavigate(input.character.pureMain?.trim() ? "character.pureSub" : "character.pureMain")} />
       <footer className="app-footer"><span>플래닛 <span>장비 계산기</span></span><p>이 브라우저에 저장 · 이미지 외부 전송 없음</p><a className="asset-credit" href="https://maplestory.io/" target="_blank" rel="noreferrer">장비 아이콘: MapleStory.io · © NEXON</a><a href="#page-top">맨 위로 ↑</a></footer>

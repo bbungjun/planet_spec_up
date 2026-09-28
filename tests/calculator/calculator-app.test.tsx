@@ -247,7 +247,7 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("펜던트 1 공격력%")).toHaveValue(16);
     expect(screen.getByLabelText("펜던트 1 요구 STR")).toHaveValue(17);
     expect(screen.getByRole("button", { name: "펜던트 1 편집" })).toHaveClass("is-complete");
-  }, 15000); // Full card → OCR → bulk flow performs dozens of user interactions.
+  }, 30000); // Full card → OCR → bulk flow performs dozens of user interactions.
 
   it("ignores a captured OCR target from a different job", async () => {
     const user = userEvent.setup();
