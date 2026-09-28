@@ -153,7 +153,8 @@ export function buildOcrReview(input: OcrReading[], warnings: string[] = []): Oc
 }
 
 export function reviewText(review: OcrReview): string {
-  return [...review.lines.filter(line => line.status !== "ignored").map(line => line.text), ...(review.category ? [`장비분류: ${review.category}`] : [])].join("\n");
+  return [...(review.header ? [review.header.name, review.header.marker] : []),
+    ...review.lines.filter(line => line.status !== "ignored").map(line => line.text), ...(review.category ? [`장비분류: ${review.category}`] : [])].join("\n");
 }
 
 /** Only observed or explicitly confirmed keys replace existing gear. */

@@ -34,6 +34,7 @@ export type OcrReviewLine = {
 };
 export type OcrReview = {
   category: string | null;
+  header?: { name: string; marker: string; readings: OcrReading[] };
   lines: OcrReviewLine[];
   warnings: string[];
   imageConfirmed?: boolean;

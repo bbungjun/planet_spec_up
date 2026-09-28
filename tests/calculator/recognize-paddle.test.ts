@@ -6,6 +6,7 @@ vi.mock("@paddleocr/paddleocr-js", () => ({ PaddleOCR: { create } }));
 vi.mock("@/features/calculator/ocr/prepareTooltip.client", () => ({ prepareTooltip }));
 vi.mock("@/features/calculator/ocr/requirementView.client", () => ({ requirementView,
   REQUIREMENT_VIEWS: [{ scale: 3, mode: "gray" }, { scale: 4, mode: "gray" }, { scale: 3, mode: "soft" }, { scale: 4, mode: "soft" }],
+  RECOVERY_VIEWS: [{ scale: 3, mode: "gray" }, { scale: 4, mode: "gray" }, { scale: 3, mode: "luma" }, { scale: 4, mode: "luma" }, { scale: 3, mode: "color" }, { scale: 4, mode: "color" }],
 }));
 vi.mock("@/features/calculator/ocr/enlargeTooltip.client", () => ({
   enlargeTooltip: async () => null,
@@ -87,7 +88,7 @@ it("reuses the existing model to reread only unresolved requirements and stops w
   predict.mockImplementation(async (image: File) => {
     if (image.name === "requirement.png") return [{ items: [item("REQ LEV:80", 60, 1)] }];
     const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
-    return [{ items: [item("REQ LEV:BQ", 60, scale), item("REQ STR:80", 90, scale), item("DEX +3", 250, scale)] }];
+    return [{ items: [item("시험 장비", 10, scale), item("(유니크 아이템)", 30, scale), item("REQ LEV:BQ", 60, scale), item("REQ STR:80", 90, scale), item("DEX +3", 250, scale)] }];
   });
   const recognizer = createPaddleTooltipRecognizer(), callbacks = options();
   await recognizer.recognize(file(), callbacks);
@@ -128,4 +129,70 @@ it("rejects cancellation during a reread and never publishes its late result", a
   await Promise.resolve();
   expect(callbacks.onReview).not.toHaveBeenCalled();
   expect(dispose).toHaveBeenCalledTimes(1);
+});
+
+it("rereads a detached requirement digit inside an expanded crop without asking for a correction", async () => {
+  const fragment = (text: string, x: number, y: number, width: number, scale: number) => ({ text, score: .95,
+    poly: [[x, y], [x + width, y], [x + width, y + 14], [x, y + 14]].map(point => point.map(value => value * scale)) });
+  predict.mockImplementation(async (image: File) => {
+    if (image.name === "requirement.png") return [{ items: [item("REQ STR:0", 10, 1)] }];
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("시험 장비", 10, scale), item("(일반 아이템)", 30, scale),
+      fragment("REQ LEV:15", 112, 60, 80, scale), fragment("REQ STR:", 112, 90, 54, scale), fragment("[", 180, 91, 10, scale),
+      item("장비분류:어깨장식", 200, scale), item("공격력:+5", 250, scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(), callbacks = options();
+  await recognizer.recognize(file(), callbacks);
+  const bounds = requirementView.mock.calls[0][1];
+  expect((bounds.x + bounds.width) * 300).toBeGreaterThanOrEqual(190);
+  const review = callbacks.onReview.mock.calls[0][0];
+  expect(mapReviewedStats(review, "corsair")).toEqual({ requiredLevel: "15", requiredSub: "0", attackFlat: "5" });
+  expect(reviewBlocked(review, "corsair")).toBe(false);
+  await recognizer.terminate();
+});
+
+it("automatically tries luminance-preserving views when a combat value is missing", async () => {
+  requirementView.mockImplementation(async (_file, _bounds, view) => new File(["row"], `${view.mode}.png`, { type: "image/png" }));
+  predict.mockImplementation(async (image: File) => {
+    if (image.name === "gray.png") return [{ items: [item("공격력:Q", 10, 1)] }];
+    if (image.name === "luma.png") return [{ items: [item("공격력:+9", 10, 1)] }];
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("장비분류:장갑", 200, scale), item("공격력:", 250, scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(), callbacks = options();
+  await recognizer.recognize(file(), callbacks);
+  expect(requirementView.mock.calls.map(call => call[2].mode)).toEqual(["gray", "gray", "luma", "luma"]);
+  expect(mapReviewedStats(callbacks.onReview.mock.calls[0][0], "corsair")).toEqual({ attackFlat: "9" });
+  expect(reviewBlocked(callbacks.onReview.mock.calls[0][0], "corsair")).toBe(false);
+  expect(create).toHaveBeenCalledTimes(1);
+  await recognizer.terminate();
+});
+
+it("recovers a colored title in two source views without importing header numbers as equipment stats", async () => {
+  requirementView.mockImplementation(async (_file, _bounds, view) => new File(["header"], `${view.mode}.png`, { type: "image/png" }));
+  predict.mockImplementation(async (image: File) => {
+    if (image.name === "color.png") return [{ items: [item("달 토끼 견장 (+1)", 10, 1), item("잠재능력 설정 불가", 30, 1), item("DEX:+999", 50, 1)] }];
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("REQ LEV:15", 90, scale), item("REQ STR:0", 120, scale), item("장비분류:어깨장식", 200, scale), item("공격력:+5", 250, scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(), callbacks = options();
+  const text = await recognizer.recognize(file(), callbacks);
+  const review = callbacks.onReview.mock.calls[0][0];
+  expect(text).toContain("달 토끼 견장 (+1)\n잠재능력 설정 불가");
+  expect(mapReviewedStats(review, "corsair")).toEqual({ requiredLevel: "15", requiredSub: "0", attackFlat: "5" });
+  expect(review.header.readings).toHaveLength(2);
+  await recognizer.terminate();
+});
+
+it("keeps completed stats when header recovery fails", async () => {
+  predict.mockImplementation(async (image: File) => {
+    if (image.name === "requirement.png") throw new Error("optional header failed");
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("REQ LEV:15", 90, scale), item("공격력:+5", 250, scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(), callbacks = options();
+  await recognizer.recognize(file(), callbacks);
+  expect(mapReviewedStats(callbacks.onReview.mock.calls[0][0], "corsair")).toEqual({ requiredLevel: "15", attackFlat: "5" });
+  expect(callbacks.onReview.mock.calls[0][0].header).toBeUndefined();
+  await recognizer.terminate();
 });

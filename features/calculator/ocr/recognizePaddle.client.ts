@@ -3,11 +3,12 @@
 import { prepareTooltip } from "./prepareTooltip.client";
 import { contrastTooltip, enlargeTooltip, tooltipImageSize } from "./enlargeTooltip.client";
 import { buildOcrReview, reviewText } from "./reviewRecognition";
-import { isKnownEquipmentCategory, parseMapleTooltip } from "./parseMapleTooltip";
+import { isKnownEquipmentCategory, parseMapleTooltip, readTooltipRequirement } from "./parseMapleTooltip";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, toRecognitionError, type TooltipRecognizer } from "./recognizeTooltip.client";
 import type { OcrBounds, OcrReading } from "./types";
-import { REQUIREMENT_VIEWS, requirementView } from "./requirementView.client";
-import { mergeRequirementRetry, retryRequirementLabel } from "./retryRequirements";
+import { RECOVERY_VIEWS, requirementView } from "./requirementView.client";
+import { mergeRecognitionRetry, retryRecognitionBounds, retryRecognitionLabel } from "./retryRecognition";
+import { tooltipHeader } from "./tooltipHeader";
 
 type Item = { text: string; score: number; poly: number[][] };
 type Engine = { initialize(): Promise<unknown>; predict(input: File): Promise<Array<{ items: Item[] }>>; dispose(): Promise<void> };
@@ -129,25 +130,52 @@ export function createPaddleTooltipRecognizer(): TooltipRecognizer {
         active(); readings.push(...paddleReadings(result.items, dimensions.width, dimensions.height, pass));
       }
       let review = buildOcrReview(readings, warnings);
-      const targets = review.lines.filter(line => retryRequirementLabel(line)).slice(0, 8);
+      const targets = review.lines.filter(line => retryRecognitionLabel(line)).slice(0, 12);
       retryTargets: for (const [index, target] of targets.entries()) {
         progress("recognizing", .75 + .23 * index / targets.length);
-        for (const [pass, view] of REQUIREMENT_VIEWS.entries()) {
+        const bounds = retryRecognitionBounds(review, target);
+        if (!bounds) continue;
+        for (const [pass, view] of RECOVERY_VIEWS.entries()) {
           const line = review.lines.find(line => line.id === target.id)!;
-          if (!retryRequirementLabel(line)) break;
+          if (!retryRecognitionLabel(line)) break;
           try {
-            const image = await requirementView(prepared, target.bounds!, view);
+            const image = await requirementView(prepared, bounds, view);
             active();
             if (!image) continue;
             const [result] = await withAbort(current.predict(image), signal);
             active();
             const text = result.items.map(item => item.text).join(" ");
-            review = mergeRequirementRetry(review, target.id, text, pass + 2);
+            review = mergeRecognitionRetry(review, target.id, text, pass + 2);
           } catch {
             // Keep the successful primary reading if an optional reread fails.
             // Cancellation still rejects the whole operation and drops late results.
             active();
             break retryTargets;
+          }
+        }
+      }
+      // The white-text mask can erase colored titles entirely. Recover only
+      // the header, without feeding background text into the equipment stats.
+      if (!tooltipHeader(reviewText(review))) {
+        const topOfRequirements = Math.min(...review.lines.filter(line => line.bounds && line.readings.some(reading => readTooltipRequirement(reading.text)))
+          .map(line => line.bounds!.y));
+        if (Number.isFinite(topOfRequirements) && topOfRequirements > .04) {
+          const bounds = { x: 0, y: 0, width: 1, height: Math.min(.45, topOfRequirements) };
+          const headers: Array<{ header: NonNullable<ReturnType<typeof tooltipHeader>>; reading: OcrReading }> = [];
+          for (const [pass, scale] of [3, 2].entries()) {
+            try {
+              const image = await requirementView(prepared, bounds, { mode: "color", scale });
+              active();
+              if (!image) break;
+              const [result] = await withAbort(current.predict(image), signal);
+              active();
+              const text = result.items.map(item => item.text).join("\n"), header = tooltipHeader(text);
+              if (header) headers.push({ header, reading: { text, pass: 20 + pass, bounds } });
+            } catch { active(); break; }
+          }
+          if (headers.length === 2 && headers[0].header.name.replace(/\s/g, "") === headers[1].header.name.replace(/\s/g, "")
+            && headers[0].header.marker.replace(/\s/g, "") === headers[1].header.marker.replace(/\s/g, "")) {
+            review = { ...review, header: { ...headers[0].header, readings: headers.map(value => value.reading) } };
           }
         }
       }

@@ -8,6 +8,7 @@ import { applyStatReplacement } from "./applyStatReplacement";
 import { mapRecognizedStats } from "./mapRecognizedStats";
 import { parseMapleTooltip } from "./parseMapleTooltip";
 import type { ParsedTooltipStats, StatReplacement } from "./types";
+import { tooltipHeader } from "./tooltipHeader";
 
 export type OcrSlotChoice = { slot: EquipmentSlot; label: string; equipment: EquipmentInput };
 export type OcrDestination = EquipmentSlot | `preset:${WeaponPresetId}` | "new";
@@ -34,9 +35,7 @@ export function existingDuplicate(parsed: ParsedTooltipStats, job: JobId, choice
 
 export function tooltipIdentity(text: string): { name: string | null; signature: string | null } {
   const parsed = parseMapleTooltip(text);
-  const lines = text.split(/\r?\n/).map(line => line.normalize("NFKC").trim()).filter(Boolean);
-  const gradeIndex = lines.findIndex(line => /[\(（].*(?:레어|에픽|유니크|레전드리|일반).*아이템/.test(line));
-  const name = gradeIndex > 0 ? lines[gradeIndex - 1].replace(/^[\s|·ㆍᆞ]+/, "").trim() : null;
+  const name = tooltipHeader(text)?.name ?? null;
   if (!parsed.category || parsed.options.length === 0) return {name, signature: null};
   const options = parsed.options.map(o => [o.requirement, o.label.replace(/\s/g, ""), o.percent, o.value]);
   options.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
