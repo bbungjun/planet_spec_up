@@ -2,18 +2,26 @@
 
 import { prepareTooltip } from "./prepareTooltip.client";
 import { contrastTooltip, enlargeTooltip, tooltipImageSize } from "./enlargeTooltip.client";
-import { buildOcrReview, reviewText } from "./reviewRecognition";
+import { applyRequirementRecovery, buildOcrReview, reviewText } from "./reviewRecognition";
 import { isKnownEquipmentCategory, parseMapleTooltip, readTooltipRequirement } from "./parseMapleTooltip";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, toRecognitionError, type TooltipRecognizer } from "./recognizeTooltip.client";
-import type { OcrBounds, OcrReading } from "./types";
-import { RECOVERY_VIEWS, requirementView } from "./requirementView.client";
+import type { OcrBounds, OcrReading, RequirementObservation } from "./types";
+import { RECOVERY_VIEWS, VERIFICATION_VIEWS, requirementVerificationView, requirementView } from "./requirementView.client";
 import { mergeRecognitionRetry, retryRecognitionBounds, retryRecognitionLabel } from "./retryRecognition";
+import { identifiedRequirementLabel, locateRequirementVerification } from "./retryRequirements";
 import { tooltipHeader } from "./tooltipHeader";
 
 type Item = { text: string; score: number; poly: number[][] };
 type Engine = { initialize(): Promise<unknown>; predict(input: File): Promise<Array<{ items: Item[] }>>; dispose(): Promise<void> };
 type Options = Parameters<TooltipRecognizer["recognize"]>[1];
 const abortError = () => new DOMException("Cancelled", "AbortError");
+const sourceIds = new WeakMap<File, string>();
+let nextSource = 0, nextOperation = 0;
+function sourceIdentity(file: File) {
+  let sourceId = sourceIds.get(file);
+  if (!sourceId) { sourceId = `image-${++nextSource}`; sourceIds.set(file, sourceId); }
+  return { sourceId, operationId: `recognition-${++nextOperation}` };
+}
 
 export function paddleReadings(items: Item[], width: number, height: number, pass: number): OcrReading[] {
   return items.filter(item => item.text.trim() && item.poly.length >= 4 && item.poly.every(point => point.length >= 2 && point.every(Number.isFinite)))
@@ -49,7 +57,10 @@ async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
   });
 }
 
-export function createPaddleTooltipRecognizer(): TooltipRecognizer {
+/** Developer/test-only candidate path. Its real-image activation gate failed;
+ * production callers use the unchanged D-150 path by omitting this option. */
+export function createPaddleTooltipRecognizer(configuration: { experimentalRequirementRecovery?: boolean } = {}): TooltipRecognizer {
+  const experimentalRequirementRecovery = configuration.experimentalRequirementRecovery === true;
   let engine: Engine | undefined;
   let initializing: Promise<Engine> | undefined;
   let generation = 0;
@@ -83,7 +94,7 @@ export function createPaddleTooltipRecognizer(): TooltipRecognizer {
     });
     return initializing;
   };
-  const run = async (file: File, options: Options, version: number): Promise<string> => {
+  const run = async (file: File, options: Options, version: number, identity: ReturnType<typeof sourceIdentity>): Promise<string> => {
     const { signal } = options;
     const active = () => { if (signal.aborted || generation !== version) throw abortError(); };
     active();
@@ -127,12 +138,61 @@ export function createPaddleTooltipRecognizer(): TooltipRecognizer {
         active();
         if (!dimensions) throw new Error("Cannot read image dimensions");
         const [result] = await withAbort(current.predict(view), signal);
-        active(); readings.push(...paddleReadings(result.items, dimensions.width, dimensions.height, pass));
+        active(); readings.push(...paddleReadings(result.items, dimensions.width, dimensions.height, pass).map((reading, index) => ({ ...reading,
+          provenance: { ...identity, role: "discovery" as const, viewId: `discovery-${pass}`, readingId: `${identity.operationId}-discovery-${pass}-${index}` } })));
       }
       let review = buildOcrReview(readings, warnings);
-      const targets = review.lines.filter(line => retryRecognitionLabel(line)).slice(0, 12);
+      if (experimentalRequirementRecovery) {
+        const preparedSize = await tooltipImageSize(prepared);
+        active();
+        if (!preparedSize) throw new Error("Cannot read original image dimensions");
+        const requirements = locateRequirementVerification(review, identity, preparedSize);
+        for (const [index, target] of requirements.entries()) {
+          const observations: RequirementObservation[] = [];
+          if (target.complete) for (const [pass, view] of VERIFICATION_VIEWS.entries()) {
+            progress("recognizing", .72 + .12 * (index + pass / 4) / requirements.length);
+            const viewId = `${identity.operationId}-${target.rowId}-${view.mode}-${view.scale}`;
+            const observation: RequirementObservation = { ...identity, field: target.field, rowId: target.rowId, viewId,
+              mode: view.mode, scale: view.scale, crop: target.crop, readings: [] };
+            observations.push(observation);
+            try {
+              const image = await requirementVerificationView(prepared, target.crop, view);
+              active();
+              if (!image) { observation.failure = "unavailable-verification-view"; continue; }
+              observation.crop = image.crop;
+              observation.renderBounds = {
+                x: image.crop.x - image.padding / image.contentWidth * image.crop.width,
+                y: image.crop.y - image.padding / image.contentHeight * image.crop.height,
+                width: image.width / image.contentWidth * image.crop.width,
+                height: image.height / image.contentHeight * image.crop.height,
+              };
+              const [result] = await withAbort(current.predict(image.file), signal);
+              active();
+              observation.readings = result.items.filter(item => item.text.trim()).map((item, readingIndex) => {
+                // Invalid/missing polygons are not empty votes. Preserve their
+                // text so uncertain numeric fragments cannot disappear.
+                const reading = paddleReadings([item], image.width, image.height, pass + 30)[0]
+                  ?? { text: item.text, pass: pass + 30, confidence: Number.isFinite(item.score) ? item.score * 100 : undefined };
+                const bounds = reading.bounds;
+                return { ...reading, ...(bounds ? { bounds: {
+                  x: image.crop.x + (bounds.x * image.width - image.padding) / image.contentWidth * image.crop.width,
+                  y: image.crop.y + (bounds.y * image.height - image.padding) / image.contentHeight * image.crop.height,
+                  width: bounds.width * image.width / image.contentWidth * image.crop.width,
+                  height: bounds.height * image.height / image.contentHeight * image.crop.height,
+                } } : {}), provenance: { ...identity, role: "verification" as const, field: target.field, rowId: target.rowId, viewId,
+                  readingId: `${viewId}-${readingIndex}` } };
+              });
+            } catch { active(); observation.failure = "verification-failed"; }
+          }
+          review = applyRequirementRecovery(review, target, observations);
+        }
+      }
+      // Default preserves D-150, including unresolved requirement retries.
+      // Only explicit experiment callers replace that path with verification;
+      // the same requirement is never run through both recovery paths.
+      const targets = review.lines.filter(line => (!experimentalRequirementRecovery || !identifiedRequirementLabel(line)) && retryRecognitionLabel(line)).slice(0, 12);
       retryTargets: for (const [index, target] of targets.entries()) {
-        progress("recognizing", .75 + .23 * index / targets.length);
+        progress("recognizing", experimentalRequirementRecovery ? .85 + .12 * index / targets.length : .75 + .23 * index / targets.length);
         const bounds = retryRecognitionBounds(review, target);
         if (!bounds) continue;
         for (const [pass, view] of RECOVERY_VIEWS.entries()) {
@@ -192,7 +252,8 @@ export function createPaddleTooltipRecognizer(): TooltipRecognizer {
   return {
     recognize(file, options) {
       const version = generation;
-      const pending = queue.then(() => run(file, options, version));
+      const identity = sourceIdentity(file);
+      const pending = queue.then(() => run(file, options, version, identity));
       queue = pending.catch(() => undefined);
       return pending;
     },

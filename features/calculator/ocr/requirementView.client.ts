@@ -15,6 +15,52 @@ export const RECOVERY_VIEWS = [
 ] as const;
 export type RecoveryView = { scale: number; mode: "gray" | "soft" | "luma" | "color" };
 
+export const VERIFICATION_VIEWS = [
+  { scale: 2, mode: "color" }, { scale: 3, mode: "color" },
+  { scale: 2, mode: "luma" }, { scale: 3, mode: "luma" },
+] as const;
+export type RequirementVerificationView = {
+  file: File;
+  width: number;
+  height: number;
+  crop: OcrBounds;
+  contentWidth: number;
+  contentHeight: number;
+  padding: number;
+};
+
+/** The verifier owns padding and crop limits. Unlike optional legacy retries,
+ * this adapter neither enlarges nor clips its exact original-region crop. */
+export async function requirementVerificationView(file: File, crop: OcrBounds, view: typeof VERIFICATION_VIEWS[number]): Promise<RequirementVerificationView | null> {
+  if (typeof createImageBitmap !== "function" || Object.values(crop).some(value => !Number.isFinite(value))
+    || crop.x < 0 || crop.y < 0 || crop.width <= 0 || crop.height <= 0 || crop.x + crop.width > 1 || crop.y + crop.height > 1) return null;
+  const bitmap = await createImageBitmap(file);
+  try {
+    const x = Math.round(crop.x * bitmap.width), y = Math.round(crop.y * bitmap.height);
+    const width = Math.round(crop.width * bitmap.width), height = Math.round(crop.height * bitmap.height);
+    if (width <= 0 || height <= 0 || x + width > bitmap.width || y + height > bitmap.height || width * height * view.scale ** 2 > 1_000_000) return null;
+    const canvas = document.createElement("canvas"), padding = 16;
+    canvas.width = width * view.scale + padding * 2; canvas.height = height * view.scale + padding * 2;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return null;
+    context.fillStyle = view.mode === "color" ? "#242424" : "white"; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingEnabled = false;
+    context.drawImage(bitmap, x, y, width, height, padding, padding, width * view.scale, height * view.scale);
+    if (view.mode === "luma") {
+      const pixels = context.getImageData(padding, padding, width * view.scale, height * view.scale);
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const value = 255 - Math.round(pixels.data[i] * .299 + pixels.data[i + 1] * .587 + pixels.data[i + 2] * .114);
+        pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
+      }
+      context.putImageData(pixels, padding, padding);
+    }
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+    return blob ? { file: new File([blob], `verified-requirement-${view.mode}-${view.scale}.png`, { type: "image/png" }),
+      width: canvas.width, height: canvas.height, contentWidth: width * view.scale, contentHeight: height * view.scale, padding,
+      crop: { x: x / bitmap.width, y: y / bitmap.height, width: width / bitmap.width, height: height / bitmap.height } } : null;
+  } finally { bitmap.close(); }
+}
+
 /** Preserve small glyph strokes that the whole-tooltip white threshold clips.
  * The crop comes from detected text bounds, never item-specific coordinates. */
 export async function requirementView(file: File, bounds: OcrBounds, view: RecoveryView): Promise<File | null> {
