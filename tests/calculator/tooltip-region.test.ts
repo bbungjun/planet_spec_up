@@ -12,7 +12,15 @@ function screenshot(width = 1000, height = 700) {
       set(x, y, border ? color : light ? [220, 220, 220] : [55, 45, 80]);
     }
   };
-  return { data, width, height, frame, set };
+  const optionRows = (rect: TooltipRect) => {
+    for (const portion of [.42, .47, .52, .57, .62, .67, .72, .77, .82]) {
+      const y = Math.round(rect.y + rect.height * portion);
+      for (let x = rect.x + Math.round(rect.width * .1); x < rect.x + Math.round(rect.width * .3); x++) {
+        set(x, y, [225, 225, 225]);
+      }
+    }
+  };
+  return { data, width, height, frame, optionRows, set };
 }
 
 describe("tooltip frame detection", () => {
@@ -21,6 +29,7 @@ describe("tooltip frame detection", () => {
     const tooltip = { x: 100, y: 100, width: 250, height: 480 };
     const control = { x: 700, y: 500, width: 100, height: 100 };
     pixels.frame(tooltip);
+    pixels.optionRows(tooltip);
     pixels.frame(control);
     for (let y = 520; y < 550; y++) for (let x = 715; x < 745; x++) pixels.set(x, y, [240, 240, 240]);
     expect(selectTooltipRegion(pixels, [tooltip, control])).toEqual(tooltip);
@@ -32,6 +41,8 @@ describe("tooltip frame detection", () => {
     const tall = { x: 420, y: 80, width: 250, height: 480 };
     pixels.frame(short);
     pixels.frame(tall);
+    pixels.optionRows(short);
+    pixels.optionRows(tall);
     expect(selectTooltipRegion(pixels, [short, tall])).toBeNull();
     expect(selectTooltipRegion(pixels, [short])).toEqual(short);
   });
@@ -110,6 +121,7 @@ describe("browser-local tooltip preparation", () => {
   it("crops one detected frame before OCR and releases its decoded bitmap", async () => {
     const pixels = screenshot();
     pixels.frame({ x: 450, y: 180, width: 200, height: 420 });
+    pixels.optionRows({ x: 450, y: 180, width: 200, height: 420 });
     const { bitmap, canvas, context } = browser(pixels);
     const prepared = await prepareTooltip(file());
     expect(prepared.name).toBe("isolated-tooltip.png");

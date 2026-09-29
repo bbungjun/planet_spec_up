@@ -53,6 +53,7 @@ describe("MVP job rules", () => {
         subPercent: "",
         attackFlat: slot === "projectile" ? "20" : "",
         attackPercent: "",
+        criticalRate: "",
         requiredSub: "",
       })),
     );

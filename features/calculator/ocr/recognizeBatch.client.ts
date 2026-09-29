@@ -28,6 +28,8 @@ type Options = {
   onProgress: (index: number, progress: number) => void;
   onPrepared: (index: number, preview: File) => void;
   onResult: (index: number, result: BatchRecognitionResult) => void;
+  /** Completed images may request a retry at the next existing worker boundary. */
+  takePriorityTask?: () => ((recognizer: TooltipRecognizer) => Promise<void>) | undefined;
 };
 
 /** A fixed pool owns separate OCR workers. Only OCR is parallel; consumers
@@ -75,7 +77,15 @@ export async function recognizeBatch(files: File[], options: Options): Promise<v
     let next = 0;
     const runWorker = async () => {
       let recognizer: TooltipRecognizer | undefined;
-      while (!signal.aborted && next < jobs.length) {
+      while (!signal.aborted) {
+        const priority = options.takePriorityTask?.();
+        if (priority) {
+          recognizer ??= (options.createRecognizer ?? createBrowserTooltipRecognizer)();
+          workers.add(recognizer);
+          await priority(recognizer);
+          continue;
+        }
+        if (next >= jobs.length) break;
         const { index, copies } = jobs[next++];
         options.onStart(index);
         let preview = files[index];

@@ -8,7 +8,7 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { calculateDamageResult } from "@/features/calculator/domain/calculate";
 import { deserializeSetup, serializeSetup } from "@/features/calculator/storage";
 
-const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
+const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "", criticalRate: "" };
 
 it("ignores leading bullet punctuation without repairing ambiguous digits or percentages", () => {
   const parsed = parseMapleTooltip(". DEX: +3\n_DEX:+6%\n. STR: +5\nDEX +2.5%\n0.5DEX:+9%\n.DEX.446%");

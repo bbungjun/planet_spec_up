@@ -24,6 +24,8 @@ export type EquipmentInput = {
   subPercent: string;
   attackFlat: string;
   attackPercent: string;
+  /** Equipment critical chance in percentage points; absent in legacy gear. */
+  criticalRate?: string;
   requiredSub: string;
   /** Blank/absent means not yet verified, explicit 0 means no level requirement. */
   requiredLevel?: string;
@@ -41,6 +43,8 @@ export type CharacterInput = {
   aranFlatAttack?: string;
   aranCombo?: string;
   aranComboCritical?: boolean;
+  /** Separate High Mastery attack; absent legacy saves retain their manual total. */
+  aranHighMastery?: boolean;
   level: string;
   mapleWarrior: MapleWarrior;
   skillPercent: string;
@@ -131,7 +135,7 @@ export type CalculationResult = {
   };
   pureMain: number;
   pureSub: number;
-  criticalStats?: { baseRate: number; extraRate: number; buffRate: number; baseDamage: number; buffDamage: number };
+  criticalStats?: { baseRate: number; equipmentRate?: number; extraRate: number; buffRate: number; baseDamage: number; buffDamage: number; totalDamage?: number; damageInterpretation?: "total" | "additional" };
   windowStats?: { totalDamagePercent: number; bossDamagePercent: number; ignoreDefensePercent: number; criticalRate: number };
   issues: ValidationIssue[];
 };

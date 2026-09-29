@@ -6,7 +6,7 @@ import { createMetadata } from "@/features/site/metadata";
 
 const title = "메이플 플래닛 계산기 | 스공 비교";
 const description =
-  "메이플 플래닛 장비 스크린샷으로 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다. 현재 베타는 캡틴만 지원합니다.";
+  "메이플 플래닛 장비 스크린샷으로 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다. 캡틴 베타와 아란 참고 베타를 제공합니다.";
 const canonicalOrigin =
   "https://planet.example.com/";
 const canonicalImage =

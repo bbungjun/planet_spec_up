@@ -59,8 +59,8 @@ export function validReplacement(value: StatReplacement): boolean {
   return Object.values(value).some(raw => raw !== undefined && raw !== "") && Object.entries(value).every(([key, raw]) => {
     if (raw === "" || raw === undefined) return true;
     const number = Number(raw);
-    const percent = key.endsWith("Percent");
-    return Number.isFinite(number) && number >= 0 && number <= (key === "ignoreDefensePercent" ? 100 : percent ? 999 : 9999) && (percent || Number.isInteger(number));
+    const percent = key.endsWith("Percent") || key === "criticalRate";
+    return Number.isFinite(number) && number >= 0 && number <= ((key === "ignoreDefensePercent" || key === "criticalRate") ? 100 : percent ? 999 : 9999) && (percent || Number.isInteger(number));
   });
 }
 

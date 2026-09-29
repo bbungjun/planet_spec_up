@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import type {
   CharacterInput,
@@ -112,6 +113,13 @@ export function CharacterPanel({
   showIdentity = true,
 }: CharacterPanelProps) {
   const rule = JOB_RULES[character.job];
+  const [pendingHighMastery, setPendingHighMastery] = useState<string | null>(null);
+  const manualAttack = Number(character.aranFlatAttack);
+  const enableHighMastery = (separateExisting: boolean) => {
+    if (separateExisting) onChange("aranFlatAttack", String(manualAttack - 10));
+    onChange("aranHighMastery", true);
+    setPendingHighMastery(null);
+  };
 
   return (
     <section className="panel character-panel" aria-labelledby="character-heading">
@@ -172,10 +180,20 @@ export function CharacterPanel({
       {character.job === "aran" && <fieldset className="settings-group">
         <legend>아란 전투 조건</legend>
         <label><input type="checkbox" checked={character.aranComboCritical ?? true} onChange={event => onChange("aranComboCritical", event.currentTarget.checked)} /> 콤보 크리티컬20 적용</label>
+        <label><input type="checkbox" checked={character.aranHighMastery ?? false} onChange={event => {
+          if (event.currentTarget.checked && character.aranHighMastery === undefined && Number.isFinite(manualAttack) && manualAttack > 0) setPendingHighMastery(character.aranFlatAttack ?? "");
+          else { onChange("aranHighMastery", event.currentTarget.checked); setPendingHighMastery(null); }
+        }} /> 하이 마스터리 적용 (+10)</label>
+        {pendingHighMastery !== null && pendingHighMastery === (character.aranFlatAttack ?? "") && character.aranHighMastery === undefined && <div role="group" aria-label="기존 추가 공격력의 하이 마스터리 포함 여부">
+          <p>기존 추가공에 하이 마스터리 +10이 포함되어 있나요?</p>
+          {manualAttack >= 10 && <button type="button" className="secondary-button" onClick={() => enableHighMastery(true)}>기존 추가공에 포함된 +10 분리</button>}
+          <button type="button" className="secondary-button" onClick={() => enableHighMastery(false)}>기존 추가공 유지하고 별도 +10</button>
+          <button type="button" className="secondary-button" onClick={() => setPendingHighMastery(null)}>취소</button>
+        </div>}
         <div className="field-grid">
-          {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "패시브·콤보 추가 공격력", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"], ["skillPercent", "참고 타격 배율%", 0.01, 10000, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
+          {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "기타·콤보 추가 공격력 (하이 마스터리 제외)", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
         </div>
-        <small>마스터20 기준: 크확10%·크리 증가분100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
+        <small>마스터20 기준: 크확10%·크리 총비율100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 크리데미지는 일반 피해 대비 총비율입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
       </fieldset>}
 
       <dl className="job-summary" aria-label="현재 직업 규칙">
@@ -239,7 +257,7 @@ export function CharacterPanel({
             onChange={(value) => onChange("ignoreDefense", value)}
           />
           <NumericField
-            label="추가 크리티컬 확률"
+            label="장비 외 추가 크리티컬 확률"
             path="character.criticalRate"
             value={character.criticalRate}
             min={0}
