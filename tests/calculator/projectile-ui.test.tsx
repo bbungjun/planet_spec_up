@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
@@ -40,7 +40,7 @@ it("uses the direct value once outside attack percent and preserves it through s
   const direct = screen.getByLabelText("불릿·표창 공격력");
   await waitFor(() => expect(direct).toBeEnabled());
   fireEvent.change(direct, { target: { value: "27" } });
-  expect(screen.getByText("공격력 합산 내역").querySelector("strong")).toHaveTextContent("232");
+  expect(within(screen.getByRole("region", {name:"적용 후 스탯창"})).getByText("공격력").nextElementSibling).toHaveTextContent("232");
   await user.click(screen.getByRole("button", { name: "사냥용 프리셋 선택" }));
   expect(direct).toHaveValue(27);
   await user.click(screen.getByRole("button", { name: /^저장$/ }));

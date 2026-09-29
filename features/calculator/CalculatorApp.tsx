@@ -35,7 +35,7 @@ import {
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
 import { StatSimulator } from "./components/StatSimulator";
-import { ResultsPanel } from "./components/ResultsPanel";
+import { CalculationIssues } from "./components/CalculationIssues";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
 import { CashEquipmentPanel, type CashEquipmentChangeHandler } from "./components/CashEquipmentPanel";
@@ -349,6 +349,13 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
     setFocusRequest((request) => request + 1);
   };
 
+  const handleShowAllOptions = () => {
+    setInputMode("bulk");
+    window.requestAnimationFrame(() => {
+      document.getElementById("equipment-editor-area")?.scrollIntoView?.({ block: "start" });
+    });
+  };
+
   return (
     <main className="calculator-shell" aria-busy={initialLoading}>
       <MapleBackdrop />
@@ -397,10 +404,11 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
             onSelectSlot={setSelectedSlot}
             onAddSlot={handleAddSlot}
             onRemoveSlot={handleRemoveSlot}
+            bulkActive={inputMode === "bulk"}
+            onShowAllOptions={handleShowAllOptions}
           />
         </div>
-        <div className="calculator-main">
-          <div className="calculator-center" aria-label="장비 입력">
+          <div className="calculator-center" id="equipment-editor-area" aria-label="장비 입력">
             {inputMode === "cards" ? (
               <EquipmentEditor
                 input={input}
@@ -419,16 +427,8 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
                 onEquipmentChange={handleEquipmentChange}
               />
             )}
+            <CalculationIssues input={input} result={result} onNavigate={handleNavigate} />
           </div>
-          <ResultsPanel
-            job={input.character.job}
-            input={input}
-            result={result}
-            onNavigate={handleNavigate}
-            onBuffSelect={attack => handleEquipmentChange("buff", "attackFlat", String(attack))}
-            onStackableBuffChange={handleStackableBuffChange}
-          />
-        </div>
       </div>
       <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}

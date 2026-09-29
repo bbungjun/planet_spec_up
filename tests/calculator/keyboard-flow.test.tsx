@@ -56,14 +56,14 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   await user.click(screen.getByRole("button", { name: "무기 편집" }));
   const cardAttack = screen.getByLabelText("무기 공격력");
   await user.type(cardAttack, "100");
-  expect(screen.getByLabelText("스탯 공격력 결과")).not.toHaveTextContent(/^0$/);
+  expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).not.toHaveTextContent(/^0$/);
 
   await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
   const bulkAttack = screen.getByLabelText("일괄 입력 무기 공격력");
   await user.clear(bulkAttack);
   await user.type(bulkAttack, "-1");
   expect((bulkAttack as HTMLInputElement).value).toBe("-1");
-  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(/^810$/); // invalid weapon contributes 0; guild contributes 5
+  expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", {
     name: "오류 무기 공격력: Enter a value from 0 to 9999.",
   }));

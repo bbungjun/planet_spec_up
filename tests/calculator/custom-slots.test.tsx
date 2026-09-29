@@ -53,7 +53,7 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
   const view = render(<CalculatorApp />);
   await user.click(screen.getByRole("button", {name: "무기 편집"}));
   await user.type(screen.getByLabelText("무기 공격력", {exact: true}), "100");
-  const before = screen.getByLabelText("스탯 공격력 결과").textContent;
+  const before = screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent;
 
   await user.type(screen.getByLabelText("새 장비 부위"), "어깨장식");
   await user.click(screen.getByRole("button", {name: "장비 추가"}));
@@ -61,7 +61,7 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
   await user.type(screen.getByLabelText("어깨장식 DEX", {exact: true}), "5");
   await user.type(screen.getByLabelText("어깨장식 공격력", {exact: true}), "7");
   await user.type(screen.getByLabelText("어깨장식 공격력%", {exact: true}), "2.5");
-  expect(screen.getByLabelText("스탯 공격력 결과").textContent).not.toBe(before);
+  expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent).not.toBe(before);
 
   await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
   expect(screen.getByLabelText("일괄 입력 어깨장식 DEX", {exact: true})).toHaveValue(5);

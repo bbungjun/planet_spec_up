@@ -38,10 +38,12 @@ it("keeps manual simulations out of the original stats and browser save", async 
   const input = fixture(); localStorage.setItem(STORAGE_KEY, serializeSetup(input));
   const view = render(<CalculatorApp/>);
   await waitFor(() => expect(screen.getByLabelText("순수 DEX")).toHaveValue(600));
-  const original = screen.getByLabelText("스탯 공격력 결과").textContent;
+  const baseline = within(screen.getByRole("table", {name:"전체 적용 결과"})).getByRole("row", {name:/최대 스탯공/});
+  const original = within(baseline).getAllByRole("cell")[0].textContent;
   fireEvent.change(screen.getByLabelText("추가 장비 공격력"), { target: { value: "30" } });
   fireEvent.change(screen.getByLabelText("추가 총데미지%"), { target: { value: "-12" } });
-  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent(original!);
+  expect(within(baseline).getAllByRole("cell")[0]).toHaveTextContent(original!);
+  expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).not.toHaveTextContent(original!);
   await userEvent.click(screen.getByRole("button", { name: "저장" }));
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
   expect(saved.input.equipment.weapon.attackFlat).toBe("100");

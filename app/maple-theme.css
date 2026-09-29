@@ -322,3 +322,8 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 @media(max-width:1100px){.simulator-grid{gap:18px}.simulator-columns,.simulator-field{grid-template-columns:minmax(90px,1fr) 140px 88px;gap:8px}}
 @media(max-width:900px){.simulator-grid{grid-template-columns:minmax(0,1fr)}.simulator-heading{align-items:flex-start;flex-wrap:wrap}.simulator-heading h2{font-size:18px}.simulator-columns,.simulator-field{grid-template-columns:minmax(80px,1fr) 140px 80px}}
 @media(max-width:400px){.simulator-columns,.simulator-field{grid-template-columns:minmax(0,1fr) 136px;gap:6px}.simulator-columns span:last-child{display:none}.simulator-field>output{grid-column:2;font-size:13px}.simulator-field>label{font-size:12px}.simulator-total-table{font-size:12px}}
+
+/* Keep equipment input wide after removing the separate result sidebar. */
+.calculator-workspace{grid-template-columns:240px minmax(0,1fr)}
+@media(max-width:999px){.calculator-workspace{grid-template-columns:220px minmax(0,1fr)}}
+@media(max-width:700px){.calculator-workspace{grid-template-columns:minmax(0,1fr)}}
