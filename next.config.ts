@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@libsql/client", "libsql"],
   outputFileTracingRoot: process.cwd(),
   webpack(config, { isServer }) {
     // OpenCV includes a Node-only branch. OCR uses its browser/WASM branch.
