@@ -21,6 +21,7 @@ type CharacterPanelProps = {
   onJobChange: (job: JobId) => void;
   showIdentity?: boolean;
   captainBeta?: boolean;
+  aranBeta?: boolean;
 };
 
 type NumericFieldProps = {
@@ -83,12 +84,12 @@ function NumericField({
   );
 }
 
-export function CharacterIdentityFields({ character, issues, onChange, onJobChange, captainBeta = false }: CharacterPanelProps) {
+export function CharacterIdentityFields({ character, issues, onChange, onJobChange, captainBeta = false, aranBeta = false }: CharacterPanelProps) {
   const bonus = levelAchievementBonus(Number(character.level));
   return <>
     <div className="field">
       <label htmlFor="character-job">직업</label>
-      <select id="character-job" value={character.job} disabled={captainBeta} onChange={event => onJobChange(event.currentTarget.value as JobId)}>
+      <select id="character-job" value={character.job} disabled={captainBeta || aranBeta} onChange={event => onJobChange(event.currentTarget.value as JobId)}>
         {!captainBeta && <option value="marksman">신궁</option>}
         <option value="corsair">캡틴</option>
         {!captainBeta && <option value="night_lord">나이트로드</option>}

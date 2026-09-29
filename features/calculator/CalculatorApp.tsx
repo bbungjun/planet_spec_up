@@ -63,13 +63,13 @@ const loadErrorMessage = (message: string) => message === "unsupported-job"
   ? "이번 베타는 캡틴만 지원합니다. 기존 다른 직업의 저장값은 보존되며 캡틴 세팅은 별도로 저장합니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
-export function CalculatorApp({ captainBeta = false, development = false }: { captainBeta?: boolean; development?: boolean }) {
-  const { load, save, clear } = useSavedSetup(captainBeta, development);
+export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean }) {
+  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta);
   const [input, setInput] = useState<CalculatorInput>(
-    () => createDefaultInput("corsair"),
+    () => createDefaultInput(aranBeta ? "aran" : "corsair"),
   );
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlot>(
-    () => firstSlot("corsair"),
+    () => firstSlot(aranBeta ? "aran" : "corsair"),
   );
   const [inputMode, setInputMode] = useState<InputMode>("cards");
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -251,6 +251,7 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
 
   const handleJobChange = (job: JobId) => {
     if (captainBeta && job !== "corsair") return;
+    if (aranBeta && job !== "aran") return;
     if (job === input.character.job) return;
     if (
       hasEquipmentValues(input)
@@ -366,6 +367,7 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
       <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
         captainBeta={captainBeta}
+        aranBeta={aranBeta}
         inputMode={inputMode}
         savedAt={savedAt}
         storageError={storageError}
@@ -379,7 +381,7 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}>
         <div className="setup-import-identity">
-          <CharacterIdentityFields captainBeta={captainBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
+          <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
       <div className="character-settings-content" id="character-settings">

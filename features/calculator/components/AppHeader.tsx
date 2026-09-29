@@ -5,6 +5,7 @@ import { GameIcon } from "./GameVisuals";
 
 type AppHeaderProps = {
   captainBeta?: boolean;
+  aranBeta?: boolean;
   inputMode: InputMode;
   savedAt: string | null;
   storageError: string | null;
@@ -16,6 +17,7 @@ type AppHeaderProps = {
 
 export function AppHeader({
   captainBeta = false,
+  aranBeta = false,
   inputMode,
   savedAt,
   storageError,
@@ -56,10 +58,11 @@ export function AppHeader({
         <div className="app-topbar">
           <a className="app-brand" href="#page-top" aria-label="플래닛 계산기 처음으로">
             <span className="brand-symbol"><GameIcon name="leaf" /></span>
-            <span>플래닛<span className={`brand-secondary${captainBeta ? " beta-release-label" : ""}`}>{captainBeta ? "캡틴 전용 베타" : "EQUIPMENT LAB"}</span></span>
+            <span>플래닛<span className={`brand-secondary${captainBeta || aranBeta ? " beta-release-label" : ""}`}>{aranBeta ? "아란 참고 베타" : captainBeta ? "캡틴 전용 베타" : "EQUIPMENT LAB"}</span></span>
             <span className="beta-badge">BETA</span>
           </a>
           <ThemeToggle />
+          {(captainBeta || aranBeta) && <nav aria-label="공개 직업 계산기"><a href={aranBeta ? "/" : "/aran"}>{aranBeta ? "캡틴 계산기" : "아란 계산기"}</a></nav>}
         </div>
       </header>
       <div className="app-toolbar" ref={toolbarRef}>

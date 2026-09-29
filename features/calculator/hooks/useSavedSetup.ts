@@ -2,10 +2,10 @@
 
 import { useCallback } from "react";
 import type { CalculatorInput } from "../domain/types";
-import { CAPTAIN_BETA_STORAGE_KEY, deserializeSetup, serializeSetup, STORAGE_KEY, DEVELOPMENT_STORAGE_KEY } from "../storage";
+import { CAPTAIN_BETA_STORAGE_KEY, ARAN_BETA_STORAGE_KEY, deserializeSetup, serializeSetup, STORAGE_KEY, DEVELOPMENT_STORAGE_KEY } from "../storage";
 
-export function useSavedSetup(captainBeta = false, development = false) {
-  const key = captainBeta ? CAPTAIN_BETA_STORAGE_KEY : development ? DEVELOPMENT_STORAGE_KEY : STORAGE_KEY;
+export function useSavedSetup(captainBeta = false, development = false, aranBeta = false) {
+  const key = aranBeta ? ARAN_BETA_STORAGE_KEY : captainBeta ? CAPTAIN_BETA_STORAGE_KEY : development ? DEVELOPMENT_STORAGE_KEY : STORAGE_KEY;
   const load = useCallback(() => {
     const current = window.localStorage.getItem(key);
     // An explicit reset must not resurrect the untouched legacy setup.
@@ -15,15 +15,18 @@ export function useSavedSetup(captainBeta = false, development = false) {
     const saved = deserializeSetup(raw);
     if (saved.ok && captainBeta && saved.value.input.character.job !== "corsair")
       return { ok: false as const, message: "unsupported-job" };
+    if (saved.ok && aranBeta && saved.value.input.character.job !== "aran")
+      return { ok: false as const, message: "unsupported-aran-job" };
     return saved;
-  }, [captainBeta, key]);
+  }, [captainBeta, aranBeta, key]);
 
   const save = useCallback((input: CalculatorInput) => {
     if (captainBeta && input.character.job !== "corsair") throw new Error("Captain beta only");
+    if (aranBeta && input.character.job !== "aran") throw new Error("Aran beta only");
     const savedAt = new Date().toISOString();
     window.localStorage.setItem(key, serializeSetup(input, savedAt));
     return savedAt;
-  }, [captainBeta, key]);
+  }, [captainBeta, aranBeta, key]);
 
   const clear = useCallback(() => {
     if (captainBeta) window.localStorage.setItem(key, "null");
