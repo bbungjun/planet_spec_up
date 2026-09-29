@@ -26,9 +26,9 @@ describe("option efficiency", () => {
     expect(calculateDamageResult(input)).toMatchObject({ mainStat: 1750, subStat: 24, totalAttack: 145, convertedAttack: 12836 });
     const result = calculateOptionEfficiency(input);
     expect(result).toMatchObject({ estimated: false, unavailableReason: null });
-    expect(result.rows.map(row => row.convertedAttackGain)).toEqual([9, 81, 90, 90, 73, 73, 161, 0]);
-    expect(result.rows.map(row => row.equivalentMainStat)).toEqual([1, 9, 10, 10, 73 / 9, 73 / 9, 161 / 9, 0]);
-    expect(result.rows[2].increasePercent).toBeCloseTo(90 / 12836 * 100, 12);
+    expect(result.rows.map(row => row.convertedAttackGain)).toEqual([9, 3, 81, 90, 90, 73, 73, 161, 0]);
+    expect(result.rows.map(row => row.equivalentMainStat)).toEqual([1, 3 / 9, 9, 10, 10, 73 / 9, 73 / 9, 161 / 9, 0]);
+    expect(result.rows.find(row => row.option === "percentEligibleAttack")!.increasePercent).toBeCloseTo(90 / 12836 * 100, 12);
     expect(input).toEqual(before);
   });
 
@@ -39,23 +39,24 @@ describe("option efficiency", () => {
     expect(hunting.rows.find(row => row.option === "bossAndTotalDamage")?.increasePercent).toBe(0);
     expect(hunting.rows.find(row => row.option === "totalDamagePercent")?.increasePercent).toBeGreaterThan(0);
     expect(hunting.rows.find(row => row.option === "ignoreDefense")?.increasePercent).toBe(0);
-    expect(hunting.rows[2].increasePercent).not.toBe(calculateOptionEfficiency(input).rows[2].increasePercent);
+    expect(hunting.rows.find(row => row.option === "percentEligibleAttack")!.increasePercent)
+      .not.toBe(calculateOptionEfficiency(input).rows.find(row => row.option === "percentEligibleAttack")!.increasePercent);
   });
 
   it("includes current Sharp Eyes and skill conditions in critical efficiency", () => {
     const input = fixture();
-    expect(calculateOptionEfficiency(input).rows[7].increasePercent).toBe(0);
+    expect(calculateOptionEfficiency(input).rows.find(row => row.option === "criticalRate")!.increasePercent).toBe(0);
     input.character.sharpEyes = "sharp_30";
-    const buffed = calculateOptionEfficiency(input).rows[7].increasePercent;
+    const buffed = calculateOptionEfficiency(input).rows.find(row => row.option === "criticalRate")!.increasePercent;
     expect(buffed).toBeGreaterThan(0);
     input.character.skillPercent = "760";
-    expect(calculateOptionEfficiency(input).rows[7].increasePercent).toBeLessThan(buffed);
+    expect(calculateOptionEfficiency(input).rows.find(row => row.option === "criticalRate")!.increasePercent).toBeLessThan(buffed);
   });
 
   it("stops adding defense efficiency once ignore covers the target", () => {
     const input = fixture();
     input.character.ignoreDefense = "40";
-    expect(calculateOptionEfficiency(input).rows[6]).toMatchObject({ convertedAttackGain: 0, equivalentMainStat: 0 });
+    expect(calculateOptionEfficiency(input).rows.find(row => row.option === "ignoreDefense")).toMatchObject({ convertedAttackGain: 0, equivalentMainStat: 0 });
   });
 
   it("keeps estimated AP fixed and identifies estimates without changing saved input", () => {
@@ -85,7 +86,7 @@ describe("option efficiency", () => {
     const result = calculateOptionEfficiency(input);
     expect(result.unavailableReason).toBeNull();
     expect(result.rows[0].increasePercent).toBe(0);
-    expect(result.rows[2].increasePercent).toBeGreaterThan(0);
+    expect(result.rows.find(row => row.option === "percentEligibleAttack")!.increasePercent).toBeGreaterThan(0);
     expect(result.rows.every(row => row.equivalentMainStat === null)).toBe(true);
   });
 
@@ -95,7 +96,7 @@ describe("option efficiency", () => {
     input.equipment.weapon!.attackFlat = "100";
     const before = calculateDamageResult(input);
     const result = calculateOptionEfficiency(input);
-    expect(result.rows[7].increasePercent).toBeGreaterThan(0);
+    expect(result.rows.find(row => row.option === "criticalRate")!.increasePercent).toBeGreaterThan(0);
     expect(result.rows[0].equivalentMainStat).toBe(1);
     expect(calculateDamageResult(input)).toEqual(before);
   });

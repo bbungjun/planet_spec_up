@@ -33,6 +33,21 @@ it("applies multiple signed deltas with existing floors, fixed pure stats, and s
   expect(input).toEqual(original);
 });
 
+it("includes Captain equipment STR in isolated and combined attack without changing pure STR", () => {
+  const input = fixture(), original = structuredClone(input);
+  const added = simulateStats(input, { ...emptySimulation(), equipmentSub: "10" });
+  expect(added.snapshot!.equipmentSub).toBe(30);
+  expect(added.after!.subStat).toBe(34);
+  expect(added.after!.pureSub).toBe(4);
+  expect(added.stat!.difference).toBeGreaterThan(0);
+  expect(added.isolated!.equipmentSub.difference).toBe(added.converted!.difference);
+  const removed = simulateStats(input, { ...emptySimulation(), equipmentSub: "-10" });
+  expect(removed.after!.subStat).toBe(14);
+  expect(removed.stat!.difference).toBeLessThan(0);
+  expect(simulateStats(input, { ...emptySimulation(), equipmentSub: "-21" }).errors.equipmentSub).toBeTruthy();
+  expect(input).toEqual(original);
+});
+
 it("keeps total damage and boss damage separate when switching to hunting", () => {
   const input = fixture();
   input.weaponPresets = { active: "boss", entries: { hunting: { weapon: { ...input.equipment.weapon! }, monsterDefense: "0" } } };

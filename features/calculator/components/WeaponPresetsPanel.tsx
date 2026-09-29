@@ -7,16 +7,15 @@ type Props = {
   input: CalculatorInput;
   onSelect: (id: WeaponPresetId) => void;
   onSave: () => void;
+  savedAt: string | null;
+  storageError: string | null;
 };
 
-export function WeaponPresetsPanel({ input, onSelect, onSave }: Props) {
+export function WeaponPresetsPanel({ input, onSelect, onSave, savedAt, storageError }: Props) {
   const active = activeWeaponPreset(input);
   return (
     <section className="panel weapon-presets" aria-labelledby="weapon-presets-heading">
-      <div className="panel-heading">
-        <div><h2 id="weapon-presets-heading">무기 프리셋</h2></div>
-        <button type="button" className="secondary-button" onClick={onSave}>프리셋 저장</button>
-      </div>
+      <div className="panel-heading"><h2 id="weapon-presets-heading">무기 프리셋</h2></div>
       <div className="weapon-preset-grid">
         {WEAPON_PRESETS.map(preset => {
           const saved = getWeaponPreset(input, preset.id);
@@ -41,6 +40,12 @@ export function WeaponPresetsPanel({ input, onSelect, onSave }: Props) {
           </div>;
         })}
       </div>
+      <button type="button" className="secondary-button preset-save-button" onClick={onSave}>프리셋 저장</button>
+      {storageError === null ? (
+        <p role="status" aria-label="저장 상태" className="preset-storage-status">
+          {savedAt === null ? "저장된 세팅 없음" : <>저장됨 <time dateTime={savedAt}>{new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(savedAt))}</time></>}
+        </p>
+      ) : <p role="alert" className="preset-storage-status">{storageError}</p>}
     </section>
   );
 }

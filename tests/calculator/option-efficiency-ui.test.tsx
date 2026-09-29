@@ -10,6 +10,7 @@ it("shows current option gains, zero effects, main-stat units and live updates",
   const { rerender } = render(<OptionEfficiencyPanel input={input} />);
   const panel = screen.getByRole("region", { name: "옵션 효율" });
   expect(within(panel).getByLabelText("DEX(장비) +1 주스탯 환산")).toHaveTextContent("기준");
+  expect(within(panel).getByLabelText("STR(장비) +1 주스탯 환산")).toBeInTheDocument();
   expect(within(panel).getByLabelText("방무 +1% 주스탯 환산")).toHaveTextContent("0 DEX");
   const before = within(panel).getByLabelText("공격력(장비) +1 주스탯 환산").textContent;
   rerender(<OptionEfficiencyPanel input={{ ...input, equipment: { ...input.equipment, weapon: { ...input.equipment.weapon!, mainPercent: "100" } } }} />);

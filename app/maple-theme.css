@@ -19,7 +19,7 @@
   --panel-shadow:inset 0 0 0 3px #4e6a7b,inset 0 0 0 4px #738d9e,0 4px 0 #10283a40,0 7px 18px #11263535;
 }
 body{background:var(--bg);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
-html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input,select,summary{touch-action:manipulation}
+html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulation}
 .calculator-shell{position:relative;isolation:isolate;padding:0 32px 22px}
 .calculator-shell > .calculator-content{display:contents}
 .app-header,.app-toolbar,.setup-import,.character-settings-content,.weapon-presets,.calculator-workspace,.candidate-comparison,.app-footer{width:100%;max-width:1370px;margin-inline:auto}
@@ -48,7 +48,7 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .brand-symbol .game-icon{width:43px;height:43px}.brand-secondary{display:block;font:700 8px/2.3 Arial,sans-serif;letter-spacing:2.2px;margin:0;color:var(--muted)}
 .beta-badge{font-size:8px;background:color-mix(in srgb,var(--surface) 55%,transparent);align-self:flex-start;margin-top:7px}
 .app-brand .beta-release-label{font-size:10px;letter-spacing:.5px;white-space:nowrap}
-.app-toolbar{position:sticky;top:0;z-index:20;min-height:60px;padding:6px 0;border-bottom:1px solid var(--line);gap:8px 16px;background:var(--bg);box-shadow:0 3px 8px #2a4c6014}
+.app-toolbar{position:static;min-height:60px;padding:6px 0;border-bottom:1px solid var(--line);gap:8px 16px;background:var(--bg)}
 .app-nav{gap:20px}.app-nav a{font-size:12px;min-height:44px}.app-header-actions{gap:6px}.app-header-actions p{font-size:10px}
 .app-header-actions .secondary-button{font-size:11px;padding:7px 10px;background:linear-gradient(var(--chrome-top),var(--chrome-bottom));color:#263e4d}
 .theme-toggle{padding:2px;border-radius:5px;background:var(--surface-raised);border-color:var(--window-edge);box-shadow:inset 0 1px #fff8}
@@ -299,7 +299,7 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 @media(max-width:370px){.calculator-shell{padding-inline:10px}.brand-secondary{font-size:6px}.theme-toggle button{font-size:9px;padding-inline:6px}.theme-toggle svg{width:14px;height:14px}.app-brand{font-size:23px}.app-nav{gap:4px}.app-nav a{font-size:9px}.equipment-list{gap:4px;padding:6px}.equipment-slot{min-height:61px}.equipment-slot-name{font-size:8px}.equipment-slot .game-icon{width:27px;height:27px}.game-window-heading>div:first-child{gap:5px}.game-window-label{font-size:8px}.field label{font-size:11px}.candidate-metric.is-main .candidate-metric-value{font-size:26px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.maple-world *,button,input,select{transition:none!important}}
 
-.stat-simulator{width:100%;max-width:1370px;margin:24px auto;scroll-margin-top:calc(var(--app-toolbar-height,60px) + 16px)}
+.stat-simulator{width:100%;max-width:1370px;margin:24px auto;scroll-margin-top:16px}
 .simulator-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
 .simulator-heading h2{margin:0 0 7px;font-size:20px}.simulator-heading p,.simulator-note,.simulator-formula{font-size:12px;line-height:1.6;color:var(--muted)}
 .simulator-heading p{margin:0}.simulator-heading button{white-space:nowrap}
@@ -327,3 +327,17 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 .calculator-workspace{grid-template-columns:240px minmax(0,1fr)}
 @media(max-width:999px){.calculator-workspace{grid-template-columns:220px minmax(0,1fr)}}
 @media(max-width:700px){.calculator-workspace{grid-template-columns:minmax(0,1fr)}}
+
+/* Presets stay in the right column while the main calculator scrolls. */
+.calculator-page-layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start;width:100%;max-width:1500px;margin-inline:auto}
+.calculator-page-main{grid-column:1;grid-row:1;min-width:0}
+.calculator-sidebar{grid-column:2;grid-row:1;position:sticky;top:16px;align-self:start;max-height:calc(100dvh - 32px);overflow-y:auto;min-width:0}
+.calculator-sidebar .weapon-presets{display:block;width:100%;max-width:none;margin:20px 0 0;padding:14px}
+.calculator-sidebar .weapon-presets>.panel-heading{display:block;margin-bottom:10px}
+.calculator-sidebar .weapon-preset-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.calculator-sidebar .weapon-preset-select{display:grid;gap:3px;min-height:60px;padding:9px 10px}
+.calculator-sidebar .weapon-preset-select small{margin-left:0}
+.calculator-sidebar .preset-save-button{display:block;width:100%;min-height:44px;margin-top:12px}
+.calculator-sidebar .preset-storage-status{margin:10px 0 0;color:var(--muted);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.calculator-sidebar [role="alert"]{color:var(--danger)}
+@media(max-width:1099px){.calculator-page-layout{grid-template-columns:minmax(0,1fr)}.calculator-sidebar{grid-column:1;grid-row:1;position:static;max-height:none;overflow:visible}.calculator-page-main{grid-column:1;grid-row:2}.calculator-sidebar .weapon-presets{margin:16px 0 0}}

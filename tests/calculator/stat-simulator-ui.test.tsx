@@ -34,6 +34,18 @@ it("supports buttons, signed inputs, reset, and live recalculation after baselin
   expect(screen.getByLabelText("추가 장비 공격력")).toHaveValue(0);
 });
 
+it("shows Captain STR delta and STR efficiency after applying a simulation", async () => {
+  const input = fixture();
+  render(<StatSimulator input={input}/>);
+  const before = screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent;
+  await userEvent.click(screen.getByRole("button", { name: "STR(장비) 1 증가" }));
+  expect(screen.getByLabelText("추가 STR(장비)")).toHaveValue(1);
+  expect(screen.getByLabelText("STR(장비) 단독 환산공 변화")).not.toHaveTextContent(/^0%$/);
+  expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent).not.toBe(before);
+  expect(within(screen.getByRole("region", { name: "적용 후 옵션 효율" }))
+    .getByLabelText("적용 후 STR(장비) +1 주스탯 환산")).toBeInTheDocument();
+});
+
 it("keeps manual simulations out of the original stats and browser save", async () => {
   const input = fixture(); localStorage.setItem(STORAGE_KEY, serializeSetup(input));
   const view = render(<CalculatorApp/>);

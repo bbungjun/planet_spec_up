@@ -24,7 +24,7 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
     const current = Number(deltas[field]);
     change(field, String((Number.isFinite(current) ? current : 0) + amount));
   };
-  const labels = { equipmentMain: `${rule.mainStat}(장비)`, mainPercent: `${rule.mainStat}%` };
+  const labels = { equipmentMain: `${rule.mainStat}(장비)`, equipmentSub: `${rule.subStat}(장비)`, mainPercent: `${rule.mainStat}%` };
   const invalid = Object.keys(simulation.errors).length > 0;
 
   return <section className="panel stat-simulator" id="stat-simulator" aria-label="추가 스탯 시뮬레이터">
@@ -68,7 +68,7 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
             <OptionEfficiencyPanel input={input} snapshot={simulation.snapshot} />
           </>}
         <details className="simulator-formula"><summary>비교 계산 기준</summary>
-          <p>장비 주스탯·공격력과 각 % 옵션의 합계에 변경량을 더한 뒤 기존 계산식과 버림을 적용합니다. % 항목의 변경량은 %p 단위입니다. 공격력%는 장비 공격력에만 적용하며, 사냥에서는 보공을 제외합니다.</p>
+          <p>장비 주·부스탯, 공격력과 각 % 옵션의 합계에 변경량을 더한 뒤 기존 계산식과 버림을 적용합니다. % 항목의 변경량은 %p 단위입니다. 공격력%는 장비 공격력에만 적용하며, 사냥에서는 보공을 제외합니다.</p>
           <p>순수 스탯·레벨·버프·공격 대상은 현재 세팅과 같습니다. 환산공은 같은 조건에서 비교하는 지표이며 실제 사냥 전체 피해나 스킬 타격값은 아닙니다.</p>
         </details>
       </div>
