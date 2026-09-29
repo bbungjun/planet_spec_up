@@ -2829,3 +2829,16 @@
 - 근거·관련 기록: 현재 질문, D-FEEDBACK-001 구현 범위, D-146 운영 배포 제한, features/feedback/server/database.ts·security.ts, docs/error-report-board.md.
 - 확인 결과: 계산기 개인 세팅은 브라우저 저장을 유지하므로 원격 DB가 필요하지 않다. 오류 제보를 Vercel에서 지속 접수·관리하려면 원격 libSQL 호환 DB의 FEEDBACK_DATABASE_URL·FEEDBACK_DATABASE_TOKEN과 FEEDBACK_ADMIN_PASSWORD가 필요하다. 배포 환경에서 DB URL/토큰이 없으면 접수를 503으로 차단한다. 로컬 Next는 output/feedback/reports.sqlite, 로컬 Vinext는 D1 시험 저장소를 사용한다.
 - 후속·범위: 계정·DB 생성과 비용/요금제 선택·토큰 발급·운영 연결 시험은 미실행이다. 실제 운영 사용 전 Preview/Production 저장소 분리와 접수·관리 조회·수정 검증이 필요하다. 이번 질문만으로 외부 서비스 가입이나 main/Production 반영을 실행하지 않는다. 이번 기록만 비운영 통합 브랜치에 커밋·푸시한다.
+
+## D-187 — 오류 제보 게시판 우선 보류
+
+- 기록 시각: 2026-09-30 02:53:37 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 확정 — 오류 제보 게시판 보류. 보류 해제 시점·새 저장 방식은 미결정이다.
+- 구현 상태: 게시판 구현은 feat/anonymous-error-board와 과거 integration/committed-branches에 보존했다. 현재 비운영 통합 브랜치 integration/aran-ocr는 origin/main에서 아란·OCR 변경만 이어 받아 게시판 코드·링크·경로를 포함하지 않는다.
+- 결정·요청: 사용자는 “우선 게시판의 경우 보류로 해놓자”라고 요청했다.
+- 이유: 사용자 이유 미명시. 원격 DB 필요 여부를 확인한 직후 요청했지만 이를 사용자 이유로 단정하지 않는다.
+- 근거·관련 기록: 현재 발언, D-FEEDBACK-001 최초 게시판 구현, D-185 세 브랜치 통합, D-186 원격 DB 설명, D-146 운영 배포 제한. 두 통합 브랜치의 커밋 계보와 앱 경로·의존성을 확인했다.
+- 적용 범위: 원격 DB 계정·토큰·운영자 비밀번호 준비, 게시판 후속 개발·운영 반영을 진행하지 않는다. 기존 게시판 구현 브랜치를 삭제하거나 이력을 덮어쓰지 않는다. 게시판을 제외한 아란·OCR 통합은 유지한다. 향후 게시판을 다시 진행할 때 별도 사용자 요청과 원격 저장·보안 검증이 필요하다.
+- 검증·Git: 게시판을 제외한 아란 통합에서 전체 Vitest 543/543, 린트, 타입 검사, Vercel용 빌드가 통과했고 빌드 경로에 /feedback 또는 /api/feedback이 없다. 이후 OCR 브랜치는 정책·결정·QA 문서만 추가한다. 이 정책·기록을 비운영 integration/aran-ocr에 커밋·푸시하고 원격 SHA를 확인한다. main·Production은 변경하지 않는다.
+- 과거 통합 브랜치 표기: integration/committed-branches에는 게시판 코드가 역사적으로 남아 있으므로 이 브랜치의 AGENTS.md에도 보류·배포 후보 제외를 표시하고 같은 결정 기록을 보존한다. 앱 코드·DB·운영 설정 변경 없이 문서만 커밋·푸시한다.
