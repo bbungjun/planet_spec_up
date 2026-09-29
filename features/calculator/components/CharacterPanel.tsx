@@ -257,7 +257,7 @@ export function CharacterPanel({
             onChange={(value) => onChange("ignoreDefense", value)}
           />
           <NumericField
-            label="추가 크리티컬 확률"
+            label="장비 외 추가 크리티컬 확률"
             path="character.criticalRate"
             value={character.criticalRate}
             min={0}

@@ -4,12 +4,13 @@ import { isKnownEquipmentCategory, parseEquipmentCategory, parseTooltipOption, r
 import type { LocatedRequirement, OcrBounds, OcrReading, OcrReview, OcrReviewLine, RequirementObservation, StatReplacement, TooltipOption } from "./types";
 import { verifyRequirementRecovery } from "./verifyRequirementRecovery";
 
-const combatLabels = new Set(["STR", "DEX", "INT", "LUK", "올스탯", "공격력", "총데미지", "보스데미지", "방어율무시"]);
+const combatLabels = new Set(["STR", "DEX", "INT", "LUK", "올스탯", "공격력", "총데미지", "보스데미지", "방어율무시", "크리티컬확률"]);
 const requirementLabel = (text: string): string | null => readTooltipRequirement(text)?.label ?? null;
 const referenceLabel = /(?:HP|MP|마력|마법\s*공격력|방[어머미]력|방무력|명중|회피|이동|점프|피격|흑수정|업그레이드|가능\s*횟수)/i;
 export function canConfirmReviewText(text: string): boolean {
   const option = parseTooltipOption(text);
   if (!option || !(option.requirement || combatLabels.has(option.label) || referenceLabel.test(option.label))) return false;
+  if (option.label === "크리티컬확률" && option.value > 100) return false;
   // User-facing edits contain literal numbers. OCR lookalike repair belongs to
   // recognition; its raw letters must not become selectable numeric values.
   if (option.requirement) return /^\d+$/.test(readTooltipRequirement(text)?.valueText ?? "");
@@ -143,6 +144,7 @@ export function buildOcrReview(input: OcrReading[], warnings: string[] = []): Oc
     else if (best && combat && !best.option.requirement && bounds && Number.isFinite(categoryY) && center(bounds) < categoryY - .01) reason = "요구 조건과 장비 옵션을 구분하지 못했어요. 원본의 항목명을 확인해주세요.";
     else if (combat && keys.size > 1) reason = "같은 줄의 숫자·옵션 종류가 다르게 읽혔어요. 원본과 대조해주세요.";
     else if (best && !best.option.requirement && !best.option.percent && ["STR", "DEX", "INT", "LUK", "올스탯"].includes(best.option.label) && best.option.value >= 100) reason = "큰 고정 스탯으로 읽혔어요. % 표시가 빠지지 않았는지 확인해주세요.";
+    else if (best?.option.label === "크리티컬확률" && best.option.value > 100) reason = "크리티컬 확률은 0~100% 범위로 확인해주세요.";
     else if (combat && agreement < 2) reason = "한 번만 읽힌 옵션이에요. 숫자와 %를 확인해주세요.";
     else if (!combat && inBody && group.some(item => readCombatOptionLabel(item.text))) reason = "옵션의 숫자를 읽지 못했어요. 원본과 대조해주세요.";
     else if (!combat && unknown && (!best || !referenceLabel.test(best.option.label))) reason = "옵션 이름이나 숫자를 정확히 읽지 못했어요.";
@@ -177,6 +179,7 @@ export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement
     else if (option.percent && option.label === "총데미지") fields.push("totalDamagePercent");
     else if (option.percent && option.label === "보스데미지") fields.push("bossDamagePercent");
     else if (option.percent && option.label === "방어율무시") fields.push("ignoreDefensePercent");
+    else if (option.percent && option.label === "크리티컬확률") fields.push("criticalRate");
     for (const field of fields) replacement[field] = String(option.requirement ? option.value : Number(replacement[field] ?? 0) + option.value);
   }
   return replacement;

@@ -46,6 +46,7 @@ export const EQUIPMENT_FIELD_DEFINITIONS: readonly EquipmentFieldDefinition[] = 
   { field: "subPercent", suffix: (_main, sub) => `${sub}%`, max: 999, step: "any" },
   { field: "attackFlat", suffix: () => "공격력", max: 9999, step: 1 },
   { field: "attackPercent", suffix: () => "공격력%", max: 999, step: "any" },
+  { field: "criticalRate", suffix: () => "크리티컬 확률%", max: 100, step: "any" },
   { field: "requiredLevel", suffix: () => "요구 레벨", max: 9999, step: 1 },
   { field: "requiredSub", suffix: (_main, sub) => `요구 ${sub}`, max: 9999, step: 1 },
   { field: "totalDamagePercent", suffix: () => "총데미지%", max: 999, step: "any" },

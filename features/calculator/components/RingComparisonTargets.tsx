@@ -16,6 +16,7 @@ export function RingComparisonTargets({ choices, selected, job, onSelect }: {
     ["mainFlat", rule.mainStat, ""], ["subFlat", rule.subStat, ""],
     ["mainPercent", `${rule.mainStat}%`, "%"], ["subPercent", `${rule.subStat}%`, "%"],
     ["attackFlat", "공격력", ""], ["attackPercent", "공격력%", "%"],
+    ["criticalRate", "크리확률", "%"],
     ["totalDamagePercent", "총데미지", "%"], ["bossDamagePercent", "보공", "%"],
     ["ignoreDefensePercent", "방무", "%"], ["damagePercent", "구형 보공·총뎀", "%"],
   ];

@@ -218,7 +218,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
   const {mainStat, subStat} = JOB_RULES[job];
   const fields: [keyof StatReplacement, string][] = [
     ["mainFlat", mainStat], ["subFlat", subStat], ["mainPercent", `${mainStat}%`], ["subPercent", `${subStat}%`],
-    ["attackFlat", "공격력"], ["attackPercent", "공격력%"], ["requiredLevel", "요구 레벨"], ["requiredSub", `요구 ${subStat}`],
+    ["attackFlat", "공격력"], ["attackPercent", "공격력%"], ["criticalRate", "크리티컬 확률%"], ["requiredLevel", "요구 레벨"], ["requiredSub", `요구 ${subStat}`],
     ["totalDamagePercent", "총데미지%"], ["bossDamagePercent", "보스공격력%"], ["ignoreDefensePercent", "방어율 무시%"],
   ];
 
@@ -278,7 +278,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
 
               <div className="equipment-ocr-proposal-grid">{fields.map(([key, label]) => <div className="field" key={key}>
                 <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 인식 {label}</label>
-                <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
+                <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={(key === "ignoreDefensePercent" || key === "criticalRate") ? 100 : key.endsWith("Percent") ? 999 : 9999} step={(key.endsWith("Percent") || key === "criticalRate") ? "any" : 1}
                   value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied"} onChange={event => {
                     const value = event.currentTarget.value, review = overrideReviewRequirement(row.review, job, key, value);
                     edit(index, { replacement: {...row.replacement!, [key]: value}, overrides: { ...row.overrides, [key]: value },

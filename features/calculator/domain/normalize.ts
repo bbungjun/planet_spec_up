@@ -184,6 +184,7 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
       attackPercent: readNumber(values.attackPercent, {
         path: `equipment.${slot}.attackPercent`, min: 0, max: 999,
       }, issues),
+      criticalRate: readNumber(values.criticalRate ?? "", { path: `equipment.${slot}.criticalRate`, min: 0, max: 100 }, issues),
       requiredLevel: readNumber(values.requiredLevel ?? "", { path: `equipment.${slot}.requiredLevel`, min: 0, max: 9999, integer: true }, issues),
       requiredSub: readNumber(values.requiredSub, {
         path: `equipment.${slot}.requiredSub`, min: 0, max: 9999, integer: true,

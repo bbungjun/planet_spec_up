@@ -54,6 +54,7 @@ export type CalculationSnapshot = {
   monsterDefense: number;
   ignoreDefense: number;
   criticalRate?: number;
+  equipmentCriticalRate?: number;
   skillPercent: number;
   sharpEyes: SharpEyes;
   guildBossLevel: GuildSkillLevel;
@@ -97,11 +98,11 @@ export function calculateFromSnapshot(
   const baseCriticalDamage = snapshot.job === "aran" && rawBaseCriticalDamage + sharpEyes.criticalDamage === 0
     ? 100 : rawBaseCriticalDamage;
   const totalCriticalDamage = baseCriticalDamage + sharpEyes.criticalDamage;
-  const totalCriticalRate = baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate;
+  const totalCriticalRate = baseCriticalRate + (snapshot.equipmentCriticalRate ?? 0) + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate;
   const issues: ValidationIssue[] = [...(snapshot.issues ?? [])];
   if (totalCriticalRate > 100) issues.push({
     severity: "error", code: "CRITICAL_RATE_EXCEEDED", path: "character.criticalRate",
-    message: `기본·추가·버프의 크리확률 합계가 ${totalCriticalRate}%입니다. 합계가 100% 이하가 되도록 추가 크리티컬 확률을 줄여주세요.`,
+    message: `기본·장비·기타·버프의 크리확률 합계가 ${totalCriticalRate}%입니다. 합계가 100% 이하가 되도록 크리티컬 확률을 확인해주세요.`,
   });
   const criticalMultiplier = snapshot.job === "aran"
     ? calculateTotalCriticalMultiplier(totalCriticalRate, totalCriticalDamage)
@@ -193,7 +194,7 @@ export function calculateFromSnapshot(
     },
     pureMain,
     pureSub,
-    criticalStats: { baseRate: baseCriticalRate, extraRate: snapshot.criticalRate ?? 0, buffRate: sharpEyes.criticalRate, baseDamage: baseCriticalDamage, buffDamage: sharpEyes.criticalDamage, totalDamage: totalCriticalDamage, damageInterpretation: snapshot.job === "aran" ? "total" : "additional" },
+    criticalStats: { baseRate: baseCriticalRate, equipmentRate: snapshot.equipmentCriticalRate ?? 0, extraRate: snapshot.criticalRate ?? 0, buffRate: sharpEyes.criticalRate, baseDamage: baseCriticalDamage, buffDamage: sharpEyes.criticalDamage, totalDamage: totalCriticalDamage, damageInterpretation: snapshot.job === "aran" ? "total" : "additional" },
     windowStats: {
       totalDamagePercent: snapshot.totalDamagePercent ?? 0,
       bossDamagePercent: snapshot.bossAndTotalDamage + guildBoss + (snapshot.guildActiveBoss ? 10 : 0),
@@ -272,6 +273,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     monsterDefense: character.monsterDefense,
     ignoreDefense: character.ignoreDefense + sumOption("ignoreDefensePercent"),
     criticalRate: character.criticalRate,
+    equipmentCriticalRate: equipment.criticalRate,
     skillPercent: character.skillPercent,
     sharpEyes: character.sharpEyes,
     guildBossLevel: character.guildBossLevel,

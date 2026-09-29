@@ -15,7 +15,7 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   totalDamagePercent: "기타 총데미지%",
   bossDamagePercent: "기타 보스공격력%",
   ignoreDefense: "방어율 무시",
-  criticalRate: "추가 크리티컬 확률",
+  criticalRate: "장비 외 추가 크리티컬 확률",
   manualPureSub: "순수 부스탯 수동값",
   pureMain: "순수 주스탯",
   pureSub: "순수 부스탯",

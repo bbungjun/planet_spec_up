@@ -15,6 +15,7 @@ export type EquipmentTotals = {
   mainPercent: number;
   subPercent: number;
   attackPercent: number;
+  criticalRate: number;
   percentEligibleAttack: number;
   flatAttack: number;
   requirements: EquipmentRequirement[];
@@ -59,6 +60,7 @@ export function sumEquipment(
     mainPercent: 0,
     subPercent: 0,
     attackPercent: 0,
+    criticalRate: 0,
     percentEligibleAttack: 0,
     flatAttack: 0,
     requirements: [],
@@ -79,6 +81,7 @@ export function sumEquipment(
     totals.mainPercent += asNumber(item.mainPercent);
     totals.subPercent += asNumber(item.subPercent);
     totals.attackPercent += asNumber(item.attackPercent);
+    if (!FLAT_ATTACK_SLOTS.has(slot)) totals.criticalRate += asNumber(item.criticalRate ?? "");
     if (FLAT_ATTACK_SLOTS.has(slot)) {
       totals.flatAttack += attackFlat;
     } else {

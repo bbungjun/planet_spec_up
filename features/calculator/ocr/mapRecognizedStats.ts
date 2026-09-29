@@ -25,6 +25,7 @@ export function mapRecognizedStats(
     totalDamagePercent: "",
     bossDamagePercent: "",
     ignoreDefensePercent: "",
+    criticalRate: "",
   };
   for (const option of parsed.options) {
     const field = option.requirement
@@ -33,6 +34,7 @@ export function mapRecognizedStats(
       : option.label === "총데미지" && option.percent ? "totalDamagePercent"
       : option.label === "보스데미지" && option.percent ? "bossDamagePercent"
       : option.label === "방어율무시" && option.percent ? "ignoreDefensePercent"
+      : option.label === "크리티컬확률" && option.percent ? "criticalRate"
       : undefined;
     if (field) {
       result[field] = String(option.requirement ? option.value : Number(result[field] ?? 0) + option.value);

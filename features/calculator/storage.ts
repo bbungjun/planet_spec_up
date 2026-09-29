@@ -84,12 +84,14 @@ function isGuildSkillLevel(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 {
 }
 
 function isEquipmentInput(value: unknown): value is EquipmentInput {
-  const optional = ["pendantId", "requiredLevel", "damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent"];
+  const optional = ["pendantId", "requiredLevel", "damagePercent", "totalDamagePercent", "bossDamagePercent", "ignoreDefensePercent", "criticalRate"];
   return isRecord(value)
     && Object.keys(value).every(key => optional.includes(key) || equipmentKeys.some(known => key === known))
     && (!Object.hasOwn(value, "pendantId") || isPendantId(value.pendantId))
     && equipmentKeys.every((key) => typeof value[key] === "string")
-    && optional.every(key => !Object.hasOwn(value, key) || typeof value[key] === "string");
+    && optional.every(key => !Object.hasOwn(value, key) || typeof value[key] === "string")
+    && (!Object.hasOwn(value, "criticalRate") || (typeof value.criticalRate === "string"
+      && (value.criticalRate.trim() === "" || (Number.isFinite(Number(value.criticalRate)) && Number(value.criticalRate) >= 0 && Number(value.criticalRate) <= 100))));
 }
 
 function isWeaponPresets(value: unknown): boolean {

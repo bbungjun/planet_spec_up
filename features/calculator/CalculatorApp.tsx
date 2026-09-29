@@ -284,9 +284,9 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   const handleSave = () => {
     const aranError = input.character.job === "aran" ? result.issues.find(issue => issue.severity === "error" && (issue.code === "ARAN_REFERENCE_REQUIRED" || issue.path.startsWith("character.aran"))) : undefined;
     if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return; }
-    const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED");
+    const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED" || (issue.severity === "error" && issue.path.endsWith(".criticalRate")));
     if (criticalError) {
-      setStorageError("전체 크리확률이 100%를 넘습니다. 입력값을 확인한 뒤 다시 저장해주세요.");
+      setStorageError(criticalError.message);
       handleNavigate(criticalError.path);
       return;
     }

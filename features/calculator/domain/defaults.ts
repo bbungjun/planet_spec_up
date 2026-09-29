@@ -11,6 +11,7 @@ export function emptyEquipment(): EquipmentInput {
     subPercent: "",
     attackFlat: "",
     attackPercent: "",
+    criticalRate: "",
     requiredSub: "",
   };
 }
