@@ -192,8 +192,8 @@ function withoutSmallControls(candidates: TooltipRect[]): TooltipRect[] {
 
 export function detectTooltipRegions(pixels: Pixels): TooltipRect[] {
   const strict = detectStrictFrames(pixels);
-  if (strict.length) return strict;
-  const candidates = [...detectFlexibleFrames(pixels, false), ...detectFlexibleFrames(pixels, true)];
+  // A strict inventory frame must not hide a translucent tooltip candidate.
+  const candidates = [...strict, ...detectFlexibleFrames(pixels, false), ...detectFlexibleFrames(pixels, true)];
   const distinct: TooltipRect[] = [];
   for (const candidate of candidates) {
     if (compositeFrame(candidate, candidates)) continue;
@@ -207,10 +207,44 @@ export function detectTooltipRegions(pixels: Pixels): TooltipRect[] {
   return withoutSmallControls(distinct);
 }
 
+/** A tooltip has a continuous dark panel and sparse light text rows in its
+ * option body. White inventory grids and dark help panels alone are not proof. */
+function hasTooltipBody(pixels: Pixels, rect: TooltipRect): boolean {
+  const pixel = (x: number, y: number) => {
+    const at = (y * pixels.width + x) * 4;
+    return [pixels.data[at], pixels.data[at + 1], pixels.data[at + 2]];
+  };
+  const step = Math.max(1, Math.round(rect.width / 160));
+  for (const start of [.15, .35, .55, .75]) {
+    let dark = 0, samples = 0;
+    for (let y = Math.round(rect.y + rect.height * start); y < rect.y + rect.height * (start + .2); y += step * 2) {
+      for (let x = Math.round(rect.x + rect.width * .05); x < rect.x + rect.width * .95; x += step * 2) {
+        const color = pixel(x, y);
+        if ((color[0] + color[1] + color[2]) / 3 < 155) dark++;
+        samples++;
+      }
+    }
+    if (!samples || dark / samples < .65) return false;
+  }
+  let textRows = 0, rows = 0;
+  for (let y = Math.round(rect.y + rect.height * .4); y < rect.y + rect.height * .95; y += step) {
+    let light = 0, samples = 0;
+    for (let x = Math.round(rect.x + rect.width * .05); x < rect.x + rect.width * .9; x += step) {
+      const color = pixel(x, y);
+      if (Math.min(...color) > 170 && Math.max(...color) - Math.min(...color) < 80) light++;
+      samples++;
+    }
+    const coverage = samples ? light / samples : 0;
+    if (coverage >= .01 && coverage <= .3) textRows++;
+    rows++;
+  }
+  return textRows >= Math.max(3, rows * .03);
+}
+
 /** Item icons distinguish gear from neighboring set-effect/help panels.
  * Multiple plausible gear tooltips still require a user's selection. */
 export function selectTooltipRegion(pixels: Pixels, candidates: TooltipRect[]): TooltipRect | null {
-  candidates = withoutSmallControls(candidates);
+  candidates = withoutSmallControls(candidates).filter(rect => hasTooltipBody(pixels, rect));
   if (candidates.length === 1) return candidates[0];
   const withIcon = candidates.filter(rect => {
     const side = Math.max(14, Math.round(rect.width * .16));
@@ -220,7 +254,8 @@ export function selectTooltipRegion(pixels: Pixels, candidates: TooltipRect[]): 
         for (let dy = 0; dy < side; dy += 3) for (let dx = 0; dx < side; dx += 3) {
           const at = ((y + dy) * pixels.width + x + dx) * 4;
           const r = pixels.data[at], g = pixels.data[at + 1], b = pixels.data[at + 2];
-          if (Math.min(r, g, b) > 140 && Math.max(r, g, b) - Math.min(r, g, b) < 90) bright++;
+          const maximum = Math.max(r, g, b), minimum = Math.min(r, g, b);
+          if ((minimum > 140 && maximum - minimum < 90) || (maximum > 120 && maximum - minimum > 40)) bright++;
           total++;
         }
         if (bright / total > .62) return true;
