@@ -2472,3 +2472,11 @@
 - 기록 시각: 2026-09-29 18:01:47 KST (UTC+09:00). 새 사용자 결정 없음.
 - 사실: 통합 c1a6afd는 main에도 반영됐으나 GitHub/Vercel이 확인한 새 배포는 Preview뿐이고 기존 공개 주소는 이전 Production을 제공했다. 같은 SHA의 기능 브랜치 선행 푸시가 원인인지는 아직 추정이다. 완료로 표시하지 않는다.
 - 조치: 앱 소스는 성공한 운영 빌드와 동일하게 유지하고 이번 결과 기록 커밋을 main에 먼저 비강제 푸시해 Production Git 배포를 새 SHA로 요청한다. 해당 운영 배포의 완료를 확인하기 전 같은 SHA를 기능 브랜치에 푸시하지 않는다. 기존 Preview의 단순 도메인 승격/환경 우회/새 프로젝트/개인 자료 업로드는 하지 않는다.
+
+### D-ARAN-020 완료 — 공개 전달 결과
+
+- 기록 시각: 2026-09-29 18:03:30 KST (UTC+09:00). 새 사용자 결정 없음.
+- Production 소스/main SHA: 8e80fbc4586bfa78c4f44c3048bd420652d415f3. GitHub deployment6730817678은 Production/success이며 Vercel 배포5bpsViuQ8JYbnCuFiCNb7R75imbj가 완료됐다. 배포 URL https://planet-spec-5woo6jgs7-youngjun3108-gmailcoms-projects.vercel.app , 공개 주소 https://planet-spec-up.vercel.app/ 및 아란 https://planet-spec-up.vercel.app/aran . 기존 성공 배포에서 새 Production으로 공개 반영을 확인했다.
+- HTTP 확인: 공개 루트·아란 페이지·페이지 JS자산·OCR det/rec모델·WASM 모두200이며 모델/WASM MIME이 올바르다. 캡틴 공개 페이지와 아란 참고 베타·아란 selfcanonical·index/follow를 확인했다. /development·Git제외 개인 검산 경로·개인 이미지 경로는404이며 공개 HTML에 개인 검산 자료 표시는 없다. 인증 없는 HTTP 전달 확인이며 브라우저 저장/상호작용 QA나 실제 OCR/게임 정확도 검증으로 표시하지 않는다.
+- 통합/한계: 최신 기본 OCR 자동복구·수동 후보 입력, 아란 기본 선택·참고 계산·2열 레이아웃·전체 옵션 버튼을 포함한다. 공속/윈드부스터의 계획을 실제 구현으로 승격하지 않았다. 참고모델/실험 비활성/기존 검토 경고와 데이터 정책을 유지했다. 새 공개 아란 저장은 개발 origin의 개인 세팅을 자동 이전하지 않는다.
+- 보존/Git: 개인output·사진·환경·인증 파일이 tracked tree에 없는 것을 확인했다. 원본 작업공간의 기존 미커밋 DECISIONS와 아란 이미지 디렉터리는 그대로이며 본 작업으로 수정하지 않았다. 최종 worktree는 clean으로 정리한다. 이 완료 기록은 feat/aran-support에만 별도 문서 커밋·푸시하여 성공한 Production SHA를 추가 문서 배포로 바꾸지 않는다.
