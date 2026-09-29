@@ -115,7 +115,7 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     aranWeaponConstant: aranNumber("aranWeaponConstant", 10, 0.01),
     aranFlatAttack: aranNumber("aranFlatAttack", 9999, 0, true),
     aranCombo: aranNumber("aranCombo", 99999, 0, true),
-    aranComboCritical: input.character.job === "aran" && input.character.aranComboCritical === true,
+    aranComboCritical: input.character.job === "aran" && (input.character.aranComboCritical ?? true),
     job: input.character.job,
     level,
     mapleWarrior: input.character.mapleWarrior,

@@ -170,7 +170,7 @@ export function CharacterPanel({
 
       {character.job === "aran" && <fieldset className="settings-group">
         <legend>아란 전투 조건</legend>
-        <label><input type="checkbox" checked={character.aranComboCritical ?? false} onChange={event => onChange("aranComboCritical", event.currentTarget.checked)} /> 콤보 크리티컬20 적용</label>
+        <label><input type="checkbox" checked={character.aranComboCritical ?? true} onChange={event => onChange("aranComboCritical", event.currentTarget.checked)} /> 콤보 크리티컬20 적용</label>
         <div className="field-grid">
           {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "패시브·콤보 추가 공격력", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"], ["skillPercent", "참고 타격 배율%", 0.01, 10000, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
         </div>

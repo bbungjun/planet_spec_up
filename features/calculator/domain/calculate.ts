@@ -88,7 +88,7 @@ export function calculateFromSnapshot(
     snapshot.ignoreDefense + guildIgnore,
   );
   const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
-  const aranCritical = aranComboCritical(snapshot.aranCombo ?? 0, snapshot.aranComboCritical === true);
+  const aranCritical = aranComboCritical(snapshot.aranCombo ?? 0, snapshot.aranComboCritical ?? (snapshot.job === "aran"));
   const baseCriticalRate = snapshot.job === "aran" ? aranCritical.rate : rule.baseCriticalRate;
   const baseCriticalDamage = snapshot.job === "aran" ? aranCritical.damage : rule.baseCriticalDamage;
   const totalCriticalRate = baseCriticalRate + (snapshot.criticalRate ?? 0) + sharpEyes.criticalRate;

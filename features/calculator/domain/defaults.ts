@@ -21,11 +21,11 @@ export function createDefaultInput(job: JobId): CalculatorInput {
   return {
     character: {
       job,
-      ...(job === "aran" ? { aranWeaponConstant: "5", aranFlatAttack: "0", aranCombo: "0", aranComboCritical: false } : {}),
+      ...(job === "aran" ? { aranWeaponConstant: "5", aranFlatAttack: "0", aranCombo: "0", aranComboCritical: true } : {}),
       level: "160",
       mapleWarrior: 20,
       skillPercent: String(rule.defaultSkillPercent),
-      sharpEyes: "none",
+      sharpEyes: job === "aran" ? "usable" : "none",
       monsterDefense: "",
       bossAndTotalDamage: "",
       ignoreDefense: "",
