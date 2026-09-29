@@ -111,7 +111,6 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     if (!raw.trim()) issues.push({ severity: "error", code: "ARAN_REFERENCE_REQUIRED", path: `character.${field}`, message: "아란 참고 모델의 전투 조건을 입력해주세요. 빈칸은 자동 확정하지 않습니다." });
     return readNumber(raw, { path: `character.${field}`, min, max, integer }, issues);
   };
-  if (input.character.job === "aran" && !(Number(input.character.skillPercent) > 0)) issues.push({ severity: "error", code: "ARAN_REFERENCE_REQUIRED", path: "character.skillPercent", message: "아란 참고 환산공에 사용할 타격 배율을 입력해주세요." });
   const character: NormalizedCharacterInput = {
     aranWeaponConstant: aranNumber("aranWeaponConstant", 10, 0.01),
     aranFlatAttack: aranNumber("aranFlatAttack", 9999, 0, true),
@@ -121,8 +120,8 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     job: input.character.job,
     level,
     mapleWarrior: input.character.mapleWarrior,
-    skillPercent: readNumber(input.character.skillPercent, {
-      path: "character.skillPercent", min: input.character.job === "aran" ? 0.01 : 0, max: 10000,
+    skillPercent: input.character.job === "aran" ? 100 : readNumber(input.character.skillPercent, {
+      path: "character.skillPercent", min: 0, max: 10000,
     }, issues),
     sharpEyes: input.character.sharpEyes,
     monsterDefense: readNumber(input.character.monsterDefense, {

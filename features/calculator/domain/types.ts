@@ -133,7 +133,7 @@ export type CalculationResult = {
   };
   pureMain: number;
   pureSub: number;
-  criticalStats?: { baseRate: number; extraRate: number; buffRate: number; baseDamage: number; buffDamage: number };
+  criticalStats?: { baseRate: number; extraRate: number; buffRate: number; baseDamage: number; buffDamage: number; totalDamage?: number; damageInterpretation?: "total" | "additional" };
   windowStats?: { totalDamagePercent: number; bossDamagePercent: number; ignoreDefensePercent: number; criticalRate: number };
   issues: ValidationIssue[];
 };

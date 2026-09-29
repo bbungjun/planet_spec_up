@@ -191,9 +191,9 @@ export function CharacterPanel({
           <button type="button" className="secondary-button" onClick={() => setPendingHighMastery(null)}>취소</button>
         </div>}
         <div className="field-grid">
-          {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "기타·콤보 추가 공격력 (하이 마스터리 제외)", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"], ["skillPercent", "참고 타격 배율%", 0.01, 10000, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
+          {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "기타·콤보 추가 공격력 (하이 마스터리 제외)", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
         </div>
-        <small>마스터20 기준: 크확10%·크리 증가분100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
+        <small>마스터20 기준: 크확10%·크리 총비율100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 크리데미지는 일반 피해 대비 총비율입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
       </fieldset>}
 
       <dl className="job-summary" aria-label="현재 직업 규칙">

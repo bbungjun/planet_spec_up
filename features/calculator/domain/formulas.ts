@@ -29,6 +29,10 @@ export const calculateCriticalMultiplier = (
   skillPercent: number,
 ) => skillPercent > 0 ? 1 + (effectiveCriticalRate(rate) / 100) * (damage / skillPercent) : 1;
 
+/** Total critical damage relative to an ordinary hit: 235% means 2.35 times. */
+export const calculateTotalCriticalMultiplier = (rate: number, totalDamagePercent: number) =>
+  1 + (effectiveCriticalRate(rate) / 100) * (totalDamagePercent / 100 - 1);
+
 export const calculateStatAttack = (
   main: number,
   sub: number,

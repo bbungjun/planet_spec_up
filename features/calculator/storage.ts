@@ -57,14 +57,15 @@ function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): b
 function isCharacterInput(value: unknown): value is CharacterInput {
   const optional = ["totalDamagePercent", "bossDamagePercent", "guildBossPercent", "guildIgnorePercent", "guildAttackFlat", "guildAccuracyFlat", "pureMain", "pureSub", "aranWeaponConstant", "aranFlatAttack", "aranCombo", "aranComboCritical", "aranHighMastery"];
   if (!isRecord(value) || !hasOnlyKeys(
-    Object.fromEntries(Object.entries(value).filter(([key]) => !optional.includes(key))), characterKeys,
+    { ...(value.job === "aran" && !Object.hasOwn(value, "skillPercent") ? { skillPercent: "" } : {}),
+      ...Object.fromEntries(Object.entries(value).filter(([key]) => !optional.includes(key))) }, characterKeys,
   )) return false;
   if (optional.some(key => Object.hasOwn(value, key) && typeof value[key] !== (["aranComboCritical", "aranHighMastery"].includes(key) ? "boolean" : "string"))) return false;
 
   return (value.job === "marksman" || value.job === "corsair" || value.job === "night_lord" || value.job === "aran")
     && typeof value.level === "string"
     && (value.mapleWarrior === 0 || value.mapleWarrior === 20 || value.mapleWarrior === 30)
-    && typeof value.skillPercent === "string"
+    && (typeof value.skillPercent === "string" || (value.job === "aran" && !Object.hasOwn(value, "skillPercent")))
     && (value.sharpEyes === "none" || value.sharpEyes === "usable" || value.sharpEyes === "sharp_30")
     && typeof value.monsterDefense === "string"
     && typeof value.bossAndTotalDamage === "string"
