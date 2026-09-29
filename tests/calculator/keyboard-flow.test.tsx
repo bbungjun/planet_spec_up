@@ -21,7 +21,7 @@ it("moves through visible fields and equipment slots in deterministic order", as
   await user.keyboard("{Enter}");
   expect(screen.getByLabelText("펜던트 1 STR")).toHaveFocus();
 
-  for (const label of ["펜던트 1 DEX%", "펜던트 1 STR%", "펜던트 1 공격력", "펜던트 1 공격력%", "펜던트 1 요구 레벨", "펜던트 1 요구 STR"]) {
+  for (const label of ["펜던트 1 DEX%", "펜던트 1 STR%", "펜던트 1 공격력", "펜던트 1 공격력%", "펜던트 1 크리티컬 확률%", "펜던트 1 요구 레벨", "펜던트 1 요구 STR"]) {
     await user.keyboard("{Enter}");
     expect(screen.getByLabelText(label)).toHaveFocus();
   }

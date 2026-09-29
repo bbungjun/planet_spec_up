@@ -36,10 +36,10 @@ it("follows the selected weapon and combat target, with fixed pure stats and liv
 it("uses the same critical contributions as the actual damage formula",()=>{
   const input=createDefaultInput("marksman");Object.assign(input.character,{criticalRate:"5",sharpEyes:"sharp_30"});
   const result=calculateDamageResult(input);
-  expect(result.criticalStats).toEqual({baseRate:40,extraRate:5,buffRate:15,baseDamage:100,buffDamage:140});
+  expect(result.criticalStats).toEqual({baseRate:40,equipmentRate:0,extraRate:5,buffRate:15,baseDamage:100,buffDamage:140,totalDamage:240,damageInterpretation:"additional"});
   render(<PresetStatWindow input={input} result={result} buffSummary="공격력 버프 없음"/>);
   expect(screen.getByText("60%")).toBeInTheDocument();expect(screen.getByText("240%")).toBeInTheDocument();
-  expect(screen.getByText("×1.533")).toBeInTheDocument();expect(screen.getByText("기본 40 + 추가 5 + 버프 15")).toBeInTheDocument();
+  expect(screen.getByText("×1.533")).toBeInTheDocument();expect(screen.getByText("기본 40 + 장비 0 + 기타 5 + 버프 15")).toBeInTheDocument();
   expect(screen.getByText("순수 스탯 추정")).toBeInTheDocument();
 });
 it("shows Night Lord's actual main/sub axes and STR without inventing a base split",()=>{

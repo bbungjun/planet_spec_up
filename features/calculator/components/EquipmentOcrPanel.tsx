@@ -353,6 +353,7 @@ export function EquipmentOcrPanel({
     { field: "subPercent", label: `인식 ${rule.subStat}%`, max: 999, step: "any" },
     { field: "attackFlat", label: "인식 공격력", max: 9999, step: 1 },
     { field: "attackPercent", label: "인식 공격력%", max: 999, step: "any" },
+    { field: "criticalRate", label: "인식 크리티컬 확률%", max: 100, step: "any" },
     { field: "requiredLevel", label: "인식 요구 레벨", max: 9999, step: 1 },
     { field: "requiredSub", label: `인식 요구 ${rule.subStat}`, max: 9999, step: 1 },
     { field: "totalDamagePercent", label: "인식 총데미지%", max: 999, step: "any" },

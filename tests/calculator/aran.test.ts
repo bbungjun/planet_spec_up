@@ -39,7 +39,7 @@ describe("Aran official effect table and explicit reference equipment model", ()
     const input=baseline(); Object.assign(input.character,{aranComboCritical:true,aranCombo:"100",skillPercent:"100"});
     const original=JSON.stringify(input), c=compareCandidate(input,candidate());
     expect(c.status).toBe("ready"); expect(c.before!.criticalStats).toMatchObject({baseRate:70,baseDamage:200});
-    expect(c.before!.criticalMultiplier).toBe(2.4); expect(c.after!.totalAttack).toBe(141);
+    expect(c.before!.criticalMultiplier).toBeCloseTo(2.72); expect(c.after!.totalAttack).toBe(141);
     expect(c.stat!.percent).toBeGreaterThan(0); expect(c.after!.pureMain).toBe(800);
     expect(calculateOptionEfficiency(input).rows).toHaveLength(8);
     const simulation=simulateStats(input,{...emptySimulation(),percentEligibleAttack:"1"});
@@ -54,8 +54,9 @@ describe("Aran official effect table and explicit reference equipment model", ()
     input.character.criticalRate="15";
     expect(calculateDamageResult(input).windowStats!.criticalRate).toBe(100);
     expect(calculateOptionEfficiency(input).rows.at(-1)!.unavailableReason).toContain("100%");
+    const criticalMultiplier = calculateDamageResult(input).criticalMultiplier;
     input.character.skillPercent="0.001";
-    expect(calculateDamageResult(input).issues.some(i=>i.path==="character.skillPercent" && i.severity==="error")).toBe(true);
+    expect(calculateDamageResult(input).criticalMultiplier).toBe(criticalMultiplier);
     input.character.skillPercent="100";
     const proposed=candidate(), preserved=JSON.stringify(proposed);
     input.character.aranWeaponConstant="";

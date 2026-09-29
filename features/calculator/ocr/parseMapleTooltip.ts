@@ -10,6 +10,8 @@ const aliases: Record<string, string> = {
   보스공격시데미지: "보스데미지", 보스공격시대미지: "보스데미지",
   보스몬스터공격시데미지: "보스데미지", 보스몬스터공격시대미지: "보스데미지",
   방어율무시: "방어율무시", 방어력무시: "방어율무시", 몬스터방어율무시: "방어율무시", 몬스터방어력무시: "방어율무시",
+  크리티컬확률: "크리티컬확률", 크리확률: "크리티컬확률", 크리티컬확율: "크리티컬확률", 크리확율: "크리티컬확률",
+  CRITICALRATE: "크리티컬확률", CRITICALCHANCE: "크리티컬확률",
 };
 
 /** Recognize an option heading even if OCR dropped its entire numeric value. */
@@ -55,7 +57,7 @@ export function parseTooltipOption(raw: string): TooltipOption | null {
   const label = known ? aliases[compact] : match[1].trim();
   // A missing percent glyph is ambiguous: retain the raw line for review,
   // instead of treating e.g. an OCR `996` as either 996 damage or 9%.
-  if (["총데미지", "보스데미지", "방어율무시"].includes(label) && match[5] !== "%") return null;
+  if (["총데미지", "보스데미지", "방어율무시", "크리티컬확률"].includes(label) && match[5] !== "%") return null;
   return {
     label,
     value: Number(value), percent: match[5] === "%", requirement: false, raw,

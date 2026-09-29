@@ -55,7 +55,7 @@ afterEach(() => {
 });
 
 describe("EquipmentOcrPanel", () => {
-  const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "" };
+  const clearedDamage = { damagePercent: "", totalDamagePercent: "", bossDamagePercent: "", ignoreDefensePercent: "", criticalRate: "" };
   it("reviews and edits numeric fields without exposing full option lists or raw text editing", async () => {
     const user = userEvent.setup();
     const recognizer = createRecognizer(vi.fn().mockResolvedValue(

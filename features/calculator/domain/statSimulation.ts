@@ -43,7 +43,7 @@ export function simulateStats(input: CalculatorInput, deltas: SimulationInput) {
     next[field] = total;
   }
   const crit = before.criticalStats;
-  if ((crit?.baseRate ?? 0) + (crit?.buffRate ?? 0) + (next.criticalRate ?? 0) > 100)
+  if ((crit?.baseRate ?? 0) + (crit?.equipmentRate ?? 0) + (crit?.buffRate ?? 0) + (next.criticalRate ?? 0) > 100)
     errors.criticalRate = "적용 후 전체 크리확률은 100% 이하여야 합니다.";
   if (blocked || Object.keys(errors).length) return { before, estimated, blocked, errors };
   const after = calculateFromSnapshot(next);
