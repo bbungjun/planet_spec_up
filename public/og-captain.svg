@@ -11,7 +11,7 @@
     <text x="86" y="102" font-size="24" font-weight="700" letter-spacing="3">PLANET EQUIPMENT LAB</text>
     <rect x="909" y="67" width="205" height="46" rx="9" fill="url(#gold)" stroke="#c39749"/>
     <text x="1011" y="97" font-size="20" font-weight="700" text-anchor="middle" fill="#73501c">캡틴 전용 베타</text>
-    <text x="82" y="217" font-size="66" font-weight="800" letter-spacing="-3">캡틴 장비 계산기</text>
+    <text x="82" y="217" font-size="48" font-weight="800" letter-spacing="-2">메이플 플래닛 계산기 | 스공 비교</text>
     <text x="86" y="271" font-size="27" fill="#587789">스크린샷으로 등록하고, 구매 전에 비교하세요.</text>
     <g fill="#eef5f8" stroke="#acc2cf"><rect x="86" y="324" width="320" height="153" rx="10"/><rect x="440" y="324" width="320" height="153" rx="10"/><rect x="794" y="324" width="320" height="153" rx="10"/></g>
     <g font-size="15" font-weight="700" fill="#628ba2" letter-spacing="2"><text x="110" y="362">01 / REGISTER</text><text x="464" y="362">02 / REVIEW</text><text x="818" y="362">03 / COMPARE</text></g>
