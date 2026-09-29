@@ -281,3 +281,83 @@ it("clears a manual ring choice when another photo replaces the draft, while kee
   for(const radio of area.getAllByRole("radio"))expect(radio).not.toBeChecked();expect(area.getByLabelText("새 후보 구매 가격")).toHaveValue(.3);
   expect(area.getByLabelText("원본의 모든 옵션을 확인했습니다")).not.toBeChecked();expect(area.getByRole("button",{name:"후보로 비교"})).toBeDisabled();
 });
+
+async function openManualCandidate() {
+  const user=userEvent.setup();
+  await user.click(await screen.findByRole("button",{name:"비교 카드 추가"}));
+  const dialog=screen.getByRole("dialog",{name:"비교할 장비 추가"});
+  await user.click(within(dialog).getByRole("button",{name:"직접 입력"}));
+  return {user,dialog,area:within(dialog)};
+}
+
+it("adds a photo-free candidate, edits its options, compares presets and saves only original gear",async()=>{
+  const input=seed();input.weaponPresets={active:"boss",entries:{chaos:{weapon:{...input.equipment.weapon!,attackFlat:"200"},monsterDefense:"80"}}};
+  localStorage.setItem(STORAGE_KEY,serializeSetup(input));const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
+  const {user,area}=await openManualCandidate();
+  await user.selectOptions(area.getByLabelText("직접 입력 비교 부위"),"weapon");
+  expect(area.queryByLabelText("비교 후보 스크린샷")).not.toBeInTheDocument();
+  expect(area.getByLabelText("새 후보 공격력",{exact:true})).toHaveValue(null);
+  for(const [label,value] of [["공격력","110"],["요구 레벨","0"],["요구 STR","0"]])fireEvent.change(area.getByLabelText(`새 후보 ${label}`,{exact:true}),{target:{value}});
+  await user.type(area.getByLabelText("새 후보 구매 가격"),"0.3");
+  await user.click(area.getByRole("button",{name:"후보로 비교"}));
+  const card=screen.getByRole("article",{name:"후보 1 비교 결과"});
+  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
+  expect(within(card).getByLabelText("후보 1 1억 메소당 환산공 상승률")).toHaveTextContent("-88.91%");
+  expect(within(card).queryByRole("img")).not.toBeInTheDocument();expect(recognize).not.toHaveBeenCalled();
+  await user.selectOptions(screen.getByLabelText("비교 전투 프리셋"),"chaos");
+  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("현재 4,364");
+  await user.click(within(card).getByRole("button",{name:"후보 1 상세 보기"}));
+  const detail=within(screen.getByRole("dialog",{name:"후보 1 상세"}));
+  fireEvent.change(detail.getByLabelText("후보 1 공격력",{exact:true}),{target:{value:"220"}});
+  await user.click(detail.getByRole("button",{name:"후보 1 상세 닫기"}));
+  expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("4,800");
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
+  await user.click(screen.getByRole("button",{name:"저장"}));const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+  expect(stored.input.equipment.weapon.attackFlat).toBe("200");expect(stored.input.candidates).toBeUndefined();
+});
+
+it("preserves blank manual requirements and withholds percentages until explicitly entered",async()=>{
+  seed();render(<CalculatorApp/>);const {user,area}=await openManualCandidate();
+  await user.selectOptions(area.getByLabelText("직접 입력 비교 부위"),"weapon");
+  fireEvent.change(area.getByLabelText("새 후보 공격력",{exact:true}),{target:{value:"110"}});
+  await user.type(area.getByLabelText("새 후보 구매 가격"),"1");await user.click(area.getByRole("button",{name:"후보로 비교"}));
+  const card=screen.getByRole("article",{name:"후보 1 비교 결과"});
+  expect(card).toHaveTextContent("조건 확인 필요 · 후보 장비의 요구 레벨을 입력해주세요.");
+  expect(within(card).getByLabelText("후보 1 1억 메소당 환산공 상승률")).toHaveTextContent("—");
+  await user.click(within(card).getByRole("button",{name:"후보 1 상세 보기"}));const details=within(screen.getByRole("dialog",{name:"후보 1 상세"}));
+  expect(details.getByLabelText("후보 1 요구 레벨")).toHaveValue(null);expect(details.getByLabelText("후보 1 요구 STR")).toHaveValue(null);
+  fireEvent.change(details.getByLabelText("후보 1 요구 레벨"),{target:{value:"0"}});
+  fireEvent.change(details.getByLabelText("후보 1 요구 STR"),{target:{value:"9999"}});
+  expect(details.getAllByRole("status")[0]).toHaveTextContent("비교 불가");
+  fireEvent.change(details.getByLabelText("후보 1 요구 STR"),{target:{value:"0"}});
+  await user.click(details.getByRole("button",{name:"후보 1 상세 닫기"}));
+  expect(within(card).getByLabelText("후보 1 1억 메소당 환산공 상승률")).not.toHaveTextContent("—");
+});
+
+it("shows existing rings for manual target selection without inheriting their stats",async()=>{
+  const input=seed();input.equipment.ring_1!.attackFlat="5";input.equipment.ring_3!.attackFlat="10";
+  localStorage.setItem(STORAGE_KEY,serializeSetup(input));const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
+  const {user,area}=await openManualCandidate();await user.selectOptions(area.getByLabelText("직접 입력 비교 부위"),"ring_1");
+  expect(area.getByRole("group",{name:"기존 반지 옵션 · 교체 대상 선택"})).toHaveTextContent("공격력10");
+  await user.click(area.getByRole("radio",{name:"반지 3 비교 선택"}));
+  expect(area.getByLabelText("새 후보 공격력",{exact:true})).toHaveValue(null);
+  for(const [label,value] of [["공격력","15"],["요구 레벨","0"],["요구 STR","0"]])fireEvent.change(area.getByLabelText(`새 후보 ${label}`,{exact:true}),{target:{value}});
+  await user.click(area.getByRole("button",{name:"후보로 비교"}));
+  const card=screen.getByRole("article",{name:"후보 1 비교 결과"});expect(card).toHaveTextContent("반지 3 교체 후");
+  const row=within(within(card).getByRole("table",{name:"캐릭터 스탯 변경 전후"})).getByRole("row",{name:/^공격력 /});
+  expect(within(row).getAllByRole("cell").map(cell=>cell.textContent)).toEqual(["115","120","+5"]);
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
+});
+
+it("ignores late photo recognition after switching to manual input and resets a canceled draft",async()=>{
+  let finish!:(value:string)=>void;recognize.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));seed();render(<CalculatorApp/>);const user=userEvent.setup();
+  await user.click(await screen.findByRole("button",{name:"비교 카드 추가"}));const dialog=screen.getByRole("dialog",{name:"비교할 장비 추가"});const area=within(dialog);
+  await user.upload(area.getByLabelText("비교 후보 스크린샷"),image());await user.click(area.getByRole("button",{name:"직접 입력"}));finish("공격력 +999");
+  fireEvent.change(area.getByLabelText("새 후보 공격력",{exact:true}),{target:{value:"120"}});
+  await user.type(area.getByLabelText("새 후보 구매 가격"),"0.3");
+  await user.click(area.getByRole("button",{name:"사진 등록"}));await user.click(area.getByRole("button",{name:"직접 입력"}));
+  expect(area.getByLabelText("새 후보 공격력",{exact:true})).toHaveValue(120);expect(area.getByLabelText("새 후보 구매 가격")).toHaveValue(.3);
+  expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  fireEvent(dialog,new Event("cancel",{cancelable:true}));expect(screen.getByRole("button",{name:"비교 카드 추가"})).toHaveFocus();
+  const next=await openManualCandidate();expect(next.area.getByLabelText("새 후보 공격력",{exact:true})).toHaveValue(null);expect(next.area.getByLabelText("새 후보 구매 가격")).toHaveValue(null);
+});

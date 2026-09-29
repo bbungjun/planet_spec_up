@@ -9,7 +9,7 @@ import { createBrowserTooltipRecognizer, recognitionErrorMessage, type TooltipRe
 import { existingDuplicate, imageFingerprint, matchingSlots, occupied, tooltipIdentity, validReplacement, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
 import { batchConcurrency, recognizeBatch, type BatchRecognitionResult } from "../ocr/recognizeBatch.client";
 import type { OcrBounds, OcrReview, StatReplacement } from "../ocr/types";
-import { mapReviewedStats, reviewBlocked, reviewQuestions, reviewText } from "../ocr/reviewRecognition";
+import { mapReviewedStats, overrideReviewRequirement, reviewBlocked, reviewQuestions, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import type { OcrDestination } from "../ocr/batch";
@@ -279,7 +279,11 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
               <div className="equipment-ocr-proposal-grid">{fields.map(([key, label]) => <div className="field" key={key}>
                 <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 인식 {label}</label>
                 <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
-                  value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied"} onChange={event => edit(index, {replacement: {...row.replacement!, [key]: event.currentTarget.value}, overrides: { ...row.overrides, [key]: event.currentTarget.value }})} />
+                  value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied"} onChange={event => {
+                    const value = event.currentTarget.value, review = overrideReviewRequirement(row.review, job, key, value);
+                    edit(index, { replacement: {...row.replacement!, [key]: value}, overrides: { ...row.overrides, [key]: value },
+                      review, text: review ? reviewText(review) : row.text });
+                  }} />
               </div>)}</div>
             </details>
           </>}

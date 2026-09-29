@@ -25,7 +25,7 @@ import { parseMapleTooltip } from "../ocr/parseMapleTooltip";
 import type { OcrBounds, OcrReview, OcrTarget, OcrSource, StatReplacement } from "../ocr/types";
 import { isPendantCategory, pendantFromName, PENDANT_SLOTS } from "../domain/pendants";
 import { PendantSelect } from "./PendantSelect";
-import { mapReviewedStats, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
+import { mapReviewedStats, overrideReviewRequirement, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
@@ -324,6 +324,9 @@ export function EquipmentOcrPanel({
 
   const updateProposal = (field: keyof StatReplacement, value: string) => {
     setCandidateConfirmed(false);
+    const nextReview = overrideReviewRequirement(review, target.job, field, value);
+    setReview(nextReview);
+    if (nextReview && nextReview !== review) setRecognizedText(reviewText(nextReview));
     setOverrides(current => ({ ...current, [field]: value }));
     setProposal((current) => current === null
       ? current

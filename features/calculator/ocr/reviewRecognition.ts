@@ -1,7 +1,8 @@
 import { JOB_RULES } from "../domain/job-rules";
 import type { JobId } from "../domain/types";
 import { isKnownEquipmentCategory, parseEquipmentCategory, parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
-import type { OcrBounds, OcrReading, OcrReview, OcrReviewLine, StatReplacement, TooltipOption } from "./types";
+import type { LocatedRequirement, OcrBounds, OcrReading, OcrReview, OcrReviewLine, RequirementObservation, StatReplacement, TooltipOption } from "./types";
+import { verifyRequirementRecovery } from "./verifyRequirementRecovery";
 
 const combatLabels = new Set(["STR", "DEX", "INT", "LUK", "올스탯", "공격력", "총데미지", "보스데미지", "방어율무시"]);
 const requirementLabel = (text: string): string | null => readTooltipRequirement(text)?.label ?? null;
@@ -149,11 +150,14 @@ export function buildOcrReview(input: OcrReading[], warnings: string[] = []): Oc
   });
   lines.sort((a, b) => (a.bounds?.y ?? 0) - (b.bounds?.y ?? 0));
   const categoryConflict = new Set(categories.map(item => item.value)).size > 1;
-  return { category: categoryConflict ? null : category, lines, warnings: [...warnings, ...(categoryConflict ? ["장비 부위가 서로 다르게 읽혔어요. 적용 위치를 선택해주세요."] : [])] };
+  return { category: categoryConflict ? null : category, lines,
+    ...(input.some(reading => reading.provenance?.role === "discovery") ? { initialReadings: input } : {}),
+    warnings: [...warnings, ...(categoryConflict ? ["장비 부위가 서로 다르게 읽혔어요. 적용 위치를 선택해주세요."] : [])] };
 }
 
 export function reviewText(review: OcrReview): string {
-  return [...review.lines.filter(line => line.status !== "ignored").map(line => line.text), ...(review.category ? [`장비분류: ${review.category}`] : [])].join("\n");
+  return [...(review.header ? [review.header.name, review.header.marker] : []),
+    ...review.lines.filter(line => line.status !== "ignored").map(line => line.text), ...(review.category ? [`장비분류: ${review.category}`] : [])].join("\n");
 }
 
 /** Only observed or explicitly confirmed keys replace existing gear. */
@@ -179,8 +183,47 @@ export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement
 }
 
 export function resolveReviewLine(review: OcrReview, id: string, text: string | null): OcrReview {
-  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored" }
-    : { ...line, text, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
+  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined }
+    : { ...line, text, recovery: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
+}
+
+/** Numeric proposal edits are explicit human overrides too, even when the
+ * issue-line editor is never opened. Preserve other fields and clear proof. */
+export function overrideReviewRequirement(review: OcrReview | null, job: JobId, field: keyof StatReplacement, value: string): OcrReview | null {
+  if (!review || (field !== "requiredLevel" && field !== "requiredSub")) return review;
+  const label = field === "requiredLevel" ? "LEV" : JOB_RULES[job].subStat;
+  let next = review;
+  for (const line of review.lines) if ((line.recovery || line.readings.some(reading => reading.provenance?.role === "verification"))
+    && (line.recovery?.target.field ?? readTooltipRequirement(line.text)?.label) === label) {
+    next = resolveReviewLine(next, line.id, value.trim() ? `REQ ${label} : ${value}` : null);
+  }
+  return next;
+}
+
+/** One finalized review is shared by display, blocking, text and stat mapping.
+ * Raw discovery evidence remains visible even when original verification wins. */
+export function applyRequirementRecovery(review: OcrReview, target: LocatedRequirement, observations: RequirementObservation[]): OcrReview {
+  const line = review.lines.find(line => line.id === target.lineId);
+  if (!line || line.status === "confirmed" || line.status === "ignored" || !line.readings.length
+    || target.rowId !== line.id || !line.bounds
+    || (Object.keys(line.bounds) as Array<keyof OcrBounds>).some(key => Math.abs(line.bounds![key] - target.rowBounds[key]) > 1e-8)
+    || line.readings.some(reading => !reading.provenance || reading.provenance.role !== "discovery"
+      || reading.provenance.sourceId !== target.sourceId || reading.provenance.operationId !== target.operationId)) return review;
+  const identifiedLabels = new Set(line.readings.map(reading => readTooltipRequirement(reading.text)?.label).filter(label => label !== undefined));
+  if (identifiedLabels.size !== 1 || !identifiedLabels.has(target.field)) return review;
+  const recovery = verifyRequirementRecovery(target, observations);
+  if (recovery.status === "verified") {
+    recovery.supersededReadingIds = line.readings.filter(reading => {
+      const option = parseTooltipOption(reading.text);
+      return !option?.requirement || option.label !== target.field || option.value !== recovery.value;
+    }).map(reading => reading.provenance!.readingId);
+    if (recovery.supersededReadingIds.length) recovery.reason = "initial-reading-superseded";
+  }
+  const updated: OcrReviewLine = { ...line, recovery, readings: [...line.readings, ...observations.flatMap(observation => observation.readings)],
+    text: recovery.status === "verified" ? `REQ ${target.field} : ${recovery.value}` : line.text,
+    status: recovery.status === "verified" ? "recognized" : "check",
+    reason: recovery.status === "verified" ? undefined : "원본 영역의 요구 조건을 일치하게 확인하지 못했어요. 원본과 대조해주세요." };
+  return { ...review, lines: review.lines.map(item => item.id === line.id ? updated : item) };
 }
 
 export function editedTextReview(text: string): OcrReview {

@@ -286,9 +286,9 @@ describe("calculator app", () => {
 
   it("publishes the Korean product metadata and document language", () => {
     expect(PRODUCT_METADATA).toMatchObject({
-      title: "플래닛 캡틴 장비 계산기 | 베타",
+      title: "메이플 플래닛 계산기 | 스공 비교",
       description:
-        "캡틴 전용 베타. 장비 스크린샷으로 세팅을 등록하고 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다.",
+        "메이플 플래닛 장비 스크린샷으로 최대 스탯공·환산공과 구매 후보의 가격 대비 효율을 비교합니다. 현재 베타는 캡틴만 지원합니다.",
     });
 
     const layout = RootLayout({ children: <main>계산기</main> });
