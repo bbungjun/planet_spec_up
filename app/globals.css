@@ -1381,6 +1381,10 @@ button:disabled { cursor: not-allowed; }
 .candidate-dialog-heading h3 { margin: 0; font-size: 1.12rem; }
 .candidate-import-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; }
 .candidate-import-price { margin-top: 16px; max-width: 280px; }
+.candidate-input-method { display: flex; gap: 8px; margin-bottom: 16px; }
+.candidate-input-method button { flex: 1; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--text); cursor: pointer; }
+.candidate-input-method button[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.candidate-manual-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
 .candidate-slot-review { padding: 12px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .candidate-slot-review p { margin: 0 0 10px; }
 .candidate-dialog label { display: flex; flex-direction: column; gap: 6px; font-size: .8rem; color: var(--muted); }

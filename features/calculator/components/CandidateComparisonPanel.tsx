@@ -158,6 +158,8 @@ function CandidateDetails({ input, candidate, onChange }: { input: CalculatorInp
 export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, onEditBaseStats }: { input: CalculatorInput; initialSlot: EquipmentSlot; onPresetSelect?: (id: WeaponPresetId) => void; onEditBaseStats: () => void }) {
   const [candidates, setCandidates] = useState<PurchaseCandidate[]>([]);
   const [importOpen, setImportOpen] = useState(false);
+  const [inputMethod, setInputMethod] = useState<"photo" | "manual">("photo");
+  const [manualEquipment, setManualEquipment] = useState<EquipmentInput>(() => candidateEquipment({}));
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [draftSlot, setDraftSlot] = useState<EquipmentSlot>(() => comparableSlots(input).includes(initialSlot) ? initialSlot : "weapon");
   const [name, setName] = useState(""), [price, setPrice] = useState("");
@@ -171,7 +173,13 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
     board.current?.querySelector<HTMLElement>(`[data-candidate-id="${lastAddedId}"]`)?.scrollIntoView?.({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [lastAddedId]);
   const changeCandidate = (next: PurchaseCandidate) => setCandidates(current => current.map(item => item.id === next.id ? next : item));
-  const openImport = () => { setDraftSlot(slots.includes(initialSlot) ? initialSlot : "weapon"); setName(`후보 ${nextNumber.current}`); setPrice(""); setImportOpen(true); };
+  const openImport = () => { setDraftSlot(slots.includes(initialSlot) ? initialSlot : "weapon"); setName(`후보 ${nextNumber.current}`); setPrice(""); setInputMethod("photo"); setManualEquipment(candidateEquipment({})); setImportOpen(true); };
+  const addCandidate = (candidate: Omit<PurchaseCandidate, "id">) => {
+    const id = crypto.randomUUID();
+    nextNumber.current += 1;
+    setCandidates(current => [...current, { ...candidate, id }]);
+    setImportOpen(false); setLastAddedId(id);
+  };
   return <section className="panel candidate-comparison" id="candidate-comparison" aria-label="구매 후보 비교" data-candidate-comparison>
     <div className="game-window-heading"><span className="game-window-label" aria-hidden="true">ITEM COMPARISON</span><span>구매 후보 비교</span></div>
     <div className="comparison-toolbar"><div><h2>장비 비교 <span>{candidates.length}</span></h2></div>
@@ -184,16 +192,43 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
     </div>
     <p className="comparison-footnote">구매 후보·사진·가격은 임시 비교용이며, 새로고침하거나 페이지를 닫으면 사라집니다.</p>
     {importOpen && <CandidateDialog title="비교할 장비 추가" onClose={() => setImportOpen(false)}>
-      <EquipmentOcrPanel key={`${draftSlot}:${activeWeaponPreset(input)}`} target={{ job: input.character.job, slot: draftSlot }} slotLabel="구매 후보" purpose="candidate"
+      <div className="candidate-input-method" role="group" aria-label="후보 입력 방식">
+        <button type="button" aria-pressed={inputMethod === "photo"} onClick={() => setInputMethod("photo")}>사진 등록</button>
+        <button type="button" aria-pressed={inputMethod === "manual"} onClick={() => setInputMethod("manual")}>직접 입력</button>
+      </div>
+      {inputMethod === "manual" ? <form onSubmit={event => {
+        event.preventDefault();
+        if (!slots.includes(draftSlot)) return;
+        addCandidate({ name: (isPendantSlot(input, draftSlot) && pendantLabel(manualEquipment.pendantId)) || name, price,
+          job: input.character.job, slot: draftSlot, category: null, inputMethod: "manual",
+          equipment: candidateEquipment({ ...manualEquipment, pendantId: isPendantSlot(input, draftSlot) ? manualEquipment.pendantId : undefined }) });
+      }}>
+        <div className="candidate-import-fields">
+          <label>비교 부위<select aria-label="직접 입력 비교 부위" value={slots.includes(draftSlot) ? draftSlot : ""} required onChange={event => setDraftSlot(event.target.value as EquipmentSlot)}>
+            <option value="" disabled>부위 선택</option>{slots.map(slot => <option key={slot} value={slot}>{getEquipmentSlotLabel(input, slot)}</option>)}
+          </select></label>
+          <label>가격 (억 메소)<input aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label>
+        </div>
+        {RING_SLOTS.includes(draftSlot) && <RingComparisonTargets job={input.character.job} selected={draftSlot}
+          choices={RING_SLOTS.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
+          onSelect={setDraftSlot} />}
+        {isPendantSlot(input, draftSlot) && <PendantSelect label="후보 펜던트 종류" value={manualEquipment.pendantId}
+          onChange={pendantId => setManualEquipment(current => ({ ...current, pendantId }))} />}
+        <div className="candidate-option-grid">{EQUIPMENT_FIELD_DEFINITIONS.filter(field => field.field !== "damagePercent").map(({ field, suffix, max, step }) => {
+          const rule = JOB_RULES[input.character.job], label = suffix(rule.mainStat, rule.subStat);
+          return <label key={field}>{label}<input type="number" min="0" max={max} step={step} value={manualEquipment[field] ?? ""}
+            aria-label={`새 후보 ${label}`} placeholder={field.startsWith("required") ? "미입력" : "0"}
+            onChange={event => setManualEquipment(current => ({ ...current, [field]: event.target.value }))}/></label>;
+        })}</div>
+        <div className="candidate-manual-actions"><button type="submit" className="equipment-ocr-apply">후보로 비교</button></div>
+      </form> : <EquipmentOcrPanel key={`${draftSlot}:${activeWeaponPreset(input)}`} target={{ job: input.character.job, slot: draftSlot }} slotLabel="구매 후보" purpose="candidate"
         candidateSlots={slots.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
         uploadFields={<div className="candidate-import-fields candidate-import-price"><label>가격 (억 메소)<input aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label></div>}
         onApply={(target, replacement, source) => {
         if (target.job !== input.character.job || !slots.includes(target.slot)) return;
-        const id = crypto.randomUUID(), candidateName = pendantLabel(source?.pendantId) || source?.name || name;
-        nextNumber.current += 1;
-        setCandidates(current => [...current, { id, name: candidateName, price, job: target.job, slot: target.slot, category: source?.category ?? null, equipment: candidateEquipment({ ...replacement, ...(isPendantSlot(input, target.slot) && source?.pendantId !== undefined ? { pendantId: source.pendantId } : {}) }), image: source?.file ?? undefined, previewImage: source?.previewFile ?? undefined }]);
-        setImportOpen(false); setLastAddedId(id);
-      }}/>
+        const candidateName = pendantLabel(source?.pendantId) || source?.name || name;
+        addCandidate({ name: candidateName, price, job: target.job, slot: target.slot, category: source?.category ?? null, equipment: candidateEquipment({ ...replacement, ...(isPendantSlot(input, target.slot) && source?.pendantId !== undefined ? { pendantId: source.pendantId } : {}) }), image: source?.file ?? undefined, previewImage: source?.previewFile ?? undefined });
+      }}/>}
     </CandidateDialog>}
     {detailCandidate && <CandidateDialog title={`${detailCandidate.name} 상세`} onClose={() => setDetailsId(null)}><CandidateDetails input={input} candidate={detailCandidate} onChange={changeCandidate}/></CandidateDialog>}
   </section>;
