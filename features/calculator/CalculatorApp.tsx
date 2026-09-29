@@ -334,6 +334,13 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
     }
   };
 
+  const handleShowAllOptions = () => {
+    setInputMode("bulk");
+    window.requestAnimationFrame(() => {
+      document.getElementById("equipment-editor-area")?.scrollIntoView({ block: "start" });
+    });
+  };
+
   const handleNavigate = (path: string) => {
     const [group, candidate, field] = path.split(".");
     let targetMode: InputMode = "cards";
@@ -401,9 +408,11 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
             onSelectSlot={setSelectedSlot}
             onAddSlot={handleAddSlot}
             onRemoveSlot={handleRemoveSlot}
+            bulkActive={inputMode === "bulk"}
+            onShowAllOptions={handleShowAllOptions}
           />
         </div>
-        <div className="calculator-center" aria-label="장비 입력">
+        <div className="calculator-center" id="equipment-editor-area" aria-label="장비 입력">
           {inputMode === "cards" ? (
             <EquipmentEditor
               input={input}

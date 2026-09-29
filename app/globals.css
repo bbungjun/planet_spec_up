@@ -486,6 +486,9 @@ time,
   font-size: 0.75rem;
 }
 
+.equipment-all-options { width: 100%; min-height: 44px; margin-bottom: 12px; }
+.equipment-all-options[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
 .equipment-add-form {
   display: grid;
   gap: 8px;
