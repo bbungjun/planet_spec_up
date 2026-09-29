@@ -17,14 +17,17 @@ it("follows the selected weapon and combat target, with fixed pure stats and liv
   await waitFor(()=>expect(within(sheet).getByLabelText("DEX 순수 및 추가 스탯")).toHaveTextContent("순수 1,000 + 추가 1,306"));
   expect(within(sheet).getByLabelText("STR 순수 및 추가 스탯")).toHaveTextContent("순수 22 + 추가 61");
   expect(within(sheet).getByLabelText("스탯 공격력 결과")).toHaveTextContent("8,552");
-  expect(within(sheet).getByLabelText("환산 공격력 결과")).toHaveTextContent("11,545");
+  expect(within(sheet).getByLabelText("환산 공격력 결과")).toHaveTextContent("13,255");
+  expect(sheet).toHaveTextContent("어드밴스드 호밍+20%p");
   const efficiency=screen.getByRole("region",{name:"옵션 효율"});
   expect(within(efficiency).getByLabelText("보공 +1% 주스탯 환산")).not.toHaveTextContent(/^0 DEX$/);
   const user=userEvent.setup();await user.click(screen.getByRole("button",{name:"사냥용 프리셋 선택"}));
   expect(sheet).toHaveTextContent("사냥용");expect(within(sheet).getByLabelText("환산 공격력 결과")).toHaveTextContent("9,407");
+  expect(sheet).toHaveTextContent("어드밴스드 호밍미적용");
   expect(within(efficiency).getByLabelText("보공 +1% 주스탯 환산")).toHaveTextContent("0 DEX");
   await user.click(screen.getByRole("button",{name:"카오스 보스용 프리셋 선택"}));
   expect(sheet).toHaveTextContent("카오스 보스용");expect(within(sheet).getByLabelText("DEX 순수 및 추가 스탯")).toHaveTextContent("순수 1,000 + 추가 1,326");
+  expect(sheet).toHaveTextContent("어드밴스드 호밍+20%p");
   const before=within(sheet).getByLabelText("스탯 공격력 결과").textContent;
   const efficiencyBefore=efficiency.textContent;
   await user.click(screen.getByRole("button",{name:"핑크빈 버프 적용"}));

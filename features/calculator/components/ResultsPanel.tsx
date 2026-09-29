@@ -164,7 +164,7 @@ export function ResultsPanel({
       <details className="preset-formula-details">
         <summary>계산 근거</summary>
         <p>최대 스탯공 = ⌊({rule.mainStat} × {rule.weaponConstant} + {rule.subStat}{extraStat}) × 공격력 ÷ 100⌋</p>
-        <p>환산공 = ⌊스탯공 × (1 + 보공·총뎀% ÷ 100) × 방어율 배율 × 크리 배율⌋</p>
+        <p>환산공 = ⌊스탯공 × (1 + (적용 보공·총뎀{result.formulaInputs.homingDamagePercent ? " + 호밍 20%p" : ""}) ÷ 100) × 방어율 배율 × 크리 배율⌋</p>
         <p>타격당 평균 데미지 {input.character.skillPercent || "0"}% 기준</p>
       </details>
 

@@ -32,6 +32,7 @@ export function PresetStatWindow({input,result,buffSummary,title,labelPrefix = "
         <div><dt>크리데미지</dt><dd><strong>{critical?`${number(critical.baseDamage+critical.buffDamage)}%`:"—"}</strong>{critical&&<small>기본 {number(critical.baseDamage)} + 버프 {number(critical.buffDamage)}</small>}</dd></div>
         <div><dt>크리 배율</dt><dd><strong>×{result.criticalMultiplier.toFixed(3)}</strong></dd></div>
         <div><dt>보공·총뎀 적용값</dt><dd><strong>{number(result.formulaInputs.bossAndTotalDamage)}%</strong></dd></div>
+        {input.character.job==="corsair" && <div><dt>어드밴스드 호밍</dt><dd><strong>{result.formulaInputs.homingDamagePercent ? `+${number(result.formulaInputs.homingDamagePercent)}%p` : "미적용"}</strong><small>{preset.id==="hunting" ? "사냥 프리셋 제외" : "보스 표식 대상 · 총뎀·보공에 가산"}</small></dd></div>}
         <div><dt>방어율 배율</dt><dd><strong>×{result.defenseMultiplier.toFixed(3)}</strong></dd></div>
       </dl>
       {(invalid||missingWeapon)&&<p className="preset-stat-input-notice" role="status">{invalid?"입력값 확인 필요":"무기 공격력 입력 필요"}</p>}

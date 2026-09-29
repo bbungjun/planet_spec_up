@@ -26,9 +26,9 @@ it("applies multiple signed deltas with existing floors, fixed pure stats, and s
   const result = simulateStats(input, { ...emptySimulation(), equipmentMain: "10", mainPercent: "5",
     percentEligibleAttack: "10", attackPercent: "5", totalDamagePercent: "9", bossAndTotalDamage: "-10", ignoreDefense: "5" });
   expect(result.after).toMatchObject({ mainStat: 1820, subStat: 24, pureMain: 1000, pureSub: 4,
-    totalAttack: 161, statAttack: 10587, convertedAttack: 13858 });
-  expect(result.before.convertedAttack).toBe(11369);
-  expect(result.converted!.percent).toBeCloseTo((13858 / 11369 - 1) * 100);
+    totalAttack: 161, statAttack: 10587, convertedAttack: 15658 });
+  expect(result.before.convertedAttack).toBe(12836);
+  expect(result.converted!.percent).toBeCloseTo((15658 / 12836 - 1) * 100);
   expect(result.isolated!.percentEligibleAttack.percent).not.toBe(result.converted!.percent);
   expect(input).toEqual(original);
 });

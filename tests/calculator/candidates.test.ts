@@ -7,13 +7,14 @@ it("replaces one item, does not inherit missing boss stats, and preserves all so
  const input=baseline(),original=JSON.stringify(input),other=candidate();const result=compareCandidate(input,other);
  expect(result.status).toBe("ready");expect(result.before!.statAttack).toBe(2218);expect(result.after!.statAttack).toBe(2439);
  expect(result.stat!.difference).toBe(221);expect(result.stat!.percent).toBeCloseTo(221/2218*100);
- expect(result.converted!.after).toBe(2439);expect(result.converted!.difference).toBeLessThan(0);
+ expect(result.converted!.after).toBe(2926);expect(result.converted!.difference).toBeLessThan(0);
  expect(result.after!.pureMain).toBe(600);expect(result.after!.pureSub).toBe(22);expect(JSON.stringify(input)).toBe(original);
 });
 it("compares each candidate independently across the three preset targets",()=>{
  const input=baseline();const one=compareCandidatePresets(input,candidate({slot:"cape",category:"망토",equipment:{...emptyEquipment(),mainFlat:"20",requiredLevel:"0",requiredSub:"0"}}));
  expect(one.map(r=>r.status)).toEqual(["ready","ready","ready"]);expect(one[0].after!.totalAttack).toBe(200);expect(one[1].after!.totalAttack).toBe(100);
  expect(one[1].after!.formulaInputs.bossAndTotalDamage).toBe(50);expect(one[2].after!.formulaInputs.bossAndTotalDamage).toBe(0);
+ expect(one.map(r=>r.after!.formulaInputs.homingDamagePercent)).toEqual([20,20,0]);
  const two=compareCandidate(input,candidate({equipment:{...candidate().equipment,attackFlat:"120"}}));expect(two.before!.totalAttack).toBe(100);expect(two.after!.totalAttack).toBe(120);
 });
 it("compares three glove candidates when unchanged legacy pendants have no kind metadata",()=>{

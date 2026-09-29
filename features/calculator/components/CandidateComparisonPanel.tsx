@@ -182,7 +182,8 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
   };
   return <section className="panel candidate-comparison" id="candidate-comparison" aria-label="구매 후보 비교" data-candidate-comparison>
     <div className="game-window-heading"><span className="game-window-label" aria-hidden="true">ITEM COMPARISON</span><span>구매 후보 비교</span></div>
-    <div className="comparison-toolbar"><div><h2>장비 비교 <span>{candidates.length}</span></h2></div>
+    <div className="comparison-toolbar"><div><h2>장비 비교 <span>{candidates.length}</span></h2>
+      {input.character.job === "corsair" && <p className="comparison-condition" aria-live="polite">{activeWeaponPreset(input) === "hunting" ? "사냥 · 호밍 미적용" : "보스 표식 대상 · 호밍 +20%p"}</p>}</div>
       <div className="comparison-toolbar-actions"><select aria-label="비교 전투 프리셋" value={activeWeaponPreset(input)} disabled={!onPresetSelect} onChange={event => onPresetSelect?.(event.target.value as WeaponPresetId)}>{WEAPON_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select><button type="button" className="comparison-add-button" onClick={openImport} aria-label="비교 후보 추가"><Plus/></button></div>
     </div>
     <div className="comparison-board" ref={board} role="group" aria-label="장비 비교 카드 목록" tabIndex={0}>

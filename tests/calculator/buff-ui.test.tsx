@@ -30,7 +30,7 @@ it("applies the result-panel preview to the main result and all presets without 
   await user.click(selectPinkBean);
   await user.click(selectPinkBean);
   expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("20,346");
-  expect(screen.getByLabelText("환산 공격력 결과")).toHaveTextContent("32,553");
+  expect(screen.getByLabelText("환산 공격력 결과")).toHaveTextContent("36,622");
   expect(screen.getByLabelText("현재 적용 버프")).toHaveTextContent("핑크빈 +35 적용");
   expect(selectPinkBean).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("button", { name: "핑크빈 +35" })).toHaveAttribute("aria-pressed", "true");

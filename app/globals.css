@@ -1307,6 +1307,7 @@ button:disabled { cursor: not-allowed; }
 .candidate-comparison { margin: 28px 0; padding: 24px; scroll-margin-top: 24px; min-width: 0; }
 .comparison-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .comparison-toolbar h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.22rem; }
+.comparison-condition { margin: 4px 0 0; color: var(--muted); font-size: .72rem; }
 .comparison-toolbar h2 > span { display: inline-grid; place-items: center; min-width: 23px; height: 23px; border-radius: 7px; background: var(--accent-soft); color: var(--accent); font-size: .72rem; }
 .comparison-toolbar-actions { display: flex; align-items: center; gap: 8px; }
 .comparison-toolbar select { min-height: 44px; max-width: 165px; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; background: var(--surface); color: var(--text); font: inherit; font-size: .8rem; }

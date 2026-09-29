@@ -55,6 +55,7 @@ it("excludes all boss bonuses in hunting but preserves total damage and additive
   Object.assign(input.equipment.weapon!, {attackFlat: "100", totalDamagePercent: "21", bossDamagePercent: "60", ignoreDefensePercent: "30"});
   const boss = calculateDamageResult(input);
   expect(boss.formulaInputs.bossAndTotalDamage).toBe(126);
+  expect(boss.formulaInputs.homingDamagePercent).toBe(20);
   expect(boss.defenseMultiplier).toBeCloseTo(0.7);
   const weapon = {...input.equipment.weapon!};
   input = switchWeaponPreset(input, "hunting");
@@ -63,10 +64,41 @@ it("excludes all boss bonuses in hunting but preserves total damage and additive
   const hunting = calculateDamageResult(input);
   expect(hunting.statAttack).toBe(boss.statAttack);
   expect(hunting.formulaInputs.bossAndTotalDamage).toBe(31);
+  expect(hunting.formulaInputs.homingDamagePercent).toBe(0);
   expect(hunting.defenseMultiplier).toBeCloseTo(0.7);
   expect(hunting.convertedAttack).toBe(Math.floor(hunting.statAttack * 1.31 * .7));
   input.equipment.weapon.ignoreDefensePercent = "100";
   expect(calculateDamageResult(input).defenseMultiplier).toBe(1);
+});
+
+it("adds homing only in Captain boss presets and recalculates after switching or restoring", () => {
+  let input = createDefaultInput("corsair");
+  Object.assign(input.character, { level: "120", pureMain: "600", pureSub: "22", guildBossPercent: "0", guildIgnorePercent: "0", guildAttackFlat: "0", monsterDefense: "0" });
+  Object.assign(input.equipment.weapon!, { attackFlat: "100", bossDamagePercent: "60", totalDamagePercent: "21", requiredLevel: "0", requiredSub: "0" });
+  const weapon = { ...input.equipment.weapon! };
+  const boss = calculateDamageResult(input);
+  expect(boss.formulaInputs).toMatchObject({ bossAndTotalDamage: 81, homingDamagePercent: 20 });
+  expect(boss.convertedAttack).toBe(Math.floor(boss.statAttack * 2.01));
+
+  input = switchWeaponPreset(input, "chaos");
+  input.equipment.weapon = { ...weapon };
+  input.character.monsterDefense = "0";
+  const chaos = calculateDamageResult(input);
+  expect(chaos.statAttack).toBe(boss.statAttack);
+  expect(chaos.convertedAttack).toBe(boss.convertedAttack);
+
+  input = switchWeaponPreset(input, "hunting");
+  input.equipment.weapon = { ...weapon };
+  const hunting = calculateDamageResult(input);
+  expect(hunting.formulaInputs).toMatchObject({ bossAndTotalDamage: 21, homingDamagePercent: 0 });
+  expect(hunting.convertedAttack).toBe(Math.floor(hunting.statAttack * 1.21));
+
+  const restored = deserializeSetup(serializeSetup(input));
+  expect(restored.ok).toBe(true);
+  if (!restored.ok) throw new Error("save failed");
+  const bossAgain = calculateDamageResult(switchWeaponPreset(restored.value.input, "boss"));
+  expect(bossAgain.convertedAttack).toBe(boss.convertedAttack);
+  expect(bossAgain.formulaInputs.homingDamagePercent).toBe(20);
 });
 
 it("preserves ambiguous legacy data and marks it for splitting instead of guessing", () => {
