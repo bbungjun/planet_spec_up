@@ -24,6 +24,7 @@ export type NormalizedCharacterInput = {
   aranFlatAttack: number;
   aranCombo: number;
   aranComboCritical: boolean;
+  aranHighMastery: boolean;
   skillPercent: number;
   sharpEyes: CalculatorInput["character"]["sharpEyes"];
   monsterDefense: number;
@@ -116,6 +117,7 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
     aranFlatAttack: aranNumber("aranFlatAttack", 9999, 0, true),
     aranCombo: aranNumber("aranCombo", 99999, 0, true),
     aranComboCritical: input.character.job === "aran" && (input.character.aranComboCritical ?? true),
+    aranHighMastery: input.character.job === "aran" && input.character.aranHighMastery === true,
     job: input.character.job,
     level,
     mapleWarrior: input.character.mapleWarrior,

@@ -35,6 +35,7 @@ export type CalculationSnapshot = {
   aranFlatAttack?: number;
   aranCombo?: number;
   aranComboCritical?: boolean;
+  aranHighMastery?: boolean;
   level: number;
   mapleWarrior: MapleWarrior;
   equipmentMain: number;
@@ -154,7 +155,7 @@ export function calculateFromSnapshot(
     : 0;
   const totalAttack = calculateTotalAttack(
     snapshot.percentEligibleAttack,
-    snapshot.flatAttack + guildAttack + levelBonus.attack + (snapshot.job === "aran" ? (snapshot.aranFlatAttack ?? 0) : 0),
+    snapshot.flatAttack + guildAttack + levelBonus.attack + (snapshot.job === "aran" ? (snapshot.aranFlatAttack ?? 0) + (snapshot.aranHighMastery ? 10 : 0) : 0),
     snapshot.attackPercent,
   );
   const statAttack = calculateStatAttack(
@@ -246,6 +247,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     aranFlatAttack: character.aranFlatAttack,
     aranCombo: character.aranCombo,
     aranComboCritical: character.aranComboCritical,
+    aranHighMastery: character.aranHighMastery,
     level: character.level,
     mapleWarrior: character.mapleWarrior,
     equipmentMain: equipment.mainFlat + cashBonus.allStat,

@@ -7,7 +7,7 @@ import { EQUIPMENT_FIELD_DEFINITIONS } from "./EquipmentEditor";
 const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
   level: "레벨",
   aranWeaponConstant: "폴암 계수",
-  aranFlatAttack: "패시브·콤보 추가 공격력",
+  aranFlatAttack: "기타·콤보 추가 공격력 (하이 마스터리 제외)",
   aranCombo: "현재 콤보",
   skillPercent: "타격당 평균 데미지 비율",
   monsterDefense: "몬스터 방어율",

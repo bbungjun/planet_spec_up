@@ -41,6 +41,8 @@ export type CharacterInput = {
   aranFlatAttack?: string;
   aranCombo?: string;
   aranComboCritical?: boolean;
+  /** Separate High Mastery attack; absent legacy saves retain their manual total. */
+  aranHighMastery?: boolean;
   level: string;
   mapleWarrior: MapleWarrior;
   skillPercent: string;
