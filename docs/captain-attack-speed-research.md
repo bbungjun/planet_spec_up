@@ -80,3 +80,7 @@ D가 이미 시전 전체 피해면 타수를 다시 곱하지 않는다. 한 �
 [formulas.ts](../features/calculator/domain/formulas.ts)의 환산공 인자는 스탯공·데미지·방어·크리이며 시간 요소가 없다. [types.ts](../features/calculator/domain/types.ts)에 무기 공속·윈드 부스터 입력이 없다. [huntingSkills.ts](../features/calculator/domain/huntingSkills.ts)와 [HuntingSkillComparison.tsx](../features/calculator/components/HuntingSkillComparison.tsx)는 시전 빈도 없이 최대 참고 피해를 표시한다.
 
 Node 산술로630→600의5%,690→600의15%, 고정 주기의0%, 피해비중70% 조건의 전체3.5%를 확인했다. 문서 링크·공백·스테이징 검사를 수행한다. 앱 코드를 수정하지 않았으므로 기존 테스트·빌드를 반복하지 않는다. 실제 게임·영상·플래닛 DPS 측정·공개 배포는 미실행이다.
+
+## 후속 사용자 계획 범위 — D-165
+
+2026-09-29 사용자는 윈드 부스터 적용 체크박스로 환산공 표시를 치환하는 구현 계획을 요청했고, 버프를 받으면 배틀쉽 캐논만 사용하므로 다른 스킬의 영향은 제외하도록 지정했다. 이 범위에서는 위의 전 스킬 검증·혼합 DPS 제안을 필수 조건으로 삼지 않는다. 최신 계획은 [윈드 부스터 구현 계획](wind-booster-implementation-plan.md)을 따른다. 캐논의 현행 주기·공속 상한·보정률이 미확정이라는 조사 한계와 실제 구현/배포 상태는 유지한다.
