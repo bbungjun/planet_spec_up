@@ -297,12 +297,15 @@ describe("calculator app", () => {
     expect(JSON.stringify(PRODUCT_METADATA)).not.toContain("codex-preview");
   });
 
-  it("uses 44px controls and tabular numerals for editable and result values", () => {
+  it("uses 44px controls and tabular numerals for editable and result values", async () => {
+    const user = userEvent.setup();
     render(<Page />);
+    await user.click(screen.getByRole("button", {name:"무기 편집"}));
+    await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     const level = screen.getByLabelText("레벨");
     const reset = screen.getByRole("button", { name: "초기화" });
-    const result = screen.getByLabelText("환산 공격력 결과");
+    const result = screen.getByLabelText("시뮬레이션 환산 공격력 결과");
 
     expect(window.getComputedStyle(level).minHeight).toBe("44px");
     expect(window.getComputedStyle(reset).minHeight).toBe("44px");
@@ -310,19 +313,6 @@ describe("calculator app", () => {
       .toContain("tabular-nums");
     expect(window.getComputedStyle(result).fontVariantNumeric)
       .toContain("tabular-nums");
-  });
-
-  it("groups the editor and results into the responsive right-hand stack", () => {
-    const { container } = render(<Page />);
-
-    const stack = container.querySelector(".calculator-main");
-    const editor = container.querySelector(".calculator-center");
-    const results = screen.getByRole("complementary", { name: "계산 결과" });
-
-    expect(stack).toBeInTheDocument();
-    expect(stack?.children).toHaveLength(2);
-    expect(stack?.children[0]).toBe(editor);
-    expect(stack?.children[1]).toBe(results);
   });
 
   it("pairs invalid-field text with a visible icon", async () => {
@@ -346,7 +336,7 @@ describe("calculator app", () => {
     render(<Page />);
 
     const surfaces = [
-      screen.getByRole("complementary", { name: "계산 결과" }),
+      screen.getByRole("region", { name: "공격력 버프" }),
       screen.getByRole("button", { name: "펜던트 1 편집" }),
       screen.getByRole("button", { name: "초기화" }),
     ];
@@ -369,12 +359,10 @@ describe("calculator app", () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
 
-    const statAttack = screen.getByLabelText("스탯 공격력 결과");
-    const convertedAttack = screen.getByLabelText("환산 공격력 결과");
-    expect(statAttack).toHaveTextContent(/^810$/); // default guild 5 + projectile 20
-    expect(convertedAttack).toHaveTextContent(/^850$/);
-
+    expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("무기 공격력"), "100");
+    const statAttack = screen.getByLabelText("시뮬레이션 스탯 공격력 결과");
+    const convertedAttack = screen.getByLabelText("시뮬레이션 환산 공격력 결과");
 
     expect(statAttack).toHaveTextContent(/^4,050$/);
     expect(convertedAttack).toHaveTextContent(/^4,252$/);
@@ -389,8 +377,8 @@ describe("calculator app", () => {
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
-    const statAttack = screen.getByLabelText("스탯 공격력 결과");
-    const convertedAttack = screen.getByLabelText("환산 공격력 결과");
+    const statAttack = screen.getByLabelText("시뮬레이션 스탯 공격력 결과");
+    const convertedAttack = screen.getByLabelText("시뮬레이션 환산 공격력 결과");
     expect(statAttack).not.toHaveTextContent(/^0$/);
     expect(convertedAttack).not.toHaveTextContent(/^0$/);
 
@@ -403,8 +391,8 @@ describe("calculator app", () => {
     expect(errorId).not.toBeNull();
     expect(document.getElementById(errorId!))
       .toHaveTextContent("Enter a value from 1 to 220.");
-    expect(statAttack).toHaveTextContent(/^0$/);
-    expect(convertedAttack).toHaveTextContent(/^0$/);
+    expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("레벨")).toHaveAttribute("aria-invalid", "true");
   });
 
   it("offers only Captain on the public beta page", () => {
@@ -549,12 +537,14 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
+    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await user.type(screen.getByLabelText("무기 공격력"), "100");
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20");
     await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
     await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");
     await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용 (+10%)"));
 
-    const results = screen.getByRole("complementary", { name: "계산 결과" });
+    const results = screen.getByRole("region", { name: "적용 후 스탯창" });
     const label = within(results).getByText("보공·총뎀 적용값");
     const evidenceRow = label.closest("div");
     expect(evidenceRow).not.toBeNull();
@@ -565,12 +555,14 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
+    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await user.type(screen.getByLabelText("무기 공격력"), "100");
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20.5");
     await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
     await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");
     await user.click(screen.getByLabelText("길드 액티브 보스 스킬 적용 (+10%)"));
 
-    const results = screen.getByRole("complementary", { name: "계산 결과" });
+    const results = screen.getByRole("region", { name: "적용 후 스탯창" });
     const label = within(results).getByText("보공·총뎀 적용값");
     const evidenceRow = label.closest("div");
     expect(evidenceRow).not.toBeNull();
@@ -582,19 +574,8 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    const results = screen.getByRole("complementary", { name: "계산 결과" });
-    expect(within(results).getByText("계산 근거")).toBeInTheDocument();
-    [
-      "DEX",
-      "STR",
-      "공격력",
-      "크리확률",
-      "크리데미지",
-      "방어율 배율",
-      "크리 배율",
-    ].forEach((label) => {
-      expect(within(results).getByText(label)).toBeInTheDocument();
-    });
+    expect(screen.getByText("비교 계산 기준")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "확인할 항목" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "모자 편집" }));
     await user.type(screen.getByLabelText("모자 DEX"), "-1");

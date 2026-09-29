@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
@@ -29,7 +29,7 @@ it("places the cash panel below guild skills, updates set bonuses, and saves/res
   expect(screen.getByLabelText("캐시 장비 적용 합계")).toHaveTextContent("공격력 +0");
   await user.click(screen.getByRole("checkbox", { name: /^성주의 한벌옷/ }));
   expect(screen.getByLabelText("캐시 장비 적용 합계")).toHaveTextContent("올스탯 +27공격력 +5");
-  expect(screen.getByText("공격력 합산 내역").querySelector("strong")).toHaveTextContent("153");
+  expect(within(screen.getByRole("region", {name:"적용 후 스탯창"})).getByText("공격력").nextElementSibling).toHaveTextContent("153");
   await user.click(screen.getByRole("button", { name: "사냥용 프리셋 선택" }));
   expect(count).toHaveValue(4);
   await user.click(screen.getByRole("button", { name: /^저장$/ }));

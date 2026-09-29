@@ -17,6 +17,8 @@ it("switches to Aran, auto derives combo critical and saves to an isolated devel
   expect(screen.queryByLabelText("불릿·표창 공격력")).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"800"}});
   fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"4"}});
+  fireEvent.click(screen.getByRole("button",{name:"무기 편집"}));
+  fireEvent.change(screen.getByLabelText("무기 공격력"),{target:{value:"100"}});
   fireEvent.click(screen.getByLabelText("콤보 크리티컬20 적용"));
   fireEvent.change(screen.getByLabelText("현재 콤보"),{target:{value:"100"}});
   expect(screen.getByText("기본 70 + 추가 0 + 버프 0")).toBeInTheDocument();
@@ -27,12 +29,12 @@ it("switches to Aran, auto derives combo critical and saves to an isolated devel
   const skill=screen.getByLabelText("참고 타격 배율%");
   expect(document.querySelectorAll("#character-skillPercent")).toHaveLength(1);
   fireEvent.change(skill,{target:{value:"10001"}});
-  expect(screen.getByLabelText("스탯 공격력 결과")).toHaveTextContent("—");
-  expect(screen.getByLabelText("혼테일 예상 스탯공")).toHaveTextContent("—");
+  expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
+  expect(screen.getByRole("region",{name:"확인할 항목"})).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"저장"}));
   expect(window.localStorage.getItem(DEVELOPMENT_STORAGE_KEY)).toBe(saved);
   fireEvent.change(skill,{target:{value:"100"}});
-  expect(screen.getByLabelText("스탯 공격력 결과")).not.toHaveTextContent("—");
+  expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).not.toHaveTextContent("—");
   fireEvent.change(screen.getByLabelText("현재 콤보"),{target:{value:"0"}});
   expect(screen.getByText("기본 10 + 추가 0 + 버프 0")).toBeInTheDocument();
 });

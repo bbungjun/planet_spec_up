@@ -162,7 +162,7 @@ time,
 .app-header h1,
 .panel-heading h2,
 .result-details h3,
-.result-issues h3 {
+.calculation-issues h3 {
   margin: 0;
 }
 
@@ -249,29 +249,7 @@ time,
 .level-achievement { grid-column: 1 / -1; margin: 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--accent); font-size: 0.78rem; line-height: 1.5; }
 @media (max-width: 650px) { .guild-skills-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .result-card small { color: var(--muted); font-size: 0.7rem; }
-.buff-comparison { margin-top: 18px; }
-.buff-comparison h3 { font-size: 0.85rem; margin: 0 0 9px; }
-.buff-comparison-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 6px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer; }
-.buff-comparison-option:hover { border-color: var(--accent); }
-.buff-comparison-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.buff-comparison-label { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-.buff-applied-badge { font-size: 0.65rem; font-weight: 700; }
 .result-card .applied-buff { display: block; margin-top: 4px; color: var(--accent); }
-.buff-comparison small { color: var(--muted); }
-.buff-comparison output { font-weight: 800; }
-.buff-comparison .is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.buff-comparison p { color: var(--muted); font-size: 0.68rem; margin: 8px 0; }
-.additional-buffs { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
-.additional-buffs h3 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; font-size: 0.85rem; }
-.additional-buffs h3 small { color: var(--muted); font-size: 0.7rem; font-weight: 400; }
-.additional-buffs .stackable-buffs { margin-top: 10px; }
-.attack-breakdown { border-top: 1px solid var(--line); margin-top: 16px; }
-.attack-breakdown summary { cursor: pointer; padding: 14px 0; font-size: 0.82rem; min-height: 44px; }
-.attack-breakdown summary strong { float: right; color: var(--accent); }
-.attack-breakdown dl { margin: 0 0 8px; font-size: 0.78rem; }
-.attack-breakdown dl > div { display: flex; justify-content: space-between; gap: 10px; margin: 9px 0; }
-.attack-breakdown dt { color: var(--muted); }
-.attack-breakdown dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 .calculator-left {
   display: grid;
@@ -279,12 +257,6 @@ time,
   gap: 16px;
 }
 
-.calculator-main {
-  display: grid;
-  min-width: 0;
-  gap: 16px;
-  align-items: start;
-}
 
 .calculator-center {
   min-width: 0;
@@ -457,7 +429,7 @@ time,
 }
 
 .equipment-list,
-.result-issues ul {
+.calculation-issues ul {
   display: grid;
   gap: 8px;
   list-style: none;
@@ -581,7 +553,7 @@ time,
 }
 
 .result-details,
-.result-issues {
+.calculation-issues {
   border-top: 1px solid var(--line);
   margin-top: 18px;
   padding-top: 16px;
@@ -709,7 +681,8 @@ time,
 
 .bulk-table-wrap table {
   width: 100%;
-  min-width: 940px;
+  min-width: 1050px;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--surface);
@@ -740,7 +713,7 @@ time,
   background: var(--surface-raised);
   color: var(--muted);
   font-size: 0.72rem;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .bulk-table-wrap th[scope="row"] {
@@ -756,16 +729,21 @@ time,
 .bulk-table-wrap thead th:first-child {
   left: 0;
   z-index: 3;
+  width: 152px;
 }
 
 .bulk-table-wrap td {
-  min-width: 108px;
+  min-width: 0;
   vertical-align: top;
 }
 
 .bulk-table-wrap .field input {
   min-height: 44px;
+  padding-inline: 8px;
+  font-size: .85rem;
 }
+
+.bulk-table-wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
 .equipment-ocr-panel {
   display: grid;
@@ -1006,19 +984,10 @@ time,
   .attack-source-fields .field:last-child { grid-column: auto; }
   .equipment-navigator .equipment-list { max-height: 510px; overflow-y: auto; padding-right: 4px; }
   .calculator-workspace {
-    grid-template-columns: 230px minmax(0, 1fr) 270px;
+    grid-template-columns: 240px minmax(0, 1fr);
   }
 
-  .calculator-main {
-    display: contents;
-  }
 
-  .results-panel {
-    position: sticky;
-    top: 16px;
-    max-height: calc(100vh - 32px);
-    overflow: auto;
-  }
 }
 
 @media (max-width: 759px) {
@@ -1235,7 +1204,7 @@ button:disabled { cursor: not-allowed; }
 .weapon-preset-card dt { color: var(--muted); }
 .weapon-presets > .panel-description:last-child { margin-top: 14px; margin-bottom: 0; font-size: .73rem; }
 .result-card.is-primary { background: var(--accent-soft); }
-.result-details h3, .result-issues h3 { font-size: .88rem; }
+.result-details h3, .calculation-issues h3 { font-size: .88rem; }
 .live-badge { color: var(--success); background: color-mix(in srgb, var(--success) 8%, var(--surface)); border-color: color-mix(in srgb, var(--success) 25%, var(--line)); font-size: .65rem; }
 .app-footer { display: flex; align-items: center; gap: 24px; padding: 26px 0 0; margin-top: 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: .7rem; }
 .app-footer > span { font-weight: 800; letter-spacing: .05em; }
@@ -1243,7 +1212,7 @@ button:disabled { cursor: not-allowed; }
 .app-footer p { flex: 1; margin: 0; }
 .app-footer a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); text-decoration: none; }
 @media (min-width: 1280px) {
-  .calculator-workspace { grid-template-columns: 220px minmax(0, 1fr) 300px; }
+  .calculator-workspace { grid-template-columns: 240px minmax(0, 1fr); }
 }
 @media (max-width: 999px) {
   .app-toolbar { padding-bottom: 14px; }
@@ -1299,9 +1268,6 @@ button:disabled { cursor: not-allowed; }
 .preset-damage-results output { color: var(--accent); font-weight: 800; font-size: 1.45rem; letter-spacing: -.03em; }
 .preset-damage-results .preset-primary-result output { font-size: 1.8rem; }
 .preset-stat-input-notice { color: var(--muted); font-size: .7rem; margin: 12px 0 0; }
-.preset-formula-details { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; font-size: .8rem; }
-.preset-formula-details summary { cursor: pointer; min-height: 44px; }
-.preset-formula-details p { color: var(--muted); font-size: .7rem; line-height: 1.7; overflow-wrap: anywhere; }
 
 /* One baseline and an expandable row of independently compared candidates. */
 .candidate-comparison { margin: 28px 0; padding: 24px; scroll-margin-top: 24px; min-width: 0; }

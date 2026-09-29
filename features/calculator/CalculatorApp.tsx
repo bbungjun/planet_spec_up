@@ -35,7 +35,7 @@ import {
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
 import { StatSimulator } from "./components/StatSimulator";
-import { ResultsPanel } from "./components/ResultsPanel";
+import { CalculationIssues } from "./components/CalculationIssues";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
 import { CashEquipmentPanel, type CashEquipmentChangeHandler } from "./components/CashEquipmentPanel";
@@ -403,35 +403,26 @@ export function CalculatorApp({ captainBeta = false, development = false }: { ca
             onRemoveSlot={handleRemoveSlot}
           />
         </div>
-        <div className="calculator-main">
-          <div className="calculator-center" aria-label="장비 입력">
-            {inputMode === "cards" ? (
-              <EquipmentEditor
-                input={input}
-                selectedSlot={selectedSlot}
-                issues={result.issues}
-                onEquipmentChange={handleEquipmentChange}
-                onSelectSlot={setSelectedSlot}
-                onOcrApply={handleOcrApply}
-                onOcrAddAsNew={handleOcrAddAsNew}
-                onOcrBatchApply={handleOcrBatchApply}
-              />
-            ) : (
-              <BulkEditor
-                input={input}
-                issues={result.issues}
-                onEquipmentChange={handleEquipmentChange}
-              />
-            )}
-          </div>
-          <ResultsPanel
-            job={input.character.job}
-            input={input}
-            result={result}
-            onNavigate={handleNavigate}
-            onBuffSelect={attack => handleEquipmentChange("buff", "attackFlat", String(attack))}
-            onStackableBuffChange={handleStackableBuffChange}
-          />
+        <div className="calculator-center" aria-label="장비 입력">
+          {inputMode === "cards" ? (
+            <EquipmentEditor
+              input={input}
+              selectedSlot={selectedSlot}
+              issues={result.issues}
+              onEquipmentChange={handleEquipmentChange}
+              onSelectSlot={setSelectedSlot}
+              onOcrApply={handleOcrApply}
+              onOcrAddAsNew={handleOcrAddAsNew}
+              onOcrBatchApply={handleOcrBatchApply}
+            />
+          ) : (
+            <BulkEditor
+              input={input}
+              issues={result.issues}
+              onEquipmentChange={handleEquipmentChange}
+            />
+          )}
+          <CalculationIssues input={input} result={result} onNavigate={handleNavigate} />
         </div>
       </div>
       <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
