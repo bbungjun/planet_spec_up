@@ -3128,3 +3128,17 @@
 - 근거·확인: AGENTS.md D-146/§10, vercel.json의 npm run build:vercel, Vercel 공식 Git 배포 문서(https://vercel.com/docs/git), 실제 GitHub Deployment API. 원격main 8e80fbc의 environment=Production 기록과 통합5bdc7a7의 environment=Preview 기록을 확인했다. Vercel 대시보드의 설정값 자체는 이번에 다시 열지 않았다.
 - 안내 결과: 이 프로젝트의 기록된 연결 기준으로 GitHub main에 병합하거나 로컬 병합을 origin/main에 푸시하면 Production 자동 빌드·배포가 시작되고 성공 시 공개 주소에 반영된다. 로컬 main에서만 병합하고 푸시하지 않은 상태는 원격 배포를 유발하지 않는다. 다른 작업 브랜치 푸시는 Preview이며 운영 사이트 반영과 구분한다. 배포 시작을 성공·공개 반영 완료로 취급하지 않는다.
 - 범위·Git: 설명 기록만 기존 비운영 integration/aran-ocr에 커밋·푸시한다. 앱 코드 변경이 없어 테스트·빌드는 반복하지 않는다. main·공개 서버·Vercel 설정과 원본 앱 루트의 미커밋 변경은 보존한다.
+
+## D-ENV-001 — 개발서버 dev-main·배포서버 main 반영 규칙 확정
+
+- 기록 시각: 2026-09-30 19:12:28 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 확정 브랜치/서버 반영 정책·dev-main 생성 및 지침 반영 완료. 이번 요청은 현재 통합본의 Production 배포 승인이 아니다.
+- 결정·요청: dev-main 브랜치를 만들고, 수정사항을 개발서버에 반영하라는 요청은 dev-main에, 배포서버에 반영하라는 요청은 main에 반영하도록 Agent.md에 기록한다.
+- 이유: 사용자 이유 미명시.
+- 근거·관련 기록: 현재 사용자 요청, D-146 명시적 운영 반영 정책, D-INTEGRATION-002~003 통합/검증 완료, D-INTEGRATION-004 Git 반영과 Vercel 배포 구분.
+- 브랜치 결과: 사용자 지정 이름 dev-main을 검증된 통합본 integration/aran-ocr 1e033f2에서 생성하고 실제 앱 루트 C:/Users/PC/Documents/플래닛에서 checkout했다. 기존 브랜치·worktree는 삭제하거나 이름을 바꾸지 않았다. 원본 DECISIONS.md의 미커밋63줄 추가/1줄 삭제는 해당 파일만 임시 보관한 뒤 복원했고 변경 내용이 정확히 같은지 대조했다. 아란 자료도 그대로 존재하며 통합본의 기존 ignore 정책을 따른다.
+- 정책 결과: AGENTS.md 상단·§7·§10에 개발 요청→dev-main/Preview, 배포 요청→main/Production과 요청 범위 검증·커밋/푸시·대상 배포 결과 확인을 명시했다. 명시적 배포 요청의 같은 승인을 반복 요구하지 않되 개발/일반 작업을 운영 반영 승인으로 확대하지 않고 무관한 미완료 변경을 운영에 포함하지 않는다. 기존 계산 QA와 게시판 보류는 유지한다.
+- 파일 결과: 저장소에서 최신 기준은 AGENTS.md이고 기존 agent.md는 이전 파일명 이력이므로 두 파일에 반영했다. 대소문자만 다른 Agent.md나 새로운 정책 파일을 중복 생성하지 않는다.
+- 검증·범위: 브랜치 계보·문서 diff/공백·선택 스테이징을 확인한다. 통합 이후 앱 코드 변경이 없는 정책/문서 작업이므로 테스트·빌드는 반복하지 않는다. Vercel Production 브랜치·환경 변수·도메인·요금제·운영 버전 설정은 변경하지 않는다.
+- Git·후속: 이번 지침2개와 이 결정 기록만 dev-main에 커밋·푸시하고 origin/dev-main 추적 및 원격SHA를 확인한다. 기존 미커밋 기록은 이번 커밋에서 제외한다. 앞으로 개발서버 반영 완료는 dev-main의 Preview 배포 결과 확인까지 수행하고, 운영 반영은 명시 요청 시 main/Production에 한정한다.
