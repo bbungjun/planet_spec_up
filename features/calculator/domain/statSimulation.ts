@@ -4,6 +4,7 @@ import type { CalculatorInput } from "./types";
 
 export const SIMULATION_FIELDS = [
   { field: "equipmentMain", label: "장비 주스탯", limit: 9999, integer: true },
+  { field: "equipmentSub", label: "장비 부스탯", limit: 9999, integer: true },
   { field: "mainPercent", label: "주스탯%", limit: 999, integer: false },
   { field: "percentEligibleAttack", label: "장비 공격력", limit: 9999, integer: true },
   { field: "attackPercent", label: "공격력%", limit: 999, integer: false },

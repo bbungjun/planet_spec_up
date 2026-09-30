@@ -41,7 +41,7 @@ describe("Aran official effect table and explicit reference equipment model", ()
     expect(c.status).toBe("ready"); expect(c.before!.criticalStats).toMatchObject({baseRate:70,baseDamage:200});
     expect(c.before!.criticalMultiplier).toBeCloseTo(2.72); expect(c.after!.totalAttack).toBe(141);
     expect(c.stat!.percent).toBeGreaterThan(0); expect(c.after!.pureMain).toBe(800);
-    expect(calculateOptionEfficiency(input).rows).toHaveLength(8);
+    expect(calculateOptionEfficiency(input).rows).toHaveLength(9);
     const simulation=simulateStats(input,{...emptySimulation(),percentEligibleAttack:"1"});
     expect(simulation.after!.totalAttack).toBe(131); expect(simulation.after!.criticalStats!.baseRate).toBe(70);
     expect(JSON.stringify(input)).toBe(original);

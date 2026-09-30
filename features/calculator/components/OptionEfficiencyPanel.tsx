@@ -11,9 +11,10 @@ export function OptionEfficiencyPanel({ input, snapshot }: { input: CalculatorIn
   const efficiency = useMemo(() => snapshot
     ? calculateSnapshotEfficiency(snapshot, !input.character.pureMain?.trim() || !input.character.pureSub?.trim())
     : calculateOptionEfficiency(input), [input, snapshot]);
-  const mainStat = JOB_RULES[input.character.job].mainStat;
+  const { mainStat, subStat } = JOB_RULES[input.character.job];
   const labels: Record<EfficiencyOption, string> = {
     equipmentMain: `${mainStat}(장비) +1`,
+    equipmentSub: `${subStat}(장비) +1`,
     mainPercent: `${mainStat} +1%`,
     percentEligibleAttack: "공격력(장비) +1",
     attackPercent: "공격력 +1%",

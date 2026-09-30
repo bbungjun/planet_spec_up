@@ -3,7 +3,7 @@ import { calculateFromSnapshot, createCalculationSnapshot, type CalculationSnaps
 import type { CalculatorInput } from "./types";
 
 const OPTION_FIELDS = [
-  "equipmentMain", "mainPercent", "percentEligibleAttack", "attackPercent",
+  "equipmentMain", "equipmentSub", "mainPercent", "percentEligibleAttack", "attackPercent",
   "totalDamagePercent", "bossAndTotalDamage", "ignoreDefense", "criticalRate",
 ] as const satisfies readonly (keyof CalculationSnapshot)[];
 
@@ -48,7 +48,7 @@ export function calculateSnapshotEfficiency(snapshot: CalculationSnapshot, estim
     const next = calculateFromSnapshot({ ...snapshot, [option]: (snapshot[option] ?? 0) + 1 });
     return { option, convertedAttackGain: next.convertedAttack - current.convertedAttack };
   });
-  const mainGain = gains[0].convertedAttackGain;
+  const mainGain = gains.find(gain => gain.option === "equipmentMain")!.convertedAttackGain;
   return {
     estimated,
     unavailableReason: null,
