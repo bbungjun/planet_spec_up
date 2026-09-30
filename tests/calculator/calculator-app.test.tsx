@@ -173,6 +173,7 @@ describe("calculator app", () => {
     ].join("\n");
     mockedTooltipRecognizer.recognize.mockResolvedValue(attachedTooltipText);
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
@@ -184,14 +185,15 @@ describe("calculator app", () => {
     await user.type(screen.getByLabelText("펜던트 1 STR"), "12");
     await user.type(screen.getByLabelText("펜던트 1 DEX%"), "13");
     await user.type(screen.getByLabelText("펜던트 1 STR%"), "14");
-    await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+    await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
     await user.type(screen.getByLabelText("일괄 입력 펜던트 1 공격력"), "15");
     await user.type(screen.getByLabelText("일괄 입력 펜던트 1 공격력%"), "16");
     await user.type(screen.getByLabelText("일괄 입력 한벌옷 공격력"), "123");
     await user.type(screen.getByLabelText("일괄 입력 한벌옷 공격력%"), "9");
-    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
+    await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
     await user.type(screen.getByLabelText("펜던트 1 요구 STR"), "17");
-    await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "한벌옷 편집" }));
 
     await user.clear(screen.getByLabelText("한벌옷 DEX"));
     await user.type(screen.getByLabelText("한벌옷 DEX"), "99");
@@ -227,7 +229,7 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("레벨")).toHaveValue(180);
     expect(screen.getByLabelText("타격당 평균 데미지 비율")).toHaveValue(420);
 
-    await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+    await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
     expect(screen.getByLabelText("일괄 입력 한벌옷 DEX")).toHaveValue(21);
     expect(screen.getByLabelText("일괄 입력 한벌옷 STR")).toHaveValue(10);
     expect(screen.getByLabelText("일괄 입력 한벌옷 DEX%")).toHaveValue(21);
@@ -237,9 +239,10 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력")).toHaveValue(15);
     expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력%")).toHaveValue(16);
 
-    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
+    await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
-    await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
     expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(77);
     expect(screen.getByLabelText("펜던트 1 STR")).toHaveValue(12);
     expect(screen.getByLabelText("펜던트 1 DEX%")).toHaveValue(13);
@@ -253,6 +256,7 @@ describe("calculator app", () => {
   it("ignores a captured OCR target from a different job", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
@@ -270,6 +274,7 @@ describe("calculator app", () => {
   it("ignores a captured OCR target whose slot is absent for the current job", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
 
     await user.clear(screen.getByLabelText("레벨"));
@@ -300,7 +305,9 @@ describe("calculator app", () => {
   it("uses 44px controls and tabular numerals for editable and result values", async () => {
     const user = userEvent.setup();
     render(<Page />);
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     const level = screen.getByLabelText("레벨");
@@ -315,24 +322,26 @@ describe("calculator app", () => {
       .toContain("tabular-nums");
   });
 
-  it("opens all equipment options from the slot list without losing card values", async () => {
+  it("switches equipment input tabs without losing card values", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
     expect(screen.queryByRole("complementary", { name: "계산 결과" })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("펜던트 1 DEX"), "25");
-    const allOptions = screen.getByRole("button", { name: "전체 장비 옵션" });
-    expect(allOptions).toHaveAttribute("aria-pressed", "false");
+    const allOptions = screen.getByRole("tab", { name: "전체장비 직접입력" });
+    expect(allOptions).toHaveAttribute("aria-selected", "false");
     await user.click(allOptions);
-    expect(allOptions).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("heading", { name: "전체 장비 옵션" })).toBeInTheDocument();
+    expect(allOptions).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "전체장비 직접입력" })).toBeInTheDocument();
     expect(screen.getByLabelText("일괄 입력 펜던트 1 DEX")).toHaveValue(25);
-    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
+    await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
     expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(25);
   });
 
   it("pairs invalid-field text with a visible icon", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     const field = screen.getByLabelText("펜던트 1 DEX");
     await user.type(field, "-1");
@@ -352,7 +361,7 @@ describe("calculator app", () => {
 
     const surfaces = [
       screen.getByRole("region", { name: "공격력 버프" }),
-      screen.getByRole("button", { name: "펜던트 1 편집" }),
+      screen.getByRole("region", { name: "전체장비 직접입력" }),
       screen.getByRole("button", { name: "초기화" }),
     ];
     surfaces.forEach((surface) => {
@@ -368,11 +377,13 @@ describe("calculator app", () => {
   it("updates live results when a card equipment value changes", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     expect(
       screen.getByRole("heading", { name: "나의 장비 작업실" }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
 
     expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
 
@@ -386,10 +397,12 @@ describe("calculator app", () => {
   it("shows a level error and zero attacks when level zero is invalid", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     await user.type(screen.getByLabelText("펜던트 1 DEX"), "100");
     await user.type(screen.getByLabelText("펜던트 1 STR"), "50");
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     const statAttack = screen.getByLabelText("시뮬레이션 스탯 공격력 결과");
@@ -464,8 +477,9 @@ describe("calculator app", () => {
     expect(screen.getByLabelText("타격당 평균 데미지 비율")).toHaveValue(150);
   });
 
-  it("renders every Corsair equipment slot as an accessible edit button", () => {
+  it("renders every Corsair equipment slot as an accessible edit button", async () => {
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     [
       "펜던트 1",
@@ -502,7 +516,8 @@ describe("calculator app", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<CalculatorApp />);
 
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
     await user.selectOptions(screen.getByLabelText("직업"), "marksman");
 
@@ -512,7 +527,8 @@ describe("calculator app", () => {
 
     confirm.mockReturnValue(true);
     await user.selectOptions(screen.getByLabelText("직업"), "night_lord");
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
 
     expect(screen.getByLabelText("직업")).toHaveValue("night_lord");
     expect(screen.getByLabelText("무기 공격력")).toHaveValue(null);
@@ -522,6 +538,7 @@ describe("calculator app", () => {
     const user = userEvent.setup();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     await user.type(screen.getByLabelText("펜던트 1 DEX"), "22");
     await user.click(screen.getByRole("button", { name: "초기화" }));
@@ -538,6 +555,7 @@ describe("calculator app", () => {
   it("shows text and styling when an equipment slot is complete", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     await user.type(screen.getByLabelText("펜던트 1 DEX"), "22");
 
@@ -553,8 +571,10 @@ describe("calculator app", () => {
   it("shows the effective boss and total damage factor used by the formula", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20");
@@ -572,8 +592,10 @@ describe("calculator app", () => {
   it("preserves meaningful decimals in the boss and total damage evidence", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
-    await user.click(screen.getByRole("button", { name: "무기 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20.5");
@@ -592,13 +614,16 @@ describe("calculator app", () => {
   it("renders formula inputs and navigates an issue to its equipment card", async () => {
     const user = userEvent.setup();
     render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
     expect(screen.getByText("비교 계산 기준")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "확인할 항목" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "모자 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "모자 편집" }));
     await user.type(screen.getByLabelText("모자 DEX"), "-1");
-    await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
     await user.click(
       screen.getByRole("button", { name: /Enter a value from 0 to 9999/ }),
     );

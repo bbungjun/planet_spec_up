@@ -28,15 +28,9 @@ export function BulkEditor({
 
   return (
     <section className="panel bulk-editor" aria-labelledby="bulk-editor-heading">
-      <div className="panel-heading">
-        <div>
+      <h2 id="bulk-editor-heading" className="candidate-sr-only">전체장비 직접입력</h2>
 
-          <h2 id="bulk-editor-heading">전체 장비 옵션</h2>
-        </div>
-        <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
-      </div>
-
-      <div className="bulk-table-wrap" role="region" tabIndex={0} aria-label="전체 장비 옵션 표">
+      <div className="bulk-table-wrap" role="region" tabIndex={0} aria-label="전체장비 직접입력 표">
         <table>
           <thead>
             <tr>

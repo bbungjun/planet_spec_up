@@ -11,6 +11,7 @@ it("moves through visible fields and equipment slots in deterministic order", as
   const user = userEvent.setup();
   render(<Page />);
 
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
   const main = screen.getByLabelText("펜던트 1 DEX");
   main.focus();
@@ -37,6 +38,7 @@ it("moves from the penultimate slot to the final slot before wrapping", async ()
   const user = userEvent.setup();
   render(<Page />);
 
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "반지 4 편집" }));
   screen.getByLabelText("반지 4 DEX").focus();
 
@@ -53,12 +55,13 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
   const user = userEvent.setup();
   render(<Page />);
 
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "무기 편집" }));
   const cardAttack = screen.getByLabelText("무기 공격력");
   await user.type(cardAttack, "100");
   expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).not.toHaveTextContent(/^0$/);
 
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   const bulkAttack = screen.getByLabelText("일괄 입력 무기 공격력");
   await user.clear(bulkAttack);
   await user.type(bulkAttack, "-1");
@@ -68,7 +71,7 @@ it("opens the referenced card and focuses its invalid field from bulk mode", asy
     name: "오류 무기 공격력: Enter a value from 0 to 9999.",
   }));
 
-  expect(screen.getByRole("button", { name: "일괄 입력 보기" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "전체장비 직접입력" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "무기 옵션" })).toBeInTheDocument();
   const focusedAttack = screen.getByLabelText("무기 공격력");
   expect(focusedAttack).toHaveValue(-1);
@@ -80,7 +83,7 @@ it("gives identical validation messages unique field names and navigates each ex
   const user = userEvent.setup();
   render(<Page />);
 
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   await user.type(screen.getByLabelText("일괄 입력 모자 DEX"), "-1");
   await user.type(screen.getByLabelText("일괄 입력 망토 STR"), "-1");
   await user.type(screen.getByLabelText("일괄 입력 모자 공격력"), "-1");
@@ -106,7 +109,7 @@ it("gives identical validation messages unique field names and navigates each ex
   expect(screen.getByLabelText("모자 공격력")).toHaveValue(-1);
 
   await user.click(screen.getByRole("button", { name: "오류 모자 총데미지%: Enter a value from 0 to 999." }));
-  expect(screen.getByRole("button", { name: "카드 입력 보기" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "장비별 입력" })).toBeInTheDocument();
   expect(screen.getByLabelText("일괄 입력 모자 총데미지%")).toHaveFocus();
   expect(screen.getByLabelText("일괄 입력 모자 총데미지%")).toHaveValue(-1);
 });

@@ -24,16 +24,45 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+it("opens direct input by default with stackable buffs off and supports keyboard tabs and preset changes", async () => {
+  const user = userEvent.setup();
+  render(<Page />);
+  const direct = screen.getByRole("tab", { name: "전체장비 직접입력" });
+  const cards = screen.getByRole("tab", { name: "장비별 입력" });
+  expect(direct).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByRole("tabpanel", { name: "전체장비 직접입력" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "전체 장비 옵션" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "뿌리기 +30" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByRole("button", { name: "분노 +12" })).toHaveAttribute("aria-pressed", "false");
+  await user.type(screen.getByLabelText("일괄 입력 펜던트 1 DEX"), "23");
+  await user.click(direct);
+  await user.keyboard("{ArrowRight}");
+  expect(cards).toHaveFocus();
+  expect(cards).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(23);
+  await user.keyboard("{Home}");
+  expect(direct).toHaveFocus();
+  expect(screen.getByLabelText("일괄 입력 펜던트 1 DEX")).toHaveValue(23);
+  await user.click(screen.getByRole("button", { name: "카오스 보스용 프리셋 선택" }));
+  expect(direct).toHaveAttribute("aria-selected", "true");
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button", { name: "망토 편집" }));
+  expect(cards).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByLabelText("장비 스크린샷 붙여넣기")).toBeVisible();
+});
+
 it("shares raw string values between card and bulk modes in both directions", async () => {
   const user = userEvent.setup();
   render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "장갑 편집" }));
   const cardAttackPercent = screen.getByLabelText("장갑 공격력%") as HTMLInputElement;
   await user.type(cardAttackPercent, "22.5");
   expect(cardAttackPercent.value).toBe("22.5");
 
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   const bulkAttackPercent = screen.getByLabelText(
     "일괄 입력 장갑 공격력%",
   ) as HTMLInputElement;
@@ -41,7 +70,7 @@ it("shares raw string values between card and bulk modes in both directions", as
 
   await user.clear(bulkAttackPercent);
   await user.type(bulkAttackPercent, "31.25");
-  await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
 
   expect((screen.getByLabelText("장갑 공격력%") as HTMLInputElement).value)
     .toBe("31.25");
@@ -52,7 +81,7 @@ it("renders only the current job slots and stat columns", async () => {
   const user = userEvent.setup();
   render(<CalculatorApp />);
 
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(screen.getByLabelText("일괄 입력 한벌옷 DEX")).toBeInTheDocument();
   expect(screen.queryByLabelText("일괄 입력 상의 DEX")).not.toBeInTheDocument();
 
@@ -73,6 +102,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
   vi.spyOn(Date.prototype, "toISOString").mockReturnValue(savedAt);
   const user = userEvent.setup();
   const firstRender = render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   const necklace = screen.getByLabelText("펜던트 1 DEX");
 
   await user.type(necklace, "11");
@@ -101,6 +131,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
 
   firstRender.unmount();
   render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => {
     expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(22);
   });
@@ -110,6 +141,7 @@ it("overwrites one saved slot, loads it, and restores it on a fresh mount", asyn
 it("reports corrupt storage once without changing the current input", async () => {
   const user = userEvent.setup();
   render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   const necklace = screen.getByLabelText("펜던트 1 DEX");
   await user.type(necklace, "44");
   window.localStorage.setItem(STORAGE_KEY, "{bad");
@@ -127,6 +159,7 @@ it("reports corrupt storage once without changing the current input", async () =
 it("rejects an incomplete saved setup without replacing the Page state", async () => {
   const user = userEvent.setup();
   render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.type(screen.getByLabelText("펜던트 1 DEX"), "44");
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
     schemaVersion: 1,
@@ -147,6 +180,7 @@ it("requires confirmation before reset and clears the persisted slot only when c
   const user = userEvent.setup();
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   render(<Page />);
+    await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   const necklace = screen.getByLabelText("펜던트 1 DEX");
   await user.type(necklace, "22");
   await user.click(screen.getByRole("button", { name: "저장" }));

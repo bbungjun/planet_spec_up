@@ -34,6 +34,7 @@ import {
   type EquipmentChangeHandler,
 } from "./components/EquipmentEditor";
 import { EquipmentNavigator } from "./components/EquipmentNavigator";
+import { EquipmentInputTabs } from "./components/EquipmentInputTabs";
 import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
 import { StatSimulator } from "./components/StatSimulator";
 import { CalculationIssues } from "./components/CalculationIssues";
@@ -74,7 +75,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlot>(
     () => firstSlot(aranBeta ? "aran" : "corsair"),
   );
-  const [inputMode, setInputMode] = useState<InputMode>("cards");
+  const [inputMode, setInputMode] = useState<InputMode>("bulk");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(captureWeaponPreset(createDefaultInput(aranBeta ? "aran" : "corsair"))));
   const [pendingCandidates, setPendingCandidates] = useState(false);
@@ -331,7 +332,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   const handlePresetSelect = (id: WeaponPresetId) => {
     setInput(current => switchWeaponPreset(current, id));
     setSelectedSlot("weapon");
-    setInputMode("cards");
   };
 
   const handleLoad = () => {
@@ -373,13 +373,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     setFocusRequest((request) => request + 1);
   };
 
-  const handleShowAllOptions = () => {
-    setInputMode("bulk");
-    window.requestAnimationFrame(() => {
-      document.getElementById("equipment-editor-area")?.scrollIntoView?.({ block: "start" });
-    });
-  };
-
   return (
     <main className={`calculator-shell${inputMode === "bulk" ? " is-bulk-mode" : ""}`} aria-busy={initialLoading}>
       <a className="skip-link" href="#equipment-editor-area" onClick={() => document.getElementById("equipment-editor-area")?.focus()}>장비 입력으로 바로가기</a>
@@ -390,10 +383,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       <AppHeader
         captainBeta={captainBeta}
         aranBeta={aranBeta}
-        inputMode={inputMode}
-        onToggleMode={() => setInputMode((mode) => (
-          mode === "cards" ? "bulk" : "cards"
-        ))}
         onSave={handleSave}
         onLoad={handleLoad}
         onReset={handleReset}
@@ -429,19 +418,18 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       </div>
       </div>
       <div ref={equipmentWorkspaceRef} className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">
-        <div className="calculator-left" aria-label="장비 목록">
+        <EquipmentInputTabs mode={inputMode} onChange={setInputMode} />
+        <div className="calculator-left" aria-label="장비 목록" hidden={inputMode === "bulk"}>
           <EquipmentNavigator
             input={input}
             issues={result.issues}
             selectedSlot={selectedSlot}
-            onSelectSlot={setSelectedSlot}
+            onSelectSlot={slot => { setSelectedSlot(slot); setInputMode("cards"); }}
             onAddSlot={handleAddSlot}
             onRemoveSlot={handleRemoveSlot}
-            bulkActive={inputMode === "bulk"}
-            onShowAllOptions={handleShowAllOptions}
           />
         </div>
-          <div className="calculator-center" id="equipment-editor-area" tabIndex={-1} aria-label="장비 입력">
+          <div className="calculator-center" id="equipment-editor-area" role="tabpanel" tabIndex={-1} aria-labelledby={`equipment-mode-${inputMode}`}>
             {inputMode === "cards" ? (
               <EquipmentEditor
                 pasteScopeRef={equipmentWorkspaceRef}

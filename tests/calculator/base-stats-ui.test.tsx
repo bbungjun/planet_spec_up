@@ -37,6 +37,7 @@ it("offers direct base stats without photo registration or inventing stats from 
 it("saves direct values and keeps them fixed across equipment and preset changes", async () => {
   seed(); const view = render(<CalculatorApp />); await ready();
   const user = userEvent.setup(); setBase();
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "장갑 편집" }));
   fireEvent.change(screen.getByLabelText("장갑 DEX"), { target: { value: "100" } });
   await user.click(screen.getByRole("button", { name: "카오스 보스용 프리셋 선택" }));

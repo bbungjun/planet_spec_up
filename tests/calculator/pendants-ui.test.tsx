@@ -17,18 +17,22 @@ beforeEach(() => {
 it("shares pendant identity with bulk input, shows duplicate warnings, and restores both identities", async () => {
   const user = userEvent.setup();
   const view = render(<CalculatorApp />);
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("펜던트 1 종류")).toBeEnabled());
   await user.selectOptions(screen.getByLabelText("펜던트 1 종류"), "horntail");
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "펜던트 2 편집" }));
   await user.selectOptions(screen.getByLabelText("펜던트 2 종류"), "horntail");
   expect(screen.getAllByText(/혼테일의 목걸이 중복 착용 불가/).length).toBeGreaterThan(0);
   expect(screen.getByRole("button", { name: "펜던트 2 편집" })).toHaveTextContent("착용 불가");
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   await user.selectOptions(screen.getByLabelText("일괄 입력 펜던트 2 종류"), "chaos_horntail");
   expect(screen.queryByText(/중복 착용 불가/)).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "저장" }));
   view.unmount(); render(<CalculatorApp />);
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("펜던트 1 종류")).toHaveValue("horntail"));
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "펜던트 2 편집" }));
   expect(screen.getByLabelText("펜던트 2 종류")).toHaveValue("chaos_horntail");
   await user.type(screen.getByLabelText("새 장비 부위"), "목걸이");
@@ -39,6 +43,7 @@ it("shares pendant identity with bulk input, shows duplicate warnings, and resto
 it("assigns different pendant kinds in selection order and asks where to put a third photo", async () => {
   recognize.mockResolvedValueOnce(tooltip("혼테일의 목걸이")).mockResolvedValueOnce(tooltip("카오스 혼테일의 목걸이")).mockResolvedValueOnce(tooltip("요괴 대사의 염주"));
   const user = userEvent.setup(); render(<CalculatorApp />);
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), [photo("first"), photo("second"), photo("third")]);
   await screen.findByText("3/3장 인식 완료");
@@ -51,6 +56,7 @@ it("assigns different pendant kinds in selection order and asks where to put a t
   await user.click(screen.getByLabelText("3번 적용에 포함"));
   await user.click(screen.getByRole("button", { name: "검토한 2개 장비 적용" }));
   expect(screen.getByLabelText("펜던트 1 종류")).toHaveValue("horntail");
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "펜던트 2 편집" }));
   expect(screen.getByLabelText("펜던트 2 종류")).toHaveValue("chaos_horntail");
   expect(screen.getByLabelText("펜던트 2 DEX")).toHaveValue(20);
@@ -59,12 +65,15 @@ it("assigns different pendant kinds in selection order and asks where to put a t
 it("requires a pendant destination for single OCR and applies the reviewed kind to that card", async () => {
   recognize.mockResolvedValue(tooltip("고든의 마법 인두"));
   const user = userEvent.setup(); render(<CalculatorApp />);
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "망토 편집" }));
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), photo("gordon"));
   await screen.findByLabelText("인식 펜던트 종류");
   expect(screen.getByRole("button", { name: "인식값 적용" })).toBeDisabled();
   expect(screen.queryByRole("button", { name: "펜던트 새 장비로 추가" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "펜던트 1 편집" }));
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), photo("gordon"));
   await waitFor(() => expect(screen.getByLabelText("인식 펜던트 종류")).toHaveValue("gordon"));
@@ -82,6 +91,7 @@ it("blocks a candidate that duplicates the retained pendant, then compares after
   const saved = serializeSetup(input); localStorage.setItem(STORAGE_KEY, saved);
   recognize.mockResolvedValue(tooltip("요괴 대사의 염주"));
   const user = userEvent.setup(); render(<CalculatorApp />);
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("펜던트 1 종류")).toHaveValue("horntail"));
   await user.click(screen.getByRole("button", { name: "비교 카드 추가" }));
   const dialog = within(screen.getByRole("dialog", { name: "비교할 장비 추가" }));

@@ -17,8 +17,6 @@ type EquipmentNavigatorProps = {
   onSelectSlot: (slot: EquipmentSlot) => void;
   onAddSlot: (label: string) => boolean;
   onRemoveSlot: (slot: EquipmentSlot) => void;
-  bulkActive?: boolean;
-  onShowAllOptions?: () => void;
 };
 
 const INTEGER_FIELDS = new Set<keyof EquipmentInput>([
@@ -52,8 +50,6 @@ export function EquipmentNavigator({
   onSelectSlot,
   onAddSlot,
   onRemoveSlot,
-  bulkActive = false,
-  onShowAllOptions,
 }: EquipmentNavigatorProps) {
   const [newSlotLabel, setNewSlotLabel] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -75,10 +71,6 @@ export function EquipmentNavigator({
         </div>
         <span>{visibleSlots.length}개</span>
       </div>
-      {onShowAllOptions && <button type="button" className="secondary-button equipment-all-options"
-        aria-pressed={bulkActive} aria-controls="equipment-editor-area" onClick={onShowAllOptions}>
-        전체 장비 옵션
-      </button>}
       <ul className="equipment-list">
         {visibleSlots.map((slot) => {
           const complete = hasValidValue(input.equipment[slot]);

@@ -51,6 +51,8 @@ it("counts independent unknown and repeated gear slots and persists them without
 it("adds a named gear slot to the card, bulk editor and the saved setup", async () => {
   const user = userEvent.setup();
   const view = render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", {name: "무기 편집"}));
   await user.type(screen.getByLabelText("무기 공격력", {exact: true}), "100");
   const before = screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent;
@@ -63,14 +65,16 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
   await user.type(screen.getByLabelText("어깨장식 공격력%", {exact: true}), "2.5");
   expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과").textContent).not.toBe(before);
 
-  await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(screen.getByLabelText("일괄 입력 어깨장식 DEX", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("일괄 입력 어깨장식 공격력", {exact: true})).toHaveValue(7);
   expect(screen.getByLabelText("일괄 입력 어깨장식 공격력%", {exact: true})).toHaveValue(2.5);
   await user.click(screen.getByRole("button", {name: /^저장$/}));
   view.unmount();
   render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByRole("button", {name: "어깨장식 편집"})).toBeInTheDocument());
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", {name: "어깨장식 편집"}));
   expect(screen.getByLabelText("어깨장식 DEX", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(7);
@@ -80,6 +84,7 @@ it("adds a named gear slot to the card, bulk editor and the saved setup", async 
 it("creates an extra slot from a reviewed OCR category without overwriting the selected card", async () => {
   const user = userEvent.setup();
   render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["image"], "shoulder.png", {type: "image/png"}));
   expect(await screen.findByRole("button", {name: "어깨장식 새 장비로 추가"})).toBeInTheDocument();
@@ -88,9 +93,10 @@ it("creates an extra slot from a reviewed OCR category without overwriting the s
   expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("어깨장식 공격력%", {exact: true})).toHaveValue(3);
   expect(screen.getByLabelText("어깨장식 STR", {exact: true})).toHaveValue(2);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", {name: "펜던트 1 편집"}));
   expect(screen.getByLabelText("펜던트 1 공격력", {exact: true})).toHaveValue(null);
-  await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(screen.getByLabelText("일괄 입력 어깨장식 공격력", {exact: true})).toHaveValue(5);
   expect(screen.getByLabelText("일괄 입력 펜던트 1 공격력", {exact: true})).toHaveValue(null);
 });
@@ -101,6 +107,7 @@ it("imports a multi-image batch into a new slot and an empty existing slot in on
     .mockResolvedValueOnce("장비분류: 망토\nDEX +8");
   const user = userEvent.setup();
   render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByLabelText("장비 스크린샷 파일")).toBeEnabled());
   await user.upload(screen.getByLabelText("장비 스크린샷 파일"), [
     new File(["shoulder"], "shoulder.png", {type: "image/png"}),
@@ -108,11 +115,13 @@ it("imports a multi-image batch into a new slot and an empty existing slot in on
   ]);
   await screen.findByText("2/2장 인식 완료");
   await user.click(screen.getByRole("button", {name: "검토한 2개 장비 적용"}));
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", {name: "어깨장식 편집"}));
   expect(screen.getByLabelText("어깨장식 공격력", {exact: true})).toHaveValue(5);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", {name: "망토 편집"}));
   expect(screen.getByLabelText("망토 DEX", {exact: true})).toHaveValue(8);
   expect(screen.getAllByText("적용 완료")).toHaveLength(2);
-  await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(screen.getByLabelText("일괄 입력 어깨장식 공격력", {exact: true})).toHaveValue(5);
 });

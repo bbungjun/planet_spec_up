@@ -40,7 +40,7 @@ function addManualCandidate(price = "3") {
 it("tracks edits, reversal, successful save and failed save without treating viewing modes as edits", async () => {
   await openCalculator();
   expect(leaveIsBlocked()).toBe(false);
-  fireEvent.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  fireEvent.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(leaveIsBlocked()).toBe(false);
   const attack = screen.getByLabelText("일괄 입력 무기 공격력", { exact: true });
   fireEvent.change(attack, { target: { value: "111" } });
@@ -60,7 +60,7 @@ it("tracks edits, reversal, successful save and failed save without treating vie
 
 it("cancels load without losing edits, then restores only after confirmation", async () => {
   await openCalculator();
-  fireEvent.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  fireEvent.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   const attack = screen.getByLabelText("일괄 입력 무기 공격력", { exact: true });
   fireEvent.change(attack, { target: { value: "112" } });
   vi.mocked(window.confirm).mockReturnValue(false);

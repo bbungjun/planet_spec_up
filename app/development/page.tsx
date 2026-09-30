@@ -4,7 +4,7 @@ import { readDevelopmentDefault } from "../../features/calculator/developmentDef
 
 export const dynamic = "force-dynamic";
 
-export default async function DevelopmentPage() {
+export default function DevelopmentPage() {
   if (process.env.NODE_ENV !== "development") notFound();
-  return <CalculatorApp development developmentDefault={await readDevelopmentDefault()} />;
+  return <CalculatorApp development developmentDefault={readDevelopmentDefault()} />;
 }

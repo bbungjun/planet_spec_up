@@ -66,7 +66,8 @@ it("OCR review creates temporary before/after comparisons and preserves original
  const card=screen.getByRole("article",{name:"후보 A 비교 결과"});expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,182");expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
  expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("환산 공격력 비교")).toHaveTextContent("-829");
  expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
- await user.click(screen.getByRole("button",{name:"무기 편집"}));expect(screen.getByLabelText("무기 공격력",{exact:true})).toHaveValue(100);
+ await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
+  await user.click(screen.getByRole("button",{name:"무기 편집"}));expect(screen.getByLabelText("무기 공격력",{exact:true})).toHaveValue(100);
  await user.click(screen.getByRole("button",{name:"저장"}));const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)!);expect(stored.input.equipment.weapon.attackFlat).toBe("100");expect(stored.input.candidates).toBeUndefined();
  await user.type(within(card).getByLabelText("후보 A 구매 가격"),"0.3");expect(within(card).getByLabelText("후보 A 구매 가격")).toHaveValue(.3);
  expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("-74.5%");

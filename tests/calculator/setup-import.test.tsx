@@ -51,7 +51,7 @@ it("reviews common armor and three weapons, then saves and restores them with on
   await ready();
   expect(screen.getByLabelText("레벨")).toHaveValue(199);
   await user.click(screen.getByRole("button", { name: "사냥용 프리셋 선택" }));
-  expect(screen.getByLabelText("무기 공격력", { exact: true })).toHaveValue(120);
+  expect(screen.getByLabelText("일괄 입력 무기 공격력", { exact: true })).toHaveValue(120);
 });
 
 it("keeps the previous setup and the reviewed batch when browser saving fails, and supports retry", async () => {
@@ -68,6 +68,7 @@ it("keeps the previous setup and the reviewed batch when browser saving fails, a
   await user.click(saveButton());
   expect(screen.getByRole("alert")).toHaveTextContent("브라우저에 저장하지 못했습니다");
   expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "망토 편집" }));
   expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(null);
   expect(saveButton()).toBeEnabled();
@@ -82,7 +83,7 @@ it("routes one pasted image to registration in bulk mode and preserves a pending
   const user = userEvent.setup();
   render(<CalculatorApp />);
   await ready();
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   fireEvent.paste(document, { clipboardData: { files: [image("cape")], items: [] } });
   await screen.findByText("1/1장 인식 완료");
   fireEvent.paste(document, { clipboardData: { files: [image("second")], items: [] } });
@@ -102,6 +103,7 @@ it("pastes into the selected inventory slot, preserves other equipment, and save
   const user = userEvent.setup();
   const view = render(<CalculatorApp />);
   await ready();
+  await user.click(screen.getByRole("tab", { name: "장비별 입력" }));
   const slot = screen.getByRole("button", { name: "망토 편집" });
   await user.click(slot);
 
@@ -124,6 +126,7 @@ it("pastes into the selected inventory slot, preserves other equipment, and save
   view.unmount();
   render(<CalculatorApp />);
   await ready();
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "망토 편집" }));
   expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(18);
 });
@@ -139,6 +142,7 @@ it("pastes a weapon into only the active preset and leaves numeric text paste al
   const user = userEvent.setup();
   render(<CalculatorApp />);
   await ready();
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "무기 편집" }));
   const textPaste = new Event("paste", { bubbles: true, cancelable: true });
   Object.defineProperty(textPaste, "clipboardData", { value: {

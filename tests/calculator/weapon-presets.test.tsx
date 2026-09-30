@@ -157,6 +157,7 @@ it("rejects malformed preset saves and out-of-range OCR ignore-defense", () => {
 it("registers one to three independent weapons and restores them through the UI", async () => {
   const user = userEvent.setup();
   const view = render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   const sidebar = screen.getByRole("complementary", {name: "무기 프리셋 및 저장"});
   expect(within(sidebar).getByRole("button", {name: "프리셋 저장"})).toBeVisible();
   expect(sidebar.querySelector("details")).toBeNull();
@@ -194,7 +195,7 @@ it("registers one to three independent weapons and restores them through the UI"
   expect(screen.getAllByText("무기 미등록")).toHaveLength(1);
   await user.click(screen.getByRole("button", {name: "사냥용 프리셋 선택"}));
   expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(null);
-  await user.click(screen.getByRole("button", {name: "일괄 입력 보기"}));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   await user.type(screen.getByLabelText("일괄 입력 무기 공격력", {exact: true}), "120");
   await user.type(screen.getByLabelText("일괄 입력 무기 총데미지%"), "21");
   await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
@@ -208,6 +209,7 @@ it("registers one to three independent weapons and restores them through the UI"
   }}}}});
   view.unmount();
   render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await waitFor(() => expect(screen.getByRole("button", {name: "사냥용 프리셋 선택"})).toHaveAttribute("aria-pressed", "true"));
   await user.click(screen.getByRole("button", {name: "카오스 보스용 프리셋 선택"}));
   expect(screen.getByLabelText("무기 공격력", {exact: true})).toHaveValue(110);
@@ -245,6 +247,7 @@ it("cancels pending OCR when switching weapon presets and ignores its late resul
   try {
     const user = userEvent.setup();
     render(<CalculatorApp />);
+  await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
     await user.click(screen.getByRole("button", {name: "일반 보스용 프리셋 선택"}));
     await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["pending"], "pending.png", {type: "image/png"}));
     await waitFor(() => expect(recognize).toHaveBeenCalledTimes(1));

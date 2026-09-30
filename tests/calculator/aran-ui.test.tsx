@@ -30,6 +30,7 @@ it("switches to Aran, auto derives combo critical and saves to an isolated devel
   expect(screen.queryByLabelText("불릿·표창 공격력")).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("순수 STR"),{target:{value:"800"}});
   fireEvent.change(screen.getByLabelText("순수 DEX"),{target:{value:"4"}});
+  fireEvent.click(screen.getByRole("tab",{name:"장비별 입력"}));
   fireEvent.click(screen.getByRole("button",{name:"무기 편집"}));
   fireEvent.change(screen.getByLabelText("무기 공격력"),{target:{value:"100"}});
   expect(screen.getByLabelText("콤보 크리티컬20 적용")).toBeChecked();

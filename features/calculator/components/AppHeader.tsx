@@ -1,12 +1,9 @@
-import type { InputMode } from "../domain/types";
 import { ThemeToggle } from "./ThemeToggle";
 import { GameIcon } from "./GameVisuals";
 
 type AppHeaderProps = {
   captainBeta?: boolean;
   aranBeta?: boolean;
-  inputMode: InputMode;
-  onToggleMode: () => void;
   onSave: () => void;
   onLoad: () => void;
   onReset: () => void;
@@ -15,8 +12,6 @@ type AppHeaderProps = {
 export function AppHeader({
   captainBeta = false,
   aranBeta = false,
-  inputMode,
-  onToggleMode,
   onSave,
   onLoad,
   onReset,
@@ -44,14 +39,6 @@ export function AppHeader({
           <a href="#candidate-comparison">장비 비교</a>
         </nav>
         <div className="app-header-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            aria-pressed={inputMode === "bulk"}
-            onClick={onToggleMode}
-          >
-            {inputMode === "cards" ? "일괄 입력 보기" : "카드 입력 보기"}
-          </button>
           <button type="button" className="secondary-button" onClick={onLoad}>
             불러오기
           </button>

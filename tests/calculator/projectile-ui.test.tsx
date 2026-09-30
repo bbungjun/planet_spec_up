@@ -30,7 +30,7 @@ it("defaults projectile attack to 20 while excluding it from all equipment desti
   expect(confirm).not.toHaveBeenCalled();
   expect(screen.getByLabelText("직업")).toHaveValue("night_lord");
   expect(screen.getByLabelText("불릿·표창 공격력")).toHaveValue(20);
-  await user.click(screen.getByRole("button", { name: "일괄 입력 보기" }));
+  await user.click(screen.getByRole("tab", { name: "전체장비 직접입력" }));
   expect(screen.queryByLabelText("일괄 입력 표창·불릿 공격력", { exact: true })).not.toBeInTheDocument();
 });
 
