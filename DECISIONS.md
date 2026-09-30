@@ -3748,3 +3748,14 @@
 - 실제 브라우저: 본인 Next 서버3107와 새 격리 `architecture-final` 세션에서 핵심16개(저장 모달·실패 입력/저장 보존·복원·3직업 이동·키 독립·화살 오류/포커스), 실제 로컬 Paddle 합성 망토 판독 및 사진 저장8개(실패 저장값/시각/검토 보존→재시도 성공)를 확인했다. 이탈 취소는 사진 목록을 보존하고 이탈 수락은 신궁 페이지로 이동하며 기존 캡틴 저장공112를 유지했다. evidence `output/playwright/app-browser-evidence.json`, 캡처 `captain-saved.png`, `synthetic-ocr-review.png`, `synthetic-ocr-saved.png`.
 - 콘솔·시험 한계: 핵심 앱 흐름 콘솔 오류/경고0. 실제 OCR는27개 ERROR채널 메시지를 냈으나 모두 ONNX `[W:] CleanUnusedInitializersAndNodeArgs`의 사용하지 않는 모델 초기값 제거 로그였다. 합성 quota 오류와 canvas 툴팁을 사용했고 외부 OCR 전송·사용자 이미지 사용은 하지 않았다. 실제 게임 사진 전체 정확도·무개입 POC·실측 데미지·성능 개선률은 미검증이다. 기존 폴암 목적지 누락·초기화 화면 우선 처리 등은 범위 밖으로 보존한다.
 - 완료 후속: PAAR 문서는 소스 커밋SHA와 기준SHA를 구분해 기록하고 HTML 실제 렌더/모바일 overflow/앵커를 확인한다. 최종 문서 커밋을 포함해 이번 비운영 브랜치를 푸시하고 원격SHA를 확인한다. 결과가 검증됐다고 원본dev-main/main 또는 공개 서버에 합치지 않는다. 관련D-ARCHITECTURE-IMPLEMENT-001·D-146·D-ENV-001·D-148·D-168.
+
+## D-ARCHITECTURE-DELIVERY-001 — PAAR 최종 산출물과 격리 검증 정리
+
+- 기록 시각: 2026-10-01 06:40:12 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 코드·관련 검증·기술문서·PAAR Markdown/HTML 완료. 비운영 문서 커밋·푸시와 원격SHA 확인을 이어 수행한다.
+- 근거·결과: 소스 커밋은9b05190b4a3eece2d3b215822eb4b8c9e5d598ae, 기준은4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b다. PAAR는 전체 요약과 네 사례 각각 문제→분석→조치→결과, 대안/선택 이유, 변경 전후 그림, 실제 파일/줄·명령·실패 분리·한계를 기록했다. Markdown40,496bytes·HTML81,896bytes이며 독립 전달SHA256과 현재 파일 hash가 일치한다. 후속 문서 커밋은 보고서가 참조하는 앱 소스 커밋을 변경하지 않는다.
+- 문서 검증: `output/architecture-report/report-validation-summary.json` 및 static-check/browser-evidence/offline-check에서10섹션·8SVG·68링크, 본문 누락/깨진 링크/중복id/외부 필수 리소스/실행script0을 확인했다. 실제1440/768/390/320px에서 가로 넘침0,10앵커·키보드 접근·SVG 접근성·file:// offline 렌더를 확인했고 보고서 콘솔 오류/경고0이었다. 대표 최종 화면과 전후 그림·모바일·offline 캡처를 무시 경로에 남겼다.
+- 앱 검증 최종 근거: `output/architecture/verification-summary.json`과 `output/playwright/app-browser-evidence.json`에 최종 명령·exitcode·수·한계를 모았다. 관련53/53, 전체613중603통과·기준과 같은10실패, lint/타입/두 로컬 빌드 통과, 앱16·사진저장8·실제 로컬 Paddle 합성 판독·이탈 취소/수락 결과를 보존한다. 전체 suite 미통과와 게임/운영 미검증은 유지한다.
+- 정리·보존: 본인 Next3107 및 architecture-app/architecture-final 세션, 보고서3251 및 architecture-report 세션을 종료했다. 원본3000 서버와 사용자 브라우저 저장에는 접근하지 않았다. 병행 다른 작업의 원본 브랜치 전진을 이번 branch에 재베이스/통합하지 않았으며 이번 작업 자체는 dev-main/main/Production을 수정하지 않았다. 이후 반영은 별도 요청으로 정한다.
+- 관련 결정: D-ARCHITECTURE-IMPLEMENT-001·D-ARCHITECTURE-RESULT-001·D-146·D-ENV-001. 사용자 결정 원장은 이 파일이며 기술/PAAR 문서는 그 결정의 구현 결과다.

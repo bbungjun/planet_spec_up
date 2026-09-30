@@ -325,6 +325,13 @@ npm run typecheck
 npm run build
 ```
 
+기준 대조의 정확한 실행 명령(작업 위치 `output/architecture/baseline`):
+
+```powershell
+npx vitest run tests/calculator/attack-buffs.test.ts tests/calculator/calculator-app.test.tsx tests/calculator/captain-beta-ui.test.tsx tests/calculator/preset-stat-window.test.tsx tests/calculator/projectile-ui.test.tsx tests/calculator/reference-cases.test.ts --maxWorkers=4 --reporter=default --reporter=json --outputFile.json=../baseline-regression.json
+npx vitest run tests/calculator/captain-beta-ui.test.tsx --maxWorkers=1 --reporter=default --reporter=json --outputFile.json=../baseline-captain-alone.json
+```
+
 기준 대조는 새 Git 이력/추가 개발 worktree를 만들지 않고 `git archive 4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b`를 무시 경로 `output/architecture/baseline`에 풀어 같은 설치 의존성으로 실행했다. 기존 테스트 기대치는 낮추거나 교체하지 않았다. 기준 실패는 신궁의 공+10·화살0·크리 패시브 및 공개 3직업 선택에 앞선 기대값들이다. 기준 묶음 실행의 캡틴 UI는 초기 로드 timeout에서 먼저 끝났으므로 별도 단독 실행으로 최종과 동일한 disabled assertion까지 확인했다. **전체 suite는 미통과다.** ‘새 실패 테스트 없음’은 게임 실측 합격이나 기존 테스트 부채 해결을 뜻하지 않는다.
 
 격리 브라우저는 본인 Next 로컬3107·새 CLI 세션 `architecture-final`을 사용했다. 사용자 데이터와 원본3000 서버를 건드리지 않았다. 저장 실패는 합성 quota 오류이며 OCR는 canvas 합성 이미지와 실제 로컬 Paddle/WASM이다. 사진 pending의 이탈 취소는 목록 보존, 수정 상태의 이탈 수락은 목적지 이동과 기존 저장 보존을 확인했다. 실제 인식 콘솔의27개 ERROR채널 메시지는 모두 ONNX `[W:] CleanUnusedInitializersAndNodeArgs` 모델 초기값 제거 경고였고 핵심 앱 흐름은 콘솔 오류/경고0이었다. 대표 캡처: `output/playwright/captain-saved.png`, `synthetic-ocr-review.png`, `synthetic-ocr-saved.png`.
