@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
-import { createDefaultInput, DEFAULT_BUFF_ATTACK, DEFAULT_PROJECTILE_ATTACK } from "./domain/defaults";
+import { createDefaultInput, DEFAULT_BUFF_ATTACK, defaultProjectileAttack } from "./domain/defaults";
 import type { StackableAttackBuffId } from "./domain/attack-buffs";
 import { JOB_RULES } from "./domain/job-rules";
 import { addEquipmentSlot, getEquipmentSlotLabel, isNonEquipmentSlot, removeEquipmentSlot } from "./domain/slots";
@@ -54,7 +54,7 @@ function hasEquipmentValues(input: CalculatorInput): boolean {
     || (input.customSlots?.length ?? 0) > 0 || Object.entries(input.equipment).some(
     ([slot, equipment]) => equipment !== undefined
       && Object.entries(equipment).some(([field, value]) => value.trim() !== ""
-        && !(slot === "projectile" && field === "attackFlat" && value === DEFAULT_PROJECTILE_ATTACK)
+        && !(slot === "projectile" && field === "attackFlat" && value === defaultProjectileAttack(input.character.job))
         && !(slot === "buff" && field === "attackFlat" && value === DEFAULT_BUFF_ATTACK)),
   );
 }
@@ -215,7 +215,14 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     const outcome = applyOcrBatch(input, job, entries);
     if (outcome.error) return outcome.error;
     if (!outcome.input) return "인식 결과를 다시 확인하세요.";
-    const characterError = calculateDamageResult(outcome.input).issues.find(issue => issue.severity === "error"
+    const outcomeIssues = calculateDamageResult(outcome.input).issues;
+    const arrowError = outcome.input.character.job === "marksman"
+      ? outcomeIssues.find(issue => issue.severity === "error" && issue.path === "equipment.projectile.attackFlat") : undefined;
+    if (arrowError) {
+      handleNavigate(arrowError.path);
+      return "화살 공격력을 0~2 사이의 정수로 입력한 뒤 저장하세요.";
+    }
+    const characterError = outcomeIssues.find(issue => issue.severity === "error"
       && (issue.path.startsWith("character.") || issue.path.startsWith("cashEquipment.")));
     if (characterError) {
       handleNavigate(characterError.path);
@@ -296,6 +303,9 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   };
 
   const handleSave = (): boolean => {
+    const arrowError = input.character.job === "marksman"
+      ? result.issues.find(issue => issue.severity === "error" && issue.path === "equipment.projectile.attackFlat") : undefined;
+    if (arrowError) { setStorageError("화살 공격력을 0~2 사이의 정수로 입력한 뒤 저장해주세요."); handleNavigate(arrowError.path); return false; }
     const aranError = input.character.job === "aran" ? result.issues.find(issue => issue.severity === "error" && (issue.code === "ARAN_REFERENCE_REQUIRED" || issue.path.startsWith("character.aran"))) : undefined;
     if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return false; }
     const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED" || (issue.severity === "error" && issue.path.endsWith(".criticalRate")));

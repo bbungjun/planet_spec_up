@@ -7,6 +7,7 @@ import { activeWeaponPreset, WEAPON_PRESETS } from "../domain/weapon-presets";
 import type { CalculatorInput } from "../domain/types";
 import { PresetStatWindow } from "./PresetStatWindow";
 import { OptionEfficiencyPanel } from "./OptionEfficiencyPanel";
+import { MARKSMAN_MASTER_SKILLS } from "../domain/marksman";
 
 const number = (value: number) => value.toLocaleString("ko-KR", { maximumFractionDigits: 3 });
 const percent = (value: number | null | undefined) => value == null ? "—"
@@ -67,6 +68,7 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
             <OptionEfficiencyPanel input={input} snapshot={simulation.snapshot} />
           </>}
         <details className="simulator-formula"><summary>비교 계산 기준</summary>
+          {input.character.job === "marksman" && <p>신궁 최대 스탯공 = floor((3.6 × 최종DEX + 최종STR) × 총공격력 / 100). 엑스퍼트{MARKSMAN_MASTER_SKILLS.crossbowExpert.level} 공격력 +{MARKSMAN_MASTER_SKILLS.crossbowExpert.attack}와 화살은 공% 제외 후 한 번 더하고, 숙련도{MARKSMAN_MASTER_SKILLS.crossbowExpert.mastery}%는 최대 스탯공에 곱하지 않습니다.</p>}
           <p>장비 주·부스탯, 공격력과 각 % 옵션의 합계에 변경량을 더한 뒤 기존 계산식과 버림을 적용합니다. % 항목의 변경량은 %p 단위입니다. 공격력%는 장비 공격력에만 적용하며, 사냥에서는 보공을 제외합니다.</p>
           <p>순수 스탯·레벨·버프·공격 대상은 현재 세팅과 같습니다. 환산공은 같은 조건에서 비교하는 지표이며 실제 사냥 전체 피해나 스킬 타격값은 아닙니다.</p>
         </details>

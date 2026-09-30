@@ -2,6 +2,7 @@ import type { CalculatorInput, ValidationIssue } from "../domain/types";
 import type { EquipmentChangeHandler } from "./EquipmentEditor";
 import { ATTACK_BUFF_PRESETS, type StackableAttackBuffId } from "../domain/attack-buffs";
 import { StackableBuffControls } from "./StackableBuffControls";
+import { MARKSMAN_ARROW_ATTACK_MAX } from "../domain/marksman";
 
 type Props = {
   input: CalculatorInput;
@@ -34,7 +35,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
       <StackableBuffControls buffs={input.attackBuffs} onChange={onStackableBuffChange} />
       <div className="attack-source-fields">
         {([
-          ["projectile", "불릿·표창 공격력"],
+          ["projectile", input.character.job === "marksman" ? "화살 공격력 (0~2)" : "불릿·표창 공격력"],
           ["blessing_1", "정령의 축복"],
           ["blessing_2", "여제의 축복"],
           ["buff", "공격력 버프 직접 입력"],
@@ -44,7 +45,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
           return (
             <div className="field" key={slot}>
               <label htmlFor={`attack-source-${slot}`}>{label}</label>
-              <input id={`attack-source-${slot}`} name={path} autoComplete="off" inputMode="numeric" type="number" min={0} max={9999} step={1}
+              <input id={`attack-source-${slot}`} name={path} autoComplete="off" inputMode="numeric" type="number" min={0} max={input.character.job === "marksman" && slot === "projectile" ? MARKSMAN_ARROW_ATTACK_MAX : 9999} step={1}
                 value={input.equipment[slot]?.attackFlat ?? ""}
                 data-field-path={path}
                 aria-invalid={error ? true : undefined}
