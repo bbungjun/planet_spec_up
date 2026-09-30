@@ -84,6 +84,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   const [initialLoading, setInitialLoading] = useState(true);
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
+  const equipmentWorkspaceRef = useRef<HTMLDivElement | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const result = useMemo(() => calculateDamageResult(input), [input]);
   const hasUnsavedChanges = !initialLoading && JSON.stringify(captureWeaponPreset(input)) !== savedSnapshot;
@@ -427,7 +428,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      <div className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">
+      <div ref={equipmentWorkspaceRef} className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
             input={input}
@@ -443,6 +444,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
           <div className="calculator-center" id="equipment-editor-area" tabIndex={-1} aria-label="장비 입력">
             {inputMode === "cards" ? (
               <EquipmentEditor
+                pasteScopeRef={equipmentWorkspaceRef}
                 input={input}
                 selectedSlot={selectedSlot}
                 issues={result.issues}

@@ -1,5 +1,5 @@
 import { isWearBlocked } from "../domain/requirements";
-import { useEffect, useRef, type KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent, type RefObject } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import type {
   CalculatorInput,
@@ -30,6 +30,7 @@ type EquipmentEditorProps = {
   onOcrApply: (target: OcrTarget, replacement: StatReplacement, source?: OcrSource) => void;
   onOcrAddAsNew: (target: OcrTarget, label: string, replacement: StatReplacement) => void;
   onOcrBatchApply: ApplyOcrBatch;
+  pasteScopeRef?: RefObject<HTMLElement | null>;
 };
 
 export type EquipmentFieldDefinition = {
@@ -72,6 +73,7 @@ export function EquipmentEditor({
   onOcrApply,
   onOcrAddAsNew,
   onOcrBatchApply,
+  pasteScopeRef,
 }: EquipmentEditorProps) {
   const equipment = input.equipment[selectedSlot];
   const rule = JOB_RULES[input.character.job];
@@ -127,6 +129,7 @@ export function EquipmentEditor({
 
       <EquipmentOcrPanel
         captureDocumentPaste={false}
+        pasteScopeRef={pasteScopeRef}
         key={input.weaponPresets?.active ?? "boss"}
         target={{ job: input.character.job, slot: selectedSlot }}
         slotLabel={slotLabel}

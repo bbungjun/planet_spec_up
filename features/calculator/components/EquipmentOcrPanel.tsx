@@ -13,6 +13,7 @@ import {
   useRef,
   type ChangeEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { JOB_RULES } from "../domain/job-rules";
 import { matchingSlots, RING_SLOTS } from "../domain/slots";
@@ -51,6 +52,8 @@ export type EquipmentOcrPanelProps = {
   uploadFields?: ReactNode;
   onApplyBatch?: ApplyOcrBatch;
   captureDocumentPaste?: boolean;
+  /** Routes inventory/editor paste before the page-wide setup importer. */
+  pasteScopeRef?: RefObject<HTMLElement | null>;
 };
 
 type PanelStatus = "idle" | "loading" | "recognizing" | "ready" | "error";
@@ -101,6 +104,7 @@ export function EquipmentOcrPanel({
   uploadFields,
   onApplyBatch,
   captureDocumentPaste = true,
+  pasteScopeRef,
 }: EquipmentOcrPanelProps) {
   const panelId = useId();
   const [candidateConfirmed,setCandidateConfirmed] = useState(false);
@@ -312,20 +316,21 @@ export function EquipmentOcrPanel({
   }, [cancelCurrent, target.job, target.slot]);
 
   useEffect(() => {
-    if (!captureDocumentPaste) return;
+    const pasteScope = captureDocumentPaste ? document : pasteScopeRef?.current;
+    if (!pasteScope) return;
     const handleDocumentPaste = (event: ClipboardEvent) => {
       if (event.defaultPrevented) return;
       if (purpose === "candidate" && !fileInputRef.current?.closest("dialog")?.hasAttribute("open")) return;
       const files = clipboardImages(event.clipboardData);
       if (files.length === 0) return;
       event.preventDefault();
-      if (purpose === "candidate") event.stopPropagation();
+      event.stopPropagation();
       processFiles(files);
     };
 
-    document.addEventListener("paste", handleDocumentPaste, purpose === "candidate");
-    return () => document.removeEventListener("paste", handleDocumentPaste, purpose === "candidate");
-  }, [processFiles, captureDocumentPaste, purpose]);
+    pasteScope.addEventListener("paste", handleDocumentPaste as EventListener, purpose === "candidate");
+    return () => pasteScope.removeEventListener("paste", handleDocumentPaste as EventListener, purpose === "candidate");
+  }, [processFiles, captureDocumentPaste, pasteScopeRef, purpose]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.currentTarget.files ?? []);
@@ -396,7 +401,14 @@ export function EquipmentOcrPanel({
       className={`equipment-ocr-panel${purpose === "candidate" ? " candidate-import-panel" : ""}`}
       aria-labelledby={`${panelId}-heading`}
       tabIndex={purpose === "candidate" ? 0 : undefined}
-      onPaste={event => { if(purpose!=="candidate")return; const files=clipboardImages(event.clipboardData);if(files.length){event.preventDefault();event.stopPropagation();processFiles(files);} }}
+      onPaste={event => {
+        if (event.defaultPrevented) return;
+        const files = clipboardImages(event.clipboardData);
+        if (!files.length) return;
+        event.preventDefault();
+        event.stopPropagation();
+        processFiles(files);
+      }}
       onDragOver={event=>{if(purpose==="candidate")event.preventDefault();}}
       onDrop={event=>{if(purpose==="candidate"){event.preventDefault();event.stopPropagation();processFiles(Array.from(event.dataTransfer.files));}}}
     >
@@ -426,14 +438,14 @@ export function EquipmentOcrPanel({
           tabIndex={-1}
           onChange={handleFileChange}
         />
-        {(captureDocumentPaste || purpose === "candidate") && <div
+        <div
           className="equipment-ocr-paste-zone"
           tabIndex={0}
           role="group"
           aria-label="장비 스크린샷 붙여넣기"
         >
-          Ctrl+V로 붙여넣기
-        </div>}
+          {purpose === "candidate" ? "Ctrl+V로 붙여넣기" : "Win+Shift+S 캡처 → Ctrl+V 붙여넣기"}
+        </div>
       </div>
       {uploadFields}
       {batch && batch.job === target.job && onApplyBatch && <EquipmentOcrBatchPanel key={batch.id}

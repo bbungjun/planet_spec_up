@@ -93,6 +93,75 @@ it("routes one pasted image to registration in bulk mode and preserves a pending
   expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
 });
 
+it("pastes into the selected inventory slot, preserves other equipment, and saves the reviewed replacement", async () => {
+  const previous = createDefaultInput("corsair");
+  previous.equipment.cape!.mainFlat = "12";
+  previous.equipment.gloves!.mainFlat = "25";
+  const raw = serializeSetup(previous);
+  localStorage.setItem(STORAGE_KEY, raw);
+  const user = userEvent.setup();
+  const view = render(<CalculatorApp />);
+  await ready();
+  const slot = screen.getByRole("button", { name: "망토 편집" });
+  await user.click(slot);
+
+  const pasted = image("replacement-cape");
+  fireEvent.paste(slot, { clipboardData: {
+    items: [{ kind: "file", getAsFile: () => pasted }], files: [pasted],
+  } });
+  await screen.findByLabelText("인식 DEX");
+  expect(recognize).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("region", { name: "여러 장비 인식 목록" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(12);
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+
+  await user.click(screen.getByRole("button", { name: "인식값 적용" }));
+  expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(18);
+  await user.click(screen.getByRole("button", { name: "프리셋 저장" }));
+  expect(deserializeSetup(localStorage.getItem(STORAGE_KEY)!)).toMatchObject({ ok: true, value: { input: {
+    equipment: { cape: { mainFlat: "18" }, gloves: { mainFlat: "25" } },
+  } } });
+  view.unmount();
+  render(<CalculatorApp />);
+  await ready();
+  await user.click(screen.getByRole("button", { name: "망토 편집" }));
+  expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(18);
+});
+
+it("pastes a weapon into only the active preset and leaves numeric text paste alone", async () => {
+  const previous = createDefaultInput("corsair");
+  previous.equipment.weapon!.attackFlat = "90";
+  previous.weaponPresets = { active: "boss", entries: {
+    chaos: { weapon: { ...previous.equipment.weapon!, attackFlat: "80" }, monsterDefense: "80" },
+  } };
+  localStorage.setItem(STORAGE_KEY, serializeSetup(previous));
+  recognize.mockResolvedValue("장비분류: 건\n공격력 +120");
+  const user = userEvent.setup();
+  render(<CalculatorApp />);
+  await ready();
+  await user.click(screen.getByRole("button", { name: "무기 편집" }));
+  const textPaste = new Event("paste", { bubbles: true, cancelable: true });
+  Object.defineProperty(textPaste, "clipboardData", { value: {
+    items: [{ kind: "string", type: "text/plain" }], files: [],
+  } });
+  fireEvent(screen.getByLabelText("무기 공격력", { exact: true }), textPaste);
+  expect(textPaste.defaultPrevented).toBe(false);
+  expect(recognize).not.toHaveBeenCalled();
+
+  fireEvent.paste(screen.getByLabelText("장비 스크린샷 붙여넣기"), {
+    clipboardData: { items: [], files: [image("replacement-weapon")] },
+  });
+  await screen.findByLabelText("인식 공격력");
+  expect(recognize).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("region", { name: "여러 장비 인식 목록" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "인식값 적용" }));
+  expect(screen.getByLabelText("무기 공격력", { exact: true })).toHaveValue(120);
+  await user.click(screen.getByRole("button", { name: "카오스 보스용 프리셋 선택" }));
+  expect(screen.getByLabelText("무기 공격력", { exact: true })).toHaveValue(80);
+  await user.click(screen.getByRole("button", { name: "일반 보스용 프리셋 선택" }));
+  expect(screen.getByLabelText("무기 공격력", { exact: true })).toHaveValue(120);
+});
+
 it("accepts dropped files and rejects conflicting destinations without partially saving", async () => {
   recognize.mockResolvedValueOnce("장비분류: 건\n공격력 +100\n보스공격력 +30%")
     .mockResolvedValueOnce("장비분류: 건\n공격력 +110\n보스공격력 +60%");
