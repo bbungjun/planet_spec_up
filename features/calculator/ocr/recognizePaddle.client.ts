@@ -2,19 +2,21 @@
 
 /**
  * 현재 장비/구매 후보 화면의 기본 PaddleOCR 판독 파이프라인.
- * 설명창 분리 → 두 크기의 확대·반전 판독 → 줄별 재시도 → 제목 복구 시도 → 공통 검토 결과 순으로 실행한다.
+ * 설명창 분리·후보 구조 검사/원색 fallback → 두 크기의 확대·반전 판독 → 줄별 재시도 → 제목 복구 시도 → 공통 검토 결과 순으로 실행한다.
  */
 
 import { prepareTooltip } from "./prepareTooltip.client";
 import { contrastTooltip, enlargeTooltip, tooltipImageSize } from "./enlargeTooltip.client";
 import { applyRequirementRecovery, buildOcrReview, reviewText } from "./reviewRecognition";
-import { isKnownEquipmentCategory, parseMapleTooltip, readTooltipRequirement } from "./parseMapleTooltip";
+import { readTooltipRequirement } from "./parseMapleTooltip";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, toRecognitionError, type TooltipRecognizer } from "./recognizeTooltip.client";
 import type { OcrBounds, OcrReading, RequirementObservation } from "./types";
 import { RECOVERY_VIEWS, VERIFICATION_VIEWS, requirementVerificationView, requirementView } from "./requirementView.client";
 import { mergeRecognitionRetry, retryRecognitionBounds, retryRecognitionLabel } from "./retryRecognition";
 import { identifiedRequirementLabel, locateRequirementVerification } from "./retryRequirements";
 import { tooltipHeader } from "./tooltipHeader";
+import { assessTooltipCandidate, distinctCompleteCandidates, sameCandidateRegion, type TooltipCandidateAssessment } from "./tooltipCandidate";
+import type { TooltipCandidateRegions } from "./prepareTooltipImage";
 
 type Item = { text: string; score: number; poly: number[][] };
 type Engine = { initialize(): Promise<unknown>; predict(input: File): Promise<Array<{ items: Item[] }>>; dispose(): Promise<void> };
@@ -130,28 +132,54 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
     const progress = (status: "loading" | "recognizing", value: number) => { active(); options.onProgress({ status, progress: value }); };
     try {
       progress("loading", 0);
-      let prepared: File;
+      let prepared: File | undefined;
       let warnings: string[] = [];
-      try { prepared = await withAbort(prepareTooltip(file, { signal, region: options.region, onWarnings: value => { warnings = value; } }), signal); }
+      let candidates: TooltipCandidateRegions | undefined;
+      let cachedFirst: { items: Item[]; width: number; height: number } | undefined;
+      try { prepared = await withAbort(prepareTooltip(file, { signal, region: options.region, onWarnings: value => { warnings = value; }, onCandidates: value => { candidates = value; } }), signal); }
       catch (error) {
         const ambiguous = error as { code?: string; regions?: OcrBounds[] };
         if (ambiguous.code !== "MULTIPLE_TOOLTIPS" || !ambiguous.regions?.length || options.region) throw error;
-        const current = await withAbort(ensure(version), signal);
-        // 후보가 여러 개면 최대 4곳을 추가 판독한다. 알려진 장비 분류와 옵션 조건을 만족하는 곳이 하나여야 진행한다.
-        const matches: Array<{ file: File; warnings: string[] }> = [];
-        for (const region of ambiguous.regions.slice(0, 4)) {
-          active();
-          let candidateWarnings: string[] = [];
-          const candidate = await withAbort(prepareTooltip(file, { signal, region, onWarnings: value => { candidateWarnings = value; } }), signal);
-          const view = await contrastTooltip(await enlargeTooltip(candidate, 3) ?? candidate);
-          active();
-          const [result] = await withAbort(current.predict(view), signal);
-          const parsed = parseMapleTooltip(result.items.map(item => item.text).join("\n"));
-          if (parsed.category && isKnownEquipmentCategory(parsed.category) && parsed.options.length >= 2) matches.push({ file: candidate, warnings: candidateWarnings });
-        }
-        if (matches.length !== 1) throw { code: matches.length ? "MULTIPLE_TOOLTIPS" : "TOOLTIP_NOT_FOUND", retryable: false };
-        prepared = matches[0].file; warnings = matches[0].warnings;
+        candidates ??= { regions: ambiguous.regions, selected: null };
       }
+      // 픽셀 탐지에서 하나로 보인 자동 후보도 구조를 검사한다. 직접 지정/작은 캡처는 기존 검토 경로를 유지한다.
+      if (!options.region && candidates?.regions.length) {
+        const current = await withAbort(ensure(version), signal);
+        const matches: Array<{ file: File; warnings: string[]; region: OcrBounds; assessment: TooltipCandidateAssessment; first: { items: Item[]; width: number; height: number } }> = [];
+        const regions = [...(candidates.selected ? [candidates.selected] : []), ...candidates.regions].slice(0, 4);
+        for (const [index, region] of regions.entries()) {
+          active();
+          if (matches.some(match => sameCandidateRegion(match.region, region))) continue;
+          let candidateWarnings: string[] = [];
+          const candidate = candidates.selected === region && prepared ? prepared
+            : await withAbort(prepareTooltip(file, { signal, region, onWarnings: value => { candidateWarnings = value; } }), signal);
+          if (candidates.selected === region) candidateWarnings = warnings;
+          const enlarged = await enlargeTooltip(candidate, 3) ?? candidate;
+          const view = await contrastTooltip(enlarged), dimensions = await tooltipImageSize(view);
+          active();
+          if (!dimensions) continue;
+          progress("recognizing", .05 + index * .03);
+          const [result] = await withAbort(current.predict(view), signal);
+          active();
+          let assessment = assessTooltipCandidate(paddleReadings(result.items, dimensions.width, dimensions.height, 0), dimensions);
+          if (assessment.status === "retry-color") {
+            // 마스크에서 잃은 구조만 원래 색상으로 확인한다. 잘못된 숫자를 이 판독으로 덮어쓰지 않는다.
+            const colorSize = await tooltipImageSize(enlarged);
+            active();
+            if (!colorSize) continue;
+            const [colorResult] = await withAbort(current.predict(enlarged), signal);
+            active();
+            assessment = assessTooltipCandidate(paddleReadings(colorResult.items, colorSize.width, colorSize.height, 1), colorSize, "color");
+          }
+          if (assessment.status === "complete") matches.push({ file: candidate, warnings: candidateWarnings, region, assessment,
+            first: { items: result.items, ...dimensions } });
+        }
+        const distinct = distinctCompleteCandidates(matches);
+        if (distinct.length !== 1) throw { code: distinct.length ? "MULTIPLE_TOOLTIPS" : "TOOLTIP_NOT_FOUND", retryable: false };
+        prepared = distinct[0].file; warnings = distinct[0].warnings;
+        if (!options.enhance) cachedFirst = distinct[0].first;
+      }
+      if (!prepared) throw { code: "TOOLTIP_NOT_FOUND", retryable: false };
       active(); options.onPrepared?.(prepared);
       const current = await withAbort(ensure(version), signal);
       // 기본 경로도 대비 보정을 수행한다. enhance는 작은 이미지의 확대 상한만 3배에서 4배로 바꾼다.
@@ -164,7 +192,8 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
         const view = await contrastTooltip(image), dimensions = await tooltipImageSize(view);
         active();
         if (!dimensions) throw new Error("Cannot read image dimensions");
-        const [result] = await withAbort(current.predict(view), signal);
+        const [result] = pass === 0 && cachedFirst && cachedFirst.width === dimensions.width && cachedFirst.height === dimensions.height
+          ? [{ items: cachedFirst.items }] : await withAbort(current.predict(view), signal);
         active(); readings.push(...paddleReadings(result.items, dimensions.width, dimensions.height, pass).map((reading, index) => ({ ...reading,
           provenance: { ...identity, role: "discovery" as const, viewId: `discovery-${pass}`, readingId: `${identity.operationId}-discovery-${pass}-${index}` } })));
       }
