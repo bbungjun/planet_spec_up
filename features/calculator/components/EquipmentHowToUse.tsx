@@ -2,9 +2,27 @@
 
 import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 
-const GUIDE_IMAGE = "/guides/equipment-registration-v2.png";
+const GUIDES = {
+  registration: {
+    title: "장비 등록 방법",
+    image: "/guides/equipment-registration-v2.png",
+    width: 1095,
+    height: 1437,
+    alt: "PrtSc 파일 선택과 Win + Shift + S 영역 캡처를 이용한 장비 등록 안내",
+  },
+  comparison: {
+    title: "장비 비교 방법",
+    image: "/guides/equipment-comparison-v1.png",
+    width: 1024,
+    height: 1536,
+    alt: "비교 대상 추가, Ctrl + V로 사진 붙여넣기, 원본 옵션 확인 후 후보로 비교하는 방법",
+  },
+} as const;
 
-function EquipmentGuideDialog({ id, onClose }: { id: string; onClose: () => void }) {
+type GuideKind = keyof typeof GUIDES;
+
+function EquipmentGuideDialog({ id, kind, onClose }: { id: string; kind: GuideKind; onClose: () => void }) {
+  const guide = GUIDES[kind];
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const backdropPointer = useRef(false);
@@ -40,17 +58,26 @@ function EquipmentGuideDialog({ id, onClose }: { id: string; onClose: () => void
     onDragOver={event => event.preventDefault()}
     onDrop={event => { event.preventDefault(); event.stopPropagation(); }}>
     <div className="equipment-guide-heading">
-      <h2 id={`${id}-heading`}>장비 등록 방법</h2>
+      <h2 id={`${id}-heading`}>{guide.title}</h2>
       <div className="equipment-guide-actions">
-        <a href={GUIDE_IMAGE} target="_blank" rel="noopener noreferrer">원본 보기 <span aria-hidden="true">↗</span></a>
-        <button ref={closeButton} type="button" className="secondary-button" onClick={onClose} aria-label="장비 등록 방법 닫기">닫기 <span aria-hidden="true">×</span></button>
+        <a href={guide.image} target="_blank" rel="noopener noreferrer">원본 보기 <span aria-hidden="true">↗</span></a>
+        <button ref={closeButton} type="button" className="secondary-button" onClick={onClose} aria-label={`${guide.title} 닫기`}>닫기 <span aria-hidden="true">×</span></button>
       </div>
     </div>
-    <div className="equipment-guide-content" role="region" aria-label="장비 등록 안내 이미지" tabIndex={0}>
+    <div className="equipment-guide-content" role="region" aria-label={`${guide.title} 안내 이미지`} tabIndex={0}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={GUIDE_IMAGE} width={1095} height={1437} decoding="async"
-        alt="PrtSc 파일 선택과 Win + Shift + S 영역 캡처를 이용한 장비 등록 안내" />
+      <img src={guide.image} width={guide.width} height={guide.height} decoding="async" alt={guide.alt} />
       <div className="equipment-guide-text">
+        {kind === "comparison" ? <>
+          <h3>장비 비교 순서</h3>
+          <ol>
+            <li>이 안내를 닫고 장비 비교 영역의 비교 대상 추가를 누릅니다.</li>
+            <li>사진 등록 창에서 복사한 장비 이미지를 Ctrl + V로 붙여넣습니다. 가격 대비 효율을 보려면 구매 가격을 억 메소 단위로 입력합니다.</li>
+            <li>인식값과 원본 옵션을 확인하고 원본의 모든 옵션을 확인했습니다에 체크한 뒤 후보로 비교를 누릅니다.</li>
+            <li>현재 장비와 후보의 최대 스탯공·환산공 상승률, 구매 가격과 가격 대비 효율을 비교합니다.</li>
+          </ol>
+          <p>결과 수치는 예시입니다. 후보를 추가해도 현재 장비는 바뀌지 않습니다.</p>
+        </> : <>
         <h3>방법 1. PrtSc로 사진 선택</h3>
         <ol>
           <li>아이템에 커서를 올리고 PrtSc를 누릅니다. 설명창의 마지막 옵션까지 보이게 촬영합니다.</li>
@@ -64,20 +91,22 @@ function EquipmentGuideDialog({ id, onClose }: { id: string; onClose: () => void
           <li>이 안내를 닫고 계산기 상단 장비 등록 영역에서 Ctrl + V로 붙여넣습니다.</li>
         </ol>
         <p>사진을 선택하거나 붙여넣으면 장비 인식이 시작됩니다.</p>
+        </>}
       </div>
     </div>
   </dialog>;
 }
 
-export function EquipmentHowToUse() {
+export function EquipmentHowToUse({ kind = "registration" }: { kind?: GuideKind }) {
   const [open, setOpen] = useState(false);
   const id = useId();
 
   return <>
     <button type="button" className="secondary-button equipment-guide-trigger" aria-haspopup="dialog"
+      aria-label={kind === "comparison" ? "How to use · 장비 비교" : undefined}
       aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(true)}>
       <span aria-hidden="true">?</span> How to use
     </button>
-    {open && <EquipmentGuideDialog id={id} onClose={() => setOpen(false)} />}
+    {open && <EquipmentGuideDialog id={id} kind={kind} onClose={() => setOpen(false)} />}
   </>;
 }
