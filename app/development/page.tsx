@@ -6,5 +6,5 @@ export const dynamic = "force-dynamic";
 
 export default function DevelopmentPage() {
   if (process.env.NODE_ENV !== "development") notFound();
-  return <CalculatorApp development developmentDefault={readDevelopmentDefault()} />;
+  return <CalculatorApp mode="development" developmentDefault={readDevelopmentDefault()} />;
 }

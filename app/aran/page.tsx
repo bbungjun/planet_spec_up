@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function AranPage() {
-  return <CalculatorApp aranBeta />;
+  return <CalculatorApp mode="aran" />;
 }

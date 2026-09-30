@@ -3,7 +3,7 @@ import { emptyEquipment } from "./defaults";
 import { getVisibleEquipmentSlots, getEquipmentSlotLabel, matchingSlots } from "./slots";
 import { activeWeaponPreset, switchWeaponPreset, WEAPON_PRESETS } from "./weapon-presets";
 import { isPendantCategory, occupiedPendantSlots } from "./pendants";
-import { isWearBlocked } from "./requirements";
+import { assessBaseline, hasMeasuredPureStats } from "./baselinePolicy";
 import { compareHuntingSkills, type HuntingSkillChange } from "./huntingSkills";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId, CalculationResult } from "./types";
 
@@ -34,7 +34,8 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   const fail=(...reasons:string[]):CandidateComparison=>({preset,status:"blocked",reasons});
   if(input.character.job==="night_lord")return fail("나이트로드 장비 교체 비교는 아직 지원하지 않습니다.");
   if(candidate.job!==input.character.job || !comparableSlots(input).includes(candidate.slot))return fail("비교 부위를 다시 선택해주세요.");
-  if(!input.character.pureMain?.trim() || !input.character.pureSub?.trim())return {...fail("캐릭터 설정에서 순수 주스탯·부스탯을 입력해주세요."),blocker:"missing-base-stats"};
+  const basePolicy=assessBaseline("candidate", [], !hasMeasuredPureStats(input));
+  if(basePolicy.blocked.length)return {...fail(...basePolicy.blocked),blocker:"missing-base-stats"};
   const choices=comparableSlots(input).map(slot=>({slot,label:getEquipmentSlotLabel(input,slot)}));
   const matches=matchingSlots(candidate.category,choices);
   const weapons:Record<string,JobId>={건:"corsair",석궁:"marksman",아대:"night_lord",폴암:"aran"};
@@ -46,11 +47,9 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   const before=calculateDamageResult(baseline);
   const next: CalculatorInput={...baseline,equipment:{...baseline.equipment,[candidate.slot]:{...candidate.equipment}}};
   const after=calculateDamageResult(next);
-  const all=[...before.issues,...after.issues];
-  const invalid=all.filter(issue=>issue.severity==="error" || issue.code === "MISSING_WEAPON_ATTACK" || isWearBlocked(issue));
-  if(invalid.length)return {...fail(...new Set(invalid.map(i=>i.message))),before,after};
-  const pending=all.filter(issue=>issue.code === "LEGACY_DAMAGE_SPLIT");
-  const reasons=[...new Set(pending.map(i=>i.message))];
+  const policy=assessBaseline("candidate", [before,after], false);
+  if(policy.blocked.length)return {...fail(...policy.blocked),before,after};
+  const reasons=[...policy.review];
   const pendants = occupiedPendantSlots(next);
   // Request kind verification only when this image's OCR category is pendant.
   // A manually selected destination does not establish the image's category.
@@ -58,7 +57,7 @@ export function compareCandidate(input: CalculatorInput, candidate: PurchaseCand
   if (isPendantCategory(candidate.category) && pendants.some(slot => !next.equipment[slot]?.pendantId)) reasons.push("펜던트 종류를 확인해주세요. 고유 아이템 중복 착용 여부를 확인해야 합니다.");
   if(!candidate.equipment.requiredLevel?.trim())reasons.push(candidate.inputMethod === "manual" ? "후보 장비의 요구 레벨을 입력해주세요." : "후보 사진의 REQ LEV 인식값이 없습니다. 원본의 요구 레벨을 확인해주세요.");
   if(!candidate.equipment.requiredSub.trim())reasons.push(candidate.inputMethod === "manual" ? "후보 장비의 요구 스탯을 입력해주세요." : "후보 사진의 요구 스탯 인식값이 없습니다. 인식값을 확인해주세요.");
-  if(before.statAttack<=0 || before.convertedAttack<=0)reasons.push("현재 공격력이 0인 항목은 상승률을 계산할 수 없습니다.");
+  if(policy.zeroBaseline)reasons.push("현재 공격력이 0인 항목은 상승률을 계산할 수 없습니다.");
   const ready=reasons.length===0;
   return {preset,status:ready?"ready":"review",reasons,before,after,
     ...(ready && preset === "hunting" && input.character.job === "corsair"

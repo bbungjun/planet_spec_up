@@ -10,6 +10,8 @@
 
 2026-10-01 최신 개발 반영 승인(D-MARKSMAN-DEV-001): 사용자의 “dev-main 까지 반영해줘” 요청에 따라 신궁 계산과 직업 선택 전체를 원본 앱의 `dev-main`에 통합·커밋·푸시하고 Vercel Preview 상태를 확인한다. 이전 D-MARKSMAN-IMPLEMENT-001·D-JOB-SELECT-001의 원본 변경/`dev-main` 반영 금지는 당시 승인 범위로 보존하며 이번 요청 범위에서 갱신한다. 최신 안내 UI·도메인 정책·기존 미커밋 기록과 서버를 보존하고 `main`/Production은 변경하지 않는다. Sol6.1 xhigh 통합·Astra 오케스트레이션과 QA 후행은 유지한다. 로컬 테스트·새 테스트·타입·lint·build·브라우저·서버·QA 에이전트는 실행하지 않으며, 푸시 후 플랫폼의 원격 자동 빌드는 승인된 개발 반영의 필수 단계로만 확인하고 계산 QA 합격으로 표현하지 않는다.
 
+2026-10-01 구조 개선 예외(D-ARCHITECTURE-IMPLEMENT-001): 사용자 요청으로 `C:/Users/PC/.codex/worktrees/architecture-refactor/플래닛`의 새 worktree·비운영 `refactor/architecture-deepening`에서 TS-ARCH-001~004 추천 구조를 모두 구현한다. 구현·검증·기술문서·PAAR HTML은 GPT-6.1 Sol xhigh, 오케스트레이션은 Astra가 담당한다. 사용자는 저장 정책 질문에 A(현재 허용/차단·오류 순서 보존)를 확정했다. 계산식·입력 원문·저장 호환·목적별 정책을 보존하며 관련 회귀·타입·lint·빌드·격리 브라우저 확인을 수행한다. 과거 신궁 작업의 QA 유예를 이번 구조 개선의 QA 금지로 확대하지 않는다. 원본 앱·기존 미커밋 기록·서버·병행 변경은 건드리지 않고 이번 worktree의 코드·문서·비운영 커밋·푸시만 진행한다. `dev-main`/`main` 병합·푸시·Production 배포는 이번 승인에 포함하지 않는다.
+
 기준 저장소는 [bbungjun/planet_spec_up](https://github.com/bbungjun/planet_spec_up)이며 기본 브랜치는 `main`이다. **실제 앱과 Git 작업 루트는 `C:/Users/PC/Documents/플래닛`**이며, 새로 clone한 환경에서도 저장소 루트가 앱 루트다. `app/`, `features/`, `package.json`이 있는 이 루트에서 모든 앱 명령과 검증을 실행한다. 2026-09-26 사용자 결정으로 `.worktrees/planet-damage-mvp`의 앱을 루트로 이전했다. 단일 앱을 중심으로 개발하며 중첩된 앱이나 추가 worktree를 기본 작업 위치로 만들지 않는다. GitHub 소스 업로드와 웹사이트 배포는 별개이며, 배포는 별도 승인을 따른다.
 
 2026-09-29 첫 공개 승인 이력(D-141~142): 캡틴 전용 베타의 첫 공개와 공개 동작 확인에 필요한 수정·재배포를 승인받아 완료했다. 기존 Hobby 계정과 기본 vercel.app 주소를 사용하며 도메인 구매·유료 플랜 전환·외부 OCR 도입으로 확대하지 않는다. 공개 성공과 독립 사용자 POC 합격·500명 부하 검증은 구분한다. **이후 배포는 아래 최신 결정(D-146)을 따르며, 첫 공개 승인을 향후 배포의 상시 승인으로 재사용하지 않는다.**

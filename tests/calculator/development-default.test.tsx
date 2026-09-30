@@ -2,6 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { readDevelopmentDefault } from "@/features/calculator/developmentDefault.server";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
+import { createCalculatorRuntime } from "@/features/calculator/runtime";
 import { useSavedSetup } from "@/features/calculator/hooks/useSavedSetup";
 import { CAPTAIN_BETA_STORAGE_KEY, DEVELOPMENT_STORAGE_KEY, STORAGE_KEY, serializeSetup } from "@/features/calculator/storage";
 
@@ -36,7 +37,7 @@ it("ignores a personal fixture on Vercel even with development mode", async () =
 });
 
 it("uses the personal default only in an empty browser, preserving saved overrides and corrupt data", () => {
-  const { result } = renderHook(() => useSavedSetup(true, false, false, seed));
+  const { result } = renderHook(() => useSavedSetup(createCalculatorRuntime("captain", seed)));
   expect(result.current.load()).toMatchObject({ ok: true, value: { input } });
   expect(localStorage.getItem(CAPTAIN_BETA_STORAGE_KEY)).toBeNull();
   const changed = createDefaultInput("corsair");
@@ -52,18 +53,18 @@ it("keeps existing legacy captain data ahead of the default", () => {
   const legacy = createDefaultInput("corsair");
   legacy.character.level = "150";
   localStorage.setItem(STORAGE_KEY, serializeSetup(legacy));
-  const { result } = renderHook(() => useSavedSetup(true, false, false, seed));
+  const { result } = renderHook(() => useSavedSetup(createCalculatorRuntime("captain", seed)));
   expect(result.current.load()).toMatchObject({ ok: true, value: { input: legacy } });
 });
 
 it.each([true, false])("does not resurrect a cleared default (captain beta: %s)", captainBeta => {
-  const { result } = renderHook(() => useSavedSetup(captainBeta, !captainBeta, false, seed));
+  const { result } = renderHook(() => useSavedSetup(createCalculatorRuntime(captainBeta ? "captain" : "development", seed)));
   result.current.clear();
   expect(result.current.load()).toEqual({ ok: false, message: "empty" });
   expect(localStorage.getItem(captainBeta ? CAPTAIN_BETA_STORAGE_KEY : DEVELOPMENT_STORAGE_KEY)).toBe("null");
 });
 
 it("keeps an ordinary unseeded browser empty", () => {
-  const { result } = renderHook(() => useSavedSetup(true));
+  const { result } = renderHook(() => useSavedSetup(createCalculatorRuntime("captain")));
   expect(result.current.load()).toEqual({ ok: false, message: "empty" });
 });

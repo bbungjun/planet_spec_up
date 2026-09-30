@@ -19,6 +19,8 @@ import type {
   JobId,
 } from "./domain/types";
 import { useSavedSetup } from "./hooks/useSavedSetup";
+import { createCalculatorRuntime, type CalculatorMode } from "./runtime";
+import { saveBaselineSetup } from "./saveBaselineSetup";
 import { usePageLeaveGuard } from "./hooks/usePageLeaveGuard";
 import { AppHeader } from "./components/AppHeader";
 import { MapleBackdrop } from "./components/GameVisuals";
@@ -69,11 +71,10 @@ const loadErrorMessage = (message: string) => message === "unsupported-job"
   : message === "unsupported-marksman-job" ? "저장된 세팅의 직업이 신궁이 아닙니다. 기존 데이터는 보존했습니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
-const PUBLIC_JOB_ROUTES = { corsair: "/", aran: "/aran", marksman: "/marksman" } as const;
-
-export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false, marksmanBeta = false, developmentDefault = null }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean; marksmanBeta?: boolean; developmentDefault?: string | null }) {
-  const initialJob: JobId = marksmanBeta ? "marksman" : aranBeta ? "aran" : "corsair";
-  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta, developmentDefault, marksmanBeta);
+export function CalculatorApp({ mode = "sandbox", developmentDefault = null }: { mode?: CalculatorMode; developmentDefault?: string | null }) {
+  const runtime = useMemo(() => createCalculatorRuntime(mode, developmentDefault), [mode, developmentDefault]);
+  const initialJob = runtime.initialJob;
+  const { load, save, clear } = useSavedSetup(runtime);
   const [input, setInput] = useState<CalculatorInput>(
     () => createDefaultInput(initialJob),
   );
@@ -216,38 +217,16 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   };
 
   const handleOcrBatchSave: ApplyOcrBatch = (job, entries) => {
-    if (initialLoading) return "저장된 캐릭터를 불러오는 중입니다. 잠시 기다려주세요.";
-    const outcome = applyOcrBatch(input, job, entries);
-    if (outcome.error) return outcome.error;
-    if (!outcome.input) return "인식 결과를 다시 확인하세요.";
-    const outcomeIssues = calculateDamageResult(outcome.input).issues;
-    const arrowError = outcome.input.character.job === "marksman"
-      ? outcomeIssues.find(issue => issue.severity === "error" && issue.path === "equipment.projectile.attackFlat") : undefined;
-    if (arrowError) {
-      handleNavigate(arrowError.path);
-      return "화살 공격력을 0~2 사이의 정수로 입력한 뒤 저장하세요.";
+    const outcome = saveBaselineSetup(input, { kind: "ocr", job, entries, loading: initialLoading }, save);
+    if (!outcome.ok) {
+      if (outcome.focusPath) handleNavigate(outcome.focusPath);
+      return outcome.message;
     }
-    const characterError = outcomeIssues.find(issue => issue.severity === "error"
-      && (issue.path.startsWith("character.") || issue.path.startsWith("cashEquipment.")));
-    if (characterError) {
-      handleNavigate(characterError.path);
-      return characterError.path.startsWith("cashEquipment.")
-        ? "캐시 장비 입력값을 수정한 뒤 저장하세요."
-        : "캐릭터 설정에 잘못된 값이 있습니다. 표시된 입력값을 수정한 뒤 저장하세요.";
-    }
-    const next = captureWeaponPreset(outcome.input);
-    try {
-      // Persist the exact reviewed snapshot before committing UI state. A quota
-      // or privacy-mode failure leaves the old setup and the review intact.
-      const timestamp = save(next);
-      setInput(next);
-      setSavedSnapshot(JSON.stringify(next));
-      setSavedAt(timestamp);
-      setStorageError(null);
-      return null;
-    } catch {
-      return "브라우저에 저장하지 못했습니다. 인식 목록은 유지됩니다. 브라우저 저장 공간·설정을 확인한 뒤 다시 눌러주세요.";
-    }
+    setInput(outcome.input);
+    setSavedSnapshot(outcome.snapshot);
+    setSavedAt(outcome.savedAt);
+    setStorageError(null);
+    return null;
   };
 
   const handleRemoveSlot = (slot: EquipmentSlot) => {
@@ -276,11 +255,12 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
 
   const handleJobChange = (job: JobId) => {
     if (job === input.character.job) return;
-    if (captainBeta || aranBeta || marksmanBeta) {
-      if (job === "night_lord") return;
+    if (runtime.publicSelection) {
+      const destination = runtime.destination(job);
+      if (destination === null) return;
       // Full-page navigation initializes the destination's own job and storage.
       // The existing beforeunload guard is the single prompt for pending work.
-      window.location.assign(PUBLIC_JOB_ROUTES[job]);
+      window.location.assign(destination);
       return;
     }
     if (
@@ -313,40 +293,16 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   };
 
   const handleSave = (): boolean => {
-    const arrowError = input.character.job === "marksman"
-      ? result.issues.find(issue => issue.severity === "error" && issue.path === "equipment.projectile.attackFlat") : undefined;
-    if (arrowError) { setStorageError("화살 공격력을 0~2 사이의 정수로 입력한 뒤 저장해주세요."); handleNavigate(arrowError.path); return false; }
-    const aranError = input.character.job === "aran" ? result.issues.find(issue => issue.severity === "error" && (issue.code === "ARAN_REFERENCE_REQUIRED" || issue.path.startsWith("character.aran"))) : undefined;
-    if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return false; }
-    const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED" || (issue.severity === "error" && issue.path.endsWith(".criticalRate")));
-    if (criticalError) {
-      setStorageError(criticalError.message);
-      handleNavigate(criticalError.path);
+    const outcome = saveBaselineSetup(input, { kind: "preset" }, save);
+    if (!outcome.ok) {
+      setStorageError(outcome.message);
+      if (outcome.focusPath) handleNavigate(outcome.focusPath);
       return false;
     }
-    const cashError = result.issues.find(issue => issue.severity === "error" && issue.path.startsWith("cashEquipment."));
-    if (cashError) {
-      setStorageError("캐시 장비 입력값을 확인한 뒤 다시 저장해주세요.");
-      handleNavigate(cashError.path);
-      return false;
-    }
-    const baseStatError = result.issues.find(issue => issue.severity === "error"
-      && (issue.path === "character.pureMain" || issue.path === "character.pureSub"));
-    if (baseStatError) {
-      setStorageError("순수 스탯을 확인한 뒤 다시 저장해주세요.");
-      handleNavigate(baseStatError.path);
-      return false;
-    }
-    try {
-      const next = captureWeaponPreset(input);
-      setSavedAt(save(next));
-      setSavedSnapshot(JSON.stringify(next));
-      setStorageError(null);
-      return true;
-    } catch {
-      setStorageError("세팅을 저장할 수 없습니다.");
-      return false;
-    }
+    setSavedAt(outcome.savedAt);
+    setSavedSnapshot(outcome.snapshot);
+    setStorageError(null);
+    return true;
   };
 
   const handlePresetSelect = (id: WeaponPresetId) => {
@@ -397,13 +353,11 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     <main className={`calculator-shell${inputMode === "bulk" ? " is-bulk-mode" : ""}`} aria-busy={initialLoading}>
       <a className="skip-link" href="#equipment-editor-area" onClick={() => document.getElementById("equipment-editor-area")?.focus()}>장비 입력으로 바로가기</a>
       <MapleBackdrop />
-      {development && <p className="panel-description">개발 전용 · 별도 저장</p>}
+      {runtime.development && <p className="panel-description">개발 전용 · 별도 저장</p>}
       {input.character.job === "aran" && <p className="panel-description" role="status">아란 참고 모델 · 콤보 크리20은 공식 효과를 자동 적용합니다. 폴암 계수 기본5·기타 추가공 기본0(효과 없음)·추가공의 공% 제외·공통 AP 범위는 참고 가정입니다. 스탯공·환산공·후보 상승률·효율은 게임 실측 미검증이며 전체 DPS가 아닙니다.</p>}
       <fieldset className="calculator-content" disabled={initialLoading} aria-label="계산기 입력 및 결과">
       <AppHeader
-        captainBeta={captainBeta}
-        aranBeta={aranBeta}
-        marksmanBeta={marksmanBeta}
+        brand={runtime.brand}
         onSave={handleSave}
         onLoad={handleLoad}
         onReset={handleReset}
@@ -419,7 +373,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave} onPendingChange={setPendingImport}>
         <div className="setup-import-identity">
-          <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} marksmanBeta={marksmanBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
+          <CharacterIdentityFields jobs={runtime.jobs} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
       <div ref={equipmentWorkspaceRef} className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">

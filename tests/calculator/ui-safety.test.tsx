@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
 import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { serializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
+import * as presets from "@/features/calculator/components/WeaponPresetsPanel";
 const originalScrollIntoView = Element.prototype.scrollIntoView;
 
 beforeEach(() => {
@@ -56,6 +57,29 @@ it("tracks edits, reversal, successful save and failed save without treating vie
   fireEvent.click(screen.getByRole("button", { name: "저장" }));
   expect(leaveIsBlocked()).toBe(true);
   expect(attack).toHaveValue(112);
+});
+
+it("retains savedAt and savedSnapshot after ordinary save failure", async () => {
+  const raw = localStorage.getItem(STORAGE_KEY)!;
+  const previousSavedAt = JSON.parse(raw).savedAt;
+  const renderPanel = presets.WeaponPresetsPanel;
+  const panel = vi.spyOn(presets, "WeaponPresetsPanel").mockImplementation(props => renderPanel(props));
+  await openCalculator();
+  expect(document.querySelector("time[datetime]")).toHaveAttribute("datetime", previousSavedAt);
+  const attack = screen.getByLabelText("일괄 입력 무기 공격력", { exact: true });
+  fireEvent.change(attack, { target: { value: "112" } });
+  const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw Error("quota"); });
+  fireEvent.click(screen.getByRole("button", { name: "프리셋 저장" }));
+  expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+  expect(screen.queryByRole("dialog", { name: "저장되었습니다" })).not.toBeInTheDocument();
+  // The save-error presentation hides <time>; observe the actual rendered panel's interface.
+  expect(panel.mock.calls.at(-1)?.[0].savedAt).toBe(previousSavedAt);
+  expect(leaveIsBlocked()).toBe(true);
+  // Reversing the failed edit should match the old savedSnapshot, not the failed one.
+  fireEvent.change(attack, { target: { value: "100" } });
+  expect(leaveIsBlocked()).toBe(false);
+  write.mockRestore();
+  expect(panel.mock.calls.at(-1)?.[0].savedAt).toBe(previousSavedAt);
 });
 
 it("cancels load without losing edits, then restores only after confirmation", async () => {

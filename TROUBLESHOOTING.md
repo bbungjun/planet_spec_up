@@ -2,11 +2,11 @@
 
 작성일: 2026-10-01 KST
 
-상태: **4개 개선 후보 기록 완료 / 1번 저장 흐름 구체화 초안 / 구현 전**
+현행 상태: **TS-ARCH-001~004 구현 완료 / 관련 53개 회귀 통과 / 전체 613개 중 603개 통과·기준과 동일한 10개 실패 / 비운영 worktree**. 최신 실행 결과는 §7을 따른다.
 
 이 문서는 코드에서 확인한 문제, 개선 판단, 보존할 동작, 구현·검증 결과를 누적하는 기술 기록이다. 사용자 결정의 원장은 [DECISIONS.md](DECISIONS.md)이며 여기에는 기술 근거와 작업 상태를 남긴다. 검토·제안·구현·실행 검증·게임 실측·운영 반영을 구분한다.
 
-이번 검토는 앱 소스 `d68d3806235c0f6960d2ed454481a729ae0327da`를 기준으로 한다. 이번 문서 작성 시점까지 후속 커밋은 문서 변경이며, 아래 항목의 앱 구현·테스트 실행은 아직 하지 않았다. 운영 장애를 재현한 보고서나 개선 완료 보고서가 아니다.
+초기 진단 이력(§1~6)은 앱 소스 `d68d3806235c0f6960d2ed454481a729ae0327da`를 기준으로 작성했고 당시 앱 구현·실행 검증은 하지 않았다. 아래의 ‘현재’, ‘구현 전’, ‘미실행’은 그 초기 작성 시점의 기록으로 보존한다. 후속 구현은 `4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b`에서 시작했으며 §7에 실제 구현·실행 검증을 추가했다.
 
 기존 OCR 설명창 완전성 사례는 [OCR_TROUBLESHOOTING_.D](OCR_TROUBLESHOOTING_.D)에 보존한다. 해당 파일은 이전 사용자 지정 파일명이며, 이번 일반 구조 개선 기록과 구분한다.
 
@@ -191,7 +191,7 @@ flowchart TD
 | A. 현행 동작 보존 | 두 경로의 검증 차이를 명시적으로 남기고 저장 순서·실패 보존을 한곳에 모음 | **추천.** 구조 변경의 영향을 분리해 확인하기 좋음 |
 | B. 검증 정책도 정리 | 예: 나머지 캐릭터 오류를 일반 저장도 막을지 등 정책별 결정을 함께 진행 | 추가 정책 질문·기존 저장 시나리오 확인이 필요 |
 
-A/B는 아직 사용자 확정이 아니다. A를 고르면 위 범위에 맞춰 호출 방식과 검증 목록을 확정할 수 있다. B를 고르면 모든 오류를 무조건 동일 차단하는 대신, 오류 유형별 저장 허용 조건을 먼저 정한다.
+초기 설계 시점에는 A/B가 미결정이었다. **후속 사용자 답변은 A로 확정됐다(D-ARCHITECTURE-IMPLEMENT-001).** 현행 허용/차단·오류 우선순위를 유지한 채 네 추천 구조를 구현했다. B의 정책 변경은 이번 작업에 포함하지 않는다.
 
 현재는 저장·불러오기·초기화 전체 재작성, 새 라이브러리, 마법 계산 엔진 같은 독립 제안을 추가하지 않는다.
 
@@ -264,3 +264,69 @@ A/B는 아직 사용자 확정이 아니다. A를 고르면 위 범위에 맞춰
 - 별도 ADR은 만들지 않는다. 이번 요청·답변과 상태 변경은 DECISIONS.md의 해당 기록에 연결한다.
 
 관련 기록: `D-ARCHITECTURE-REVIEW-001`, `D-ARCHITECTURE-DESIGN-001`.
+
+## 7. 후속 구현·검증 결과 — TS-ARCH-001~004
+
+기준 커밋: `4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b`. 작업 위치: `C:/Users/PC/.codex/worktrees/architecture-refactor/플래닛`, 브랜치: `refactor/architecture-deepening`. 사용자 답변 A에 따라 기존 허용/차단·오류 순서·메시지·포커스를 보존했다. 기록 시각·승인 범위는 DECISIONS.md의 D-ARCHITECTURE-IMPLEMENT-001·D-ARCHITECTURE-RESULT-001을 따른다. PAAR 결과는 [Markdown](docs/architecture-paar-report.md)과 [단일 HTML](docs/architecture-paar-report.html)에 제공한다.
+
+### 7.1 TS-ARCH-001 완료 — 기준 세팅 저장 module
+
+- 실제 interface: `features/calculator/saveBaselineSetup.ts:15`의 `saveBaselineSetup(input, request, persist)`. 요청은 `preset` 또는 `ocr`이고 결과는 성공 세팅·저장 시각·snapshot, 또는 실패 메시지·선택적 포커스 경로다.
+- `CalculatorApp.tsx:219` 사진 저장과 `:295` 일반 저장에서 준비·검증·프리셋 캡처·저장·실패 결과 조립을 제거했다. 화면은 성공 결과를 받은 뒤 저장 기준/시각을 반영한다. 일반 저장은 `setInput`을 하지 않고 사진 저장만 성공 세팅을 적용한다.
+- 사진은 `applyOcrBatch`를 시도당 한 번 호출한다. 새 장비 ID가 생성되는 준비 결과를 그대로 저장·반환하며 숫자 정규화 결과를 저장하지 않는다. 기존 직렬화의 활성 프리셋 캡처도 보존한다.
+- 기존 차이: 일반 저장은 화살→아란→크확→캐시→순수 스탯 순으로 차단하며 다른 레벨/장비 오류를 무조건 차단하지 않는다. 사진 저장은 준비 오류→화살→첫 캐릭터/캐시 오류 순이다. 초기화·불러오기 순서는 변경하지 않았다.
+- 검증: `baseline-save.test.ts:11,27,55,63,69,81`의 원문/무기 권위/신규 ID/우선순위/전체 거절, `setup-import.test.tsx:57`의 사진 실패 저장값·DOM 저장 시각·검토/이탈 보호, `ui-safety.test.tsx:62`의 일반 실패 저장값·dirty 반전·실제 렌더링되는 WeaponPresetsPanel interface의 저장 시각을 확인했다. 일반 실패는 기존 오류 UI가 `<time>`을 숨기는 동작을 유지하며 ‘실패 뒤에도 시각이 화면에 계속 보인다’고 주장하지 않는다.
+- 독립 리뷰 보완: 상수 자기 비교가 실제 저장 상태 검증을 대신하지 않도록 실제 localStorage 실패 및 위 UI 결과로 교체했다. 저장 실패·성공 모달 조건은 기존 테스트와 실제 격리 브라우저에서도 확인했다.
+
+### 7.2 TS-ARCH-002 완료 — OCR 인식값 검토 module
+
+- 실제 interface: `ocr/batchReview.ts:20`의 `createBatchReview(text, review, job)` → `place(context)`. 파싱·검토 매핑·유효 옵션/미해결 질문·이미지/의미 중복·기존 장비 중복·반지 예외·목적지·무기 프리셋을 함께 소유한다. 단순 parse helper 추출에 그치지 않았다.
+- `EquipmentOcrBatchPanel.tsx:131,228`의 초기와 재시도가 같은 interface를 사용한다. 초기 caller는 선택 순서 queue/예약 칸, 재시도 caller는 비동기 이미지 해시 완료 시점의 살아 있는 행/이전 선택을 전달한다. 초기 worker pool·재시도 스케줄·취소/파일/attempt 소유권 방어는 기존에 남겼다.
+- 유지: 초기 사진 순서·완료 역순 안전성, 동일 옵션 별도 반지, 같은 파일·분류 재시도의 destination/label/pendantChoice/needsDestination, 파일 교체/분류 변경 시 새 판정. `recognizeBatch.client.ts`, recognizer, `applyOcrBatch`는 변경하지 않았다.
+- 독립 리뷰에서 파일명 `""`인 같은 바이트 이미지의 존재를 truthiness로 판정하면 중복 제외가 사라지는 회귀를 발견했다. `sameImage !== undefined`로 수정하고 `batch-review.test.ts:10` 및 `ocr-batch-ui.test.tsx:18`에서 초기/재시도 모두 보강했다. 초기 의미 중복의 빈 이름 의미도 보존했다.
+- 검증: `batch-review.test.ts`, `ocr-batch-ui.test.tsx`, `ocr-recovery-ui.test.tsx`, `ocr-concurrency.test.ts`, `setup-import.test.tsx`와 실제 로컬 Paddle 합성 망토 등록·실패·재시도 저장을 확인했다. 기존 무기 분류 목록의 폴암 누락은 이번 A 범위에서 추가하지 않았다. 신규 판독 모델·사용자 무개입 POC·게임 사진 전체 정확도 검증은 수행하지 않았다.
+
+### 7.3 TS-ARCH-003 완료 — 직업별 실행·저장 module
+
+- 실제 interface: `runtime.ts:20`의 `createCalculatorRuntime(mode, developmentDefault?)`. 시작 직업·선택 직업·공개 페이지 이동·브랜드·저장 키·fallback·직업 거절·reset sentinel을 같은 맥락에서 결정한다.
+- 실제 페이지는 `CalculatorApp mode="captain|aran|marksman|development"`를 사용한다. `CalculatorApp.tsx:74`의 여러 boolean을 제거하고 hook도 `useSavedSetup(runtime)` 하나로 줄였다. 헤더에는 결정한 브랜드, 직업창에는 결정한 jobs를 전달해 동일 boolean 분기를 남기지 않았다.
+- 캡틴 전용 키→공용 legacy→개발 seed 우선순위, corrupt 전용 값의 fallback 금지, 신궁 전용 격리/seed 제외, 명시적인 reset의 `"null"`, seed 없는 아란/개발의 removeItem 의미와 직업 불일치 메시지를 유지한다. 공통 계산 JobRules와 저장 직렬화는 별도 module로 유지했다.
+- 검증: 기존 `captain-beta-storage.test.ts`, `development-default.test.tsx`, `storage.test.ts`, `aran-ui.test.tsx`의 assertion은 그대로 두고 새 interface로 호출만 이관했다. 신규 `runtime.test.ts`에서 3공개 페이지 연결·키·다른 직업 저장 거절·신궁 격리·개발 Night Lord 접근·reset을 확인했다. 실제 브라우저의 캡틴→신궁→아란→캡틴 이동·저장 키 독립과 복원을 확인했다. `/development`의 생산 모드404/개발 모드 제공 정책은 소스 그대로이며 Night Lord 선택 계약은 실행 테스트로 확인했다.
+
+### 7.4 TS-ARCH-004 완료 — 기준 상태와 목적별 허용 module
+
+- 실제 interface: `domain/baselinePolicy.ts:9`의 `assessBaseline(purpose, results, estimated)` 및 순수 스탯 존재 판정. 계산된 result의 오류·무기 없음·착용 불가·구형 분리·0을 한곳에서 분류한다. 계산 후 발생하는 `CRITICAL_RATE_EXCEEDED`도 포함한다.
+- `candidates.ts:37,50`, `optionEfficiency.ts:27,34`, `statSimulation.ts:30,31`에서 관련 issue code 지식을 제거했다. 후보 자체의 분류/목적지/요구 조건 검사와 시뮬레이션 변경량 검사, 효율의 개별 +1 상한은 해당 목적에 남긴다.
+- 후보는 실제 순수 스탯을 먼저 요구하고 두 결과의 입력 오류/무기 없음/착용 불가를 issue 순서로 중복 제거해 차단한다. 구형 분리는 review이며 기준 before의 스탯공 또는 환산공0은 상승률을 보류한다. 효율은 추정을 허용하고 legacy 별도 차단 없이 입력→무기→착용→비유한/0환산공 순으로 보류한다. 시뮬레이터는 추정을 허용하고 legacy를 차단하지만 0 자체는 허용해 비율을 null로 둔다.
+- 검증: 신규 `baseline-policy.test.ts`와 기존 `candidates.test.ts`, `option-efficiency.test.ts`, `stat-simulation.test.ts`, 관련 UI 회귀를 실행했다. `CalculationSnapshot`, `calculateFromSnapshot`, 모든 계산식·버림·직업 상수·요구 조건 계산은 변경하지 않았다.
+
+### 7.5 실행 결과·기준 대조·한계
+
+| 실행 | 실제 결과 | 로컬 evidence |
+| --- | --- | --- |
+| 신규 interface·저장·OCR 관련 7파일 | **53/53 통과** | `output/architecture/final-targeted.json`, `.log` |
+| 전체 suite(최종) | **613개 중603통과·10실패, 63파일 중57통과·6실패** | `output/architecture/full-suite-final.json`, `.log` |
+| 기준4a084bb의 실패 파일6개 | **73개 중63통과·동일10테스트 실패** | `output/architecture/baseline-regression.json`, `.log` |
+| 실패 집합 대조 | **정확히 동일, 새 실패 테스트 없음** | `output/architecture/baseline-comparison.json` |
+| 기준 캡틴 UI 단독 대조 | **옛 직업창 disabled 기대 :17에서 동일 실패** | `output/architecture/baseline-captain-alone.json`, `.log` |
+| lint | 오류0·경고0 | `output/architecture/lint.log` |
+| Vercel 대상 로컬 build→typecheck | 둘 다 통과 | `output/architecture/build-vercel.log`, `typecheck.log`(마지막 실행으로 갱신) |
+| 기존 Vinext build | 통과 | `output/architecture/build-vinext.log` |
+| 격리 앱 브라우저 | 핵심16개·사진 저장8개 확인, 이탈 취소/수락 확인 | `output/playwright/app-browser-evidence.json` |
+
+실행 명령:
+
+```powershell
+npx vitest run tests/calculator/baseline-save.test.ts tests/calculator/batch-review.test.ts tests/calculator/baseline-policy.test.ts tests/calculator/runtime.test.ts tests/calculator/setup-import.test.tsx tests/calculator/ocr-batch-ui.test.tsx tests/calculator/ui-safety.test.tsx --maxWorkers=4 --reporter=default --reporter=json --outputFile.json=output/architecture/final-targeted.json
+npx vitest run --maxWorkers=4 --reporter=default --reporter=json --outputFile.json=output/architecture/full-suite-final.json
+npm run lint
+npm run build:vercel
+npm run typecheck
+npm run build
+```
+
+기준 대조는 새 Git 이력/추가 개발 worktree를 만들지 않고 `git archive 4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b`를 무시 경로 `output/architecture/baseline`에 풀어 같은 설치 의존성으로 실행했다. 기존 테스트 기대치는 낮추거나 교체하지 않았다. 기준 실패는 신궁의 공+10·화살0·크리 패시브 및 공개 3직업 선택에 앞선 기대값들이다. 기준 묶음 실행의 캡틴 UI는 초기 로드 timeout에서 먼저 끝났으므로 별도 단독 실행으로 최종과 동일한 disabled assertion까지 확인했다. **전체 suite는 미통과다.** ‘새 실패 테스트 없음’은 게임 실측 합격이나 기존 테스트 부채 해결을 뜻하지 않는다.
+
+격리 브라우저는 본인 Next 로컬3107·새 CLI 세션 `architecture-final`을 사용했다. 사용자 데이터와 원본3000 서버를 건드리지 않았다. 저장 실패는 합성 quota 오류이며 OCR는 canvas 합성 이미지와 실제 로컬 Paddle/WASM이다. 사진 pending의 이탈 취소는 목록 보존, 수정 상태의 이탈 수락은 목적지 이동과 기존 저장 보존을 확인했다. 실제 인식 콘솔의27개 ERROR채널 메시지는 모두 ONNX `[W:] CleanUnusedInitializersAndNodeArgs` 모델 초기값 제거 경고였고 핵심 앱 흐름은 콘솔 오류/경고0이었다. 대표 캡처: `output/playwright/captain-saved.png`, `synthetic-ocr-review.png`, `synthetic-ocr-saved.png`.
+
+기능/성능 개선률·실제 사용자 시간 단축·게임 실측·모든 OCR환경 정확도·독립 POC는 측정하지 않았다. 기준 세팅 저장의 허용 차이, 폴암 자동 목적지 누락, 일반 실패 시 저장 시각을 숨기는 표시 정책, 초기화의 화면 우선 처리 등 기존 동작/한계는 그대로다. 원본 앱·기존 미커밋 기록·`dev-main`/`main`·공개 서버는 변경하지 않았다. 이번 비운영 소스와 결과 문서만 커밋·푸시한다.

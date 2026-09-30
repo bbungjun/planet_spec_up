@@ -9,12 +9,12 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { EquipmentSlot, JobId } from "../domain/types";
 import { JOB_RULES } from "../domain/job-rules";
 import { parseMapleTooltip } from "../ocr/parseMapleTooltip";
-import { mapRecognizedStats } from "../ocr/mapRecognizedStats";
+import { createBatchReview, reserveBatchDestination } from "../ocr/batchReview";
 import { createBrowserTooltipRecognizer, recognitionErrorMessage, type TooltipRecognizer } from "../ocr/recognizeTooltip.client";
-import { existingDuplicate, imageFingerprint, matchingSlots, occupied, tooltipIdentity, validReplacement, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
+import { existingDuplicate, imageFingerprint, occupied, tooltipIdentity, validReplacement, type ApplyOcrBatch, type OcrSlotChoice } from "../ocr/batch";
 import { batchConcurrency, recognizeBatch, type BatchRecognitionResult } from "../ocr/recognizeBatch.client";
 import type { OcrBounds, OcrReview, StatReplacement } from "../ocr/types";
-import { mapReviewedStats, overrideReviewRequirement, reviewBlocked, reviewQuestions, reviewText } from "../ocr/reviewRecognition";
+import { mapReviewedStats, overrideReviewRequirement, reviewBlocked, reviewText } from "../ocr/reviewRecognition";
 import { OcrReviewIssues } from "./OcrReviewIssues";
 import { TooltipRegionSelector } from "./TooltipRegionSelector";
 import type { OcrDestination } from "../ocr/batch";
@@ -109,7 +109,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
     initialActive.current = true;
     const controller = new AbortController();
     let disposed = false;
-    const seenEquipment = new Map<string, string>();
+    const reviewed: { name: string; text: string }[] = [];
     const reserved = new Set<EquipmentSlot>();
     const results = new Map<number, BatchRecognitionResult>();
     let nextReview = 0;
@@ -128,27 +128,16 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
           continue;
         }
         const { text, preview } = result;
-        const parsed = { ...parseMapleTooltip(text), ...(result.review ? { category: result.review.category } : {}) };
-        const replacement = result.review ? mapReviewedStats(result.review, job) : mapRecognizedStats(parsed, job);
-        const identity = tooltipIdentity(text);
-        const earlier = identity.signature ? seenEquipment.get(identity.signature) : null;
-        const warning = result.duplicateOf !== undefined ? `${files[result.duplicateOf].name}와 동일한 이미지입니다.`
-          : earlier && parsed.category !== "반지" ? `${earlier}와 ${identity.name ? "이름·옵션" : "옵션"}이 같은 장비입니다. 중복 여부를 확인하세요.`
-          : existingDuplicate(parsed, job, initialChoices.current);
-        if (!Object.values(replacement).some(value => value !== "") && !(result.review && reviewQuestions(result.review, job).length)) {
+        const recognition = createBatchReview(text, result.review, job);
+        if (!recognition) {
           update(index, {state: "error", text, included: false, error: "계산에 적용할 옵션을 찾지 못했습니다. 툴팁 부분을 캡처해 다시 선택하세요."});
           continue;
         }
-        const candidate = matchingSlots(parsed.category, initialChoices.current).find(choice => !occupied(choice.equipment) && !reserved.has(choice.slot));
-        const isWeapon = ["건", "석궁", "아대", "무기"].includes(parsed.category ?? "");
-        const destination: OcrDestination = isWeapon
-          ? `preset:${Number(replacement.ignoreDefensePercent) > 0 ? "chaos" : Number(replacement.bossDamagePercent) > 0 ? "boss" : "hunting"}`
-          : !warning && candidate ? candidate.slot : "new";
-        if (destination !== "new" && !destination.startsWith("preset:")) reserved.add(destination as EquipmentSlot);
-        update(index, {state: "ready", text, preview, replacement, review: result.review ?? null, destination,
-          needsDestination: parsed.category === null || ((parsed.category === "반지" || isPendantCategory(parsed.category)) && destination === "new"),
-          category: parsed.category, label: parsed.category ?? "추가 장비", warning, included: !warning});
-        if (identity.signature && !earlier) seenEquipment.set(identity.signature, file.name);
+        const ready = recognition.place({ kind: "initial", choices: initialChoices.current, reserved, peers: reviewed,
+          sameImage: result.duplicateOf !== undefined ? files[result.duplicateOf].name : undefined });
+        reserveBatchDestination(reserved, ready.destination);
+        update(index, { state: "ready", preview, ...ready });
+        reviewed.push({ name: file.name, text });
       }
     };
     stopInitial.current = () => {
@@ -236,10 +225,8 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
           onReview: result => { review = result; },
         });
         if (controller.signal.aborted) return;
-        const parsed = { ...parseMapleTooltip(text), ...(review ? { category: review.category } : {}) };
-        const replacement = review ? mapReviewedStats(review, job) : mapRecognizedStats(parsed, job);
-        if (!Object.values(replacement).some(value => value !== "") && !(review && reviewQuestions(review, job).length)) throw new Error("No options");
-        const identity = tooltipIdentity(text);
+        const recognition = createBatchReview(text, review, job);
+        if (!recognition) throw new Error("No options");
         const fingerprint = (image: File) => {
           let pending = retryFingerprints.current.get(image);
           if (!pending) { pending = imageFingerprint(image); retryFingerprints.current.set(image, pending); }
@@ -255,17 +242,11 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
         setRows(current => {
           if (controller.signal.aborted || current[index]?.file !== file || current[index]?.attempt !== attempt) return current;
           const sameImage = current.find((row, i) => i !== index && sameImages.has(row.file));
-          const repeated = parsed.category !== "반지" && current.find((row, i) => i !== index && row.state === "ready" && identity.signature && tooltipIdentity(row.text).signature === identity.signature);
-          const warning = sameImage ? `${sameImage.file.name}와 동일한 이미지입니다.`
-            : repeated ? `${repeated.file.name}와 이름·옵션이 같은 장비입니다. 중복 여부를 확인하세요.` : existingDuplicate(parsed, job, choices);
-          const taken = new Set(current.filter((row, i) => i !== index && row.included && row.state === "ready").map(row => row.destination));
-          const candidate = matchingSlots(parsed.category, choices).find(choice => !occupied(choice.equipment) && !taken.has(choice.slot));
-          const weapon = ["건", "석궁", "아대", "무기"].includes(parsed.category ?? "");
-          const sameDestination = !replacementFile && parsed.category === original.category;
-          const destination: OcrDestination = sameDestination ? original.destination : weapon ? `preset:${Number(replacement.ignoreDefensePercent) > 0 ? "chaos" : Number(replacement.bossDamagePercent) > 0 ? "boss" : "hunting"}` : !warning && candidate ? candidate.slot : "new";
-          return current.map((row, i) => i !== index ? row : { ...row, state: "ready", progress: 1, text, preview, replacement, review: review ?? null,
-            warning, included: !warning, allowDuplicate: false, pendantChoice: sameDestination ? original.pendantChoice : undefined, destination, category: parsed.category, label: sameDestination ? original.label : parsed.category ?? "추가 장비",
-            needsDestination: sameDestination ? original.needsDestination : initialActive.current || parsed.category === null || ((parsed.category === "반지" || isPendantCategory(parsed.category)) && destination === "new") });
+          const ready = recognition.place({ kind: "retry", choices,
+            reserved: new Set(current.filter((row, i) => i !== index && row.included && row.state === "ready").map(row => row.destination)),
+            peers: current.filter((row, i) => i !== index && row.state === "ready").map(row => ({ name: row.file.name, text: row.text })),
+            sameImage: sameImage?.file.name, previous: original, replacedFile: !!replacementFile, initialBusy: initialActive.current });
+          return current.map((row, i) => i !== index ? row : { ...row, ...ready, state: "ready", progress: 1, preview, allowDuplicate: false });
         });
       } catch (error) {
         patch({ state: "error", included: false, error: recognitionErrorMessage(error) });

@@ -3722,3 +3722,29 @@
 - 미결정Q1: A 현행 허용/차단과 오류 우선순위를 보존한 구조 개선을 추천했다. B 검증 정책까지 정리하는 선택은 레벨 등 오류 유형별 후속 결정이 필요하다. 어느 선택도 사용자 확정으로 기록하지 않았다. grilling의 설계 질문 단계이며 저장 허용 동작을 임의로 바꾸지 않는다.
 - 검증·한계: 코드·기존 테스트 소스를 읽고 Markdown 파일의 내부 문서 링크/코드 블록 및 Git diff를 확인했다. 읽기 전용 하위 에이전트는 grilling이 요구하는 환경 사실 조사에만 사용했다. 앱 변경·새 테스트·테스트 실행·타입·lint·build·앱 브라우저 QA·서버·게임 실측은 하지 않았다. 기존 테스트 의도를 이번 합격 결과로 표현하지 않는다.
 - Git·보존: TROUBLESHOOTING.md와 이번 기록만 dev-main에 선택 문서 커밋·푸시하고 원격SHA를 확인한다. 기존 DECISIONS96줄 추가/1줄 삭제 및 사용자 저장값·병행 작업은 보존한다. main/Production·DNS는 변경하지 않는다. 관련D-ARCHITECTURE-REVIEW-001·D-146·D-ENV-001·D-148·D-168.
+
+## D-ARCHITECTURE-IMPLEMENT-001 — 네 추천 구조의 새 worktree 구현과 저장 정책 A 확정
+
+- 기록 시각: 2026-10-01 06:32:12 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 확정 요청 반영 완료. 구조 변경은 구현·검증했으며 계산 정책 변경·개발/운영 서버 반영 승인이 아니다.
+- 결정·요청: “1,2,3,4 의 구조에 대해 새로운워킹트리에서 전부 추천안을 기준으로 수정하고 관련내용들을 전부 기록후 PAAR 형식으로 기록해둔 문서를 html 파일로 만들어서 보고 해줘. 오케스트레이션으로만 astra 모델이고 구현은 gpt6.1sol xhigh”. 직전 저장 정책 Q1에는 A(현행 허용/차단·오류 우선순위를 보존하고 구조만 개선)를 명시 선택했다.
+- 이유: 사용자 이유 미명시. 에이전트 판단으로 정책 변경과 구조 변경의 효과를 분리하기 위해 기존 차이를 보존했다. 이를 사용자 이유로 단정하지 않는다.
+- 범위: 기준4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b에서 `C:/Users/PC/.codex/worktrees/architecture-refactor/플래닛` 및 비운영 `refactor/architecture-deepening`으로 작업했다. GPT-6.1 Sol xhigh가 코드·테스트·기술기록·PAAR 산출물을 맡고 Astra는 오케스트레이션만 담당했다. 후속 병렬 Sol 보고서 담당이 PAAR Markdown/HTML 및 렌더 확인을 맡았으며 최종 Git 작업은 구현 담당이 한다.
+- 근거: D-ARCHITECTURE-REVIEW-001·D-ARCHITECTURE-DESIGN-001의 TS-ARCH-001~004와 사용자 A 답변. AGENTS.md에 이번 worktree/모델 분담/현행 정책 유지/검증/비운영 한정 예외를 추가했다. 과거 신궁 QA 유예는 과거 해당 요청에 한정하고 이번 구조 개선의 QA 금지로 확대하지 않았다.
+- 결과: 저장 준비·검증·동일 객체 저장·성공 반환은 `saveBaselineSetup`, 인식값 검토·중복·목적지는 `batchReview`, 직업/저장/이동 정책은 `runtime`, 목적별 계산 허용은 `baselinePolicy`에 모았다. 실제 caller의 반복 검증/boolean/issue 판정을 제거했다. 계산식·공통 snapshot·raw 저장·키·구형 fallback·reset sentinel·활성 무기 권위·취소/늦은 결과·목적별 차이를 보존했다.
+- 산출물: TROUBLESHOOTING.md §7에 네 항목 완료 상태·파일/줄·검증·한계를 추가하고 초기 진단/제안 이력은 보존했다. `docs/architecture-paar-report.md`와 `.html`은 실제 완료 결과를 PAAR로 보고한다. 사용자 결정 원장은 이 DECISIONS.md 한 파일이며 별도 ADR/결정 원장을 만들지 않는다.
+- Git·보존: 이번 worktree의 코드·문서·비운영 커밋·푸시 범위만 승인됐다. 원본 앱의 dev-main·기존 DECISIONS 미커밋96줄 추가/1줄 삭제·원본3000 서버·병행 변경·개인 자료는 수정하지 않는다. dev-main/main 병합·푸시·Production 배포·DNS·유료/외부 OCR 도입은 진행하지 않는다. 관련D-146·D-ENV-001·D-148·D-168.
+
+## D-ARCHITECTURE-RESULT-001 — 구조 개선 실행 검증과 기준 실패 분리
+
+- 기록 시각: 2026-10-01 06:32:12 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 구조 개선 구현·검증·기술기록 완료. 비운영 소스 커밋 후 PAAR 최종 문서/HTML QA와 함께 푸시·원격SHA 확인한다. 전체 suite는 미통과이며 게임 실측/운영 배포는 수행하지 않았다.
+- 수행 내용: 신규 interface 테스트 4파일과 저장/OCR/UI 회귀를 보강했고 기존 assertion을 약하게 변경하지 않았다. 독립 정적 리뷰는 네 module의 실제 depth 증가를 확인했다. 빈 파일명 동일 이미지의 존재 판정 회귀를 `!== undefined`로 수정하고 초기/재시도 회귀를 추가했다. 저장 시각의 자기상수 비교는 실제 localStorage 실패·사진 UI 시각·일반 저장의 실제 렌더 interface 관찰로 교체했다. 일반 저장 실패에서 기존 오류 UI가 저장 시각을 숨기는 동작은 보존했다.
+- 실행 결과: 관련7파일53개 전부 통과. 최종 전체63파일613개는603통과·10실패다. 기준4a084bb1의 clean archive에서 실패6파일73개를 실행해63통과·같은10개 실패를 확인했고 실패집합은 정확히 동일했다. 기준 묶음의 캡틴 UI가 로드 timeout에서 끝난 경우는 단독 실행으로 최종과 같은 옛 `toBeDisabled` :17 assertion까지 재현했다. 신규 실패 테스트는 없으나 전체 테스트 부채가 해결됐다고 표현하지 않는다.
+- 실패 분류: 신궁 최신 +10 비장비공/화살0/크리 패시브와 공개3직업 선택에 앞선 기대값이 남았다. 이 작업에서 신궁 게임 수치나 기존 테스트 기대치를 바꾸어 통과를 만들지 않았다. 증거: `output/architecture/full-suite-final.json`, `baseline-regression.json`, `baseline-captain-alone.json`, `baseline-comparison.json`, `final-targeted.json` 및 같은 이름의 실행 로그. clean archive와 핵심 source/test blob의 기준 일치도 독립 검토했다.
+- 정적·빌드: lint 오류0·경고0, 최종 `npm run build:vercel` 후 `npm run typecheck` 통과, 기존 `npm run build` Vinext도 통과했다. 마지막 실행 로그는 `output/architecture/build-vercel.log`, `typecheck.log`, `lint.log`, `build-vinext.log`다. Vercel 대상 로컬 빌드 통과를 배포된 Production 검증으로 표시하지 않는다.
+- 실제 브라우저: 본인 Next 서버3107와 새 격리 `architecture-final` 세션에서 핵심16개(저장 모달·실패 입력/저장 보존·복원·3직업 이동·키 독립·화살 오류/포커스), 실제 로컬 Paddle 합성 망토 판독 및 사진 저장8개(실패 저장값/시각/검토 보존→재시도 성공)를 확인했다. 이탈 취소는 사진 목록을 보존하고 이탈 수락은 신궁 페이지로 이동하며 기존 캡틴 저장공112를 유지했다. evidence `output/playwright/app-browser-evidence.json`, 캡처 `captain-saved.png`, `synthetic-ocr-review.png`, `synthetic-ocr-saved.png`.
+- 콘솔·시험 한계: 핵심 앱 흐름 콘솔 오류/경고0. 실제 OCR는27개 ERROR채널 메시지를 냈으나 모두 ONNX `[W:] CleanUnusedInitializersAndNodeArgs`의 사용하지 않는 모델 초기값 제거 로그였다. 합성 quota 오류와 canvas 툴팁을 사용했고 외부 OCR 전송·사용자 이미지 사용은 하지 않았다. 실제 게임 사진 전체 정확도·무개입 POC·실측 데미지·성능 개선률은 미검증이다. 기존 폴암 목적지 누락·초기화 화면 우선 처리 등은 범위 밖으로 보존한다.
+- 완료 후속: PAAR 문서는 소스 커밋SHA와 기준SHA를 구분해 기록하고 HTML 실제 렌더/모바일 overflow/앵커를 확인한다. 최종 문서 커밋을 포함해 이번 비운영 브랜치를 푸시하고 원격SHA를 확인한다. 결과가 검증됐다고 원본dev-main/main 또는 공개 서버에 합치지 않는다. 관련D-ARCHITECTURE-IMPLEMENT-001·D-146·D-ENV-001·D-148·D-168.

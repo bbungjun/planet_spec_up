@@ -15,6 +15,17 @@ const ringB = ringA.replace("DEX +1", "DEX +4");
 const file = (name: string, body = name, type = "image/png") => new File([body], name, {type});
 const ringChoices = () => RING_SLOTS.map((slot, index) => ({ slot, label: `반지 ${index + 1}`, equipment: emptyEquipment() }));
 
+it("excludes unnamed identical clipboard images initially and after retry", async () => {
+  const user = userEvent.setup();
+  render(<EquipmentOcrBatchPanel files={[file("", "same bytes"), file("", "same bytes")]} job="corsair" choices={ringChoices()}
+    onApply={vi.fn()} onClose={vi.fn()} createRecognizer={() => ({ recognize: vi.fn().mockResolvedValue(ringA), terminate: vi.fn() })} />);
+  await screen.findByText("2/2장 인식 완료");
+  expect(screen.getByLabelText("2번 별도 장비로 포함")).not.toBeChecked();
+  await user.click(screen.getByRole("button", { name: "2번 대비 보정 후 다시 읽기" }));
+  await screen.findByText("와 동일한 이미지입니다.");
+  expect(screen.getByLabelText("2번 별도 장비로 포함")).not.toBeChecked();
+});
+
 it("includes equal-option rings by default while excluding identical image copies", async () => {
   const recognize = vi.fn<TooltipRecognizer["recognize"]>().mockImplementation(async image => image.name === "b.png" ? ringB : ringA);
   const apply = vi.fn().mockReturnValue(null);
