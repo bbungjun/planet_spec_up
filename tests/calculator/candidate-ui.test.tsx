@@ -8,7 +8,7 @@ import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client"
 const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
 function seed(){const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
-const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
+const panel=()=>screen.getByRole("region",{name:"장비 비교"});
 it("keeps candidate review numeric and requires confirmation again after a manual edit",async()=>{
  seed();const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
  const {user,area}=await importPhoto("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");

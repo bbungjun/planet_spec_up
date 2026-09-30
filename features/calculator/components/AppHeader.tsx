@@ -38,7 +38,7 @@ export function AppHeader({
           <a href="#weapon-presets-heading">무기 프리셋</a>
           <a href="#equipment-workspace">장비 계산</a>
           <a href="#stat-simulator">수동 비교</a>
-          <a href="#candidate-comparison">후보 비교</a>
+          <a href="#candidate-comparison">장비 비교</a>
         </nav>
         <div className="app-header-actions">
           <button
