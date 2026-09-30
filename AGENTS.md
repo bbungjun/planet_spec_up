@@ -16,6 +16,8 @@
 
 이전 전 문서와 앱 복구본은 Git 제외 경로 `output/root-migration-20260926-215715/`에 보존했다. 그 아래 `previous-app/`은 복구용 detached worktree이며 개발·실행 대상이 아니다. 기존 `master` 이력도 보존한다. 백업 안의 과거 작업 지침을 현재 정책으로 적용하지 않는다.
 
+**2026-10-01 도메인 연결 승인(D-DOMAIN-CONNECT-001): 사용자는 호스팅케이알에서 구매한 `플래닛스펙업.xyz`를 현재 공개 계산기에 직접 연결하도록 요청했다.** 퓨니코드는 `xn--tj1bw3gpwlt7cywxr6b.xyz`이며 이번 범위는 기존 Vercel Production 배포에 기본 주소와 `www`를 연결하는 것이다. DNS·HTTPS 검증 결과와 등록정보 인증 상태는 DECISIONS.md에 구분해서 기록한다. 이 요청을 개발 브랜치의 새 기능 공개·포괄적인 main 병합/푸시·유료 서비스 도입 승인으로 확대하지 않는다. 기존 `planet-spec-up.vercel.app` 주소와 사용자 저장 데이터는 보존한다.
+
 ## 사용자 결정 기록 — 매 작업 필수
 
 - 결정과 이유의 이력은 앱 루트의 [DECISIONS.md](DECISIONS.md) **한 파일**에 누적한다. 같은 용도의 날짜별 파일·별도 결정 문서를 자동으로 만들지 않는다.
