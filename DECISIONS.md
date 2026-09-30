@@ -3759,3 +3759,12 @@
 - 앱 검증 최종 근거: `output/architecture/verification-summary.json`과 `output/playwright/app-browser-evidence.json`에 최종 명령·exitcode·수·한계를 모았다. 관련53/53, 전체613중603통과·기준과 같은10실패, lint/타입/두 로컬 빌드 통과, 앱16·사진저장8·실제 로컬 Paddle 합성 판독·이탈 취소/수락 결과를 보존한다. 전체 suite 미통과와 게임/운영 미검증은 유지한다.
 - 정리·보존: 본인 Next3107 및 architecture-app/architecture-final 세션, 보고서3251 및 architecture-report 세션을 종료했다. 원본3000 서버와 사용자 브라우저 저장에는 접근하지 않았다. 병행 다른 작업의 원본 브랜치 전진을 이번 branch에 재베이스/통합하지 않았으며 이번 작업 자체는 dev-main/main/Production을 수정하지 않았다. 이후 반영은 별도 요청으로 정한다.
 - 관련 결정: D-ARCHITECTURE-IMPLEMENT-001·D-ARCHITECTURE-RESULT-001·D-146·D-ENV-001. 사용자 결정 원장은 이 파일이며 기술/PAAR 문서는 그 결정의 구현 결과다.
+
+## D-ARCHITECTURE-GIT-001 — 비운영 결과 푸시 확인과 완료 기록
+
+- 기록 시각: 2026-10-01 06:41:11 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 소스·PAAR 결과를 비운영 브랜치에 푸시했고 원격 확인 완료. 이 완료 기록과 Markdown 끝의 빈 줄 정리도 같은 브랜치에 문서 커밋·푸시하고 최종HEAD를 다시 대조한다.
+- 실제 Git 결과: `refactor/architecture-deepening`의 소스9b05190b4a3eece2d3b215822eb4b8c9e5d598ae와 보고서58dda1416d9173e87db667e22919a17dce3881ed를 origin에 푸시했다. `git ls-remote --heads origin refs/heads/refactor/architecture-deepening`의 SHA가 당시 로컬HEAD58dda1416d9173e87db667e22919a17dce3881ed와 일치했고 upstream을 설정했다. force push·dev-main/main 병합·푸시·Production 배포는 하지 않았다.
+- 문서 정리: 최초 문서 공백 검사에서 Markdown EOF의 빈 줄1개가 발견돼 제거했다. 기존CRLF 줄 끝을 유지했으며 본문·HTML·앱소스는 변경하지 않았다. 최종 Markdown40,494bytes·HTML81,896bytes의 현재SHA256은 `output/architecture-report/report-validation-summary.json`에 갱신했다. 정적 검사10섹션·8SVG·68링크·본문/링크/ID/외부리소스 오류0을 다시 확인했다.
+- 완료 근거·한계: D-ARCHITECTURE-RESULT-001·D-ARCHITECTURE-DELIVERY-001의 실제 검증·전체suite기존10실패·합성/로컬 범위와 서버/세션 정리를 유지한다. 이번 작업의 변경은 새 worktree와 비운영브랜치에 한정되며 병행 원본 작업을 통합하지 않는다.

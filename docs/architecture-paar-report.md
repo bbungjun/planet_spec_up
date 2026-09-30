@@ -662,4 +662,3 @@ npx --yes --package @playwright/cli playwright-cli --session=architecture-report
 
 
 재검증은 앱 루트인 이 worktree에서 수행한다. 구현 담당자의 앱 검증 명령과 보고서 자체 확인은 위 결과 표에 구분했다. 보고서 전용 HTTP 서버와 Playwright session만 사용하며 기존 서버나 사용자 브라우저 저장값을 재사용하지 않는다.
-
