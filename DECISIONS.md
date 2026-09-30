@@ -3250,3 +3250,14 @@
 - 브라우저 검증: 독립 Vinext3125와 Next production 모드 로컬3126에서 PC 라이트/다크 및1280/1440px를 확인했다. Vinext의 보이는 텍스트/폼354~355개와 의사요소에서 다른 computed font0개, 실제woff2 요청16개·298,536바이트 모두localhost origin, 외부 폰트 요청0개다. Next는 로드된 폰트16개·동일origin /_next/static/media 요청16개·라이선스HTTP200·콘솔 오류/경고0개를 확인했다. 처음3125의IPv4 접속 거부는 서버가::1로 바인딩돼localhost 주소로 바로잡았으며 이후 확인은 정상 수행했다. 제목 줄바꿈 보정 뒤 최종 빌드를 다시 통과했다.
 - 근거·한계: 폰트 전체 빌드 자산은124개·3,519,780바이트이며 실제 화면은 필요한 부분만 요청한다. 검토 캡처는 Git 제외 output/playwright/noto-kr-pc-1280.png·noto-kr-pc-dark.png에 보관했다. 실기기 모바일·실제 게임·OCR 무수정 검증은 이번 글꼴 변경 범위가 아니다. 원격 Preview는 앞선 배포에서 Vercel 로그인 보호를 확인했으므로 플랫폼 배포 성공과 로그인 없는 실제 페이지 QA를 구분한다.
 - Git·후속: 이번 폰트/스타일/라이선스/정책과 이 기록만 dev-main에 선택 커밋·푸시하고 원격SHA 및 해당 Preview 배포 결과를 확인한다. 원래 DECISIONS.md63줄 추가/1줄 삭제·기존3000 개발서버·main/Production을 보존했다. 구현자가 만든3125/3126 검증 서버와 브라우저는 종료했다.
+
+## D-UI-FONT-002 — Noto Sans KR 개발 브랜치·Preview 반영 확인
+
+- 기록 시각: 2026-09-30 21:08:15 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: D-UI-FONT-001의 dev-main 반영·Preview 플랫폼 배포 성공 확인 완료 — 새 사용자 결정 없음.
+- 결정·요청: 현재 디자인 확정 및 Noto Sans KR 전체 적용의 개발 브랜치 반영 요청을 마무리한다.
+- 이유: 사용자 이유 미명시.
+- 결과·근거: 구현 커밋00aafac6c3db7ea8de6fb1084fa006a686a2eb58을origin/dev-main에 푸시하고 로컬/원격SHA 일치를 확인했다. GitHub Deployment6758914624는 같은SHA·environment=Preview이며2026-09-30 21:07:32 KST에success와Deployment has completed 상태를 기록했다. 해당 커밋의Vercel status도success다.
+- 한계: Preview 주소는Vercel 로그인 보호로 연결된다. 원격 비로그인 화면의 폰트/UI QA를 수행한 것으로 표현하지 않으며 실제 폰트/라이트·다크/1280·1440px 검증은D-UI-FONT-001의 독립 로컬 Vinext·Next 결과다. 운영main·Production은 변경하지 않았다.
+- Git·후속: 이 완료 기록만 같은dev-main에 문서 커밋·푸시하고 원래DECISIONS.md63줄 추가/1줄 삭제는 보존한다. 후속 문서 커밋에는 앱/폰트 변경이 없으며 최종 원격SHA와Preview 결과를 확인한다.
