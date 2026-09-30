@@ -11,7 +11,8 @@ it("keeps another job's save untouched while using and reloading the captain bet
   const legacy = serializeSetup(createDefaultInput("night_lord")); localStorage.setItem(STORAGE_KEY, legacy);
   const user = userEvent.setup(); const view = render(<Page />);
   await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
-  expect(screen.getByText("캡틴 전용 베타")).toBeVisible();
+  expect(screen.getByText("BETA", { exact: true })).toBeVisible();
+  expect(screen.queryByText("캡틴 전용 베타")).not.toBeInTheDocument();
   expect(screen.getByLabelText("직업")).toHaveValue("corsair");
   expect(screen.getByLabelText("직업")).toBeDisabled();
   expect(within(screen.getByLabelText("직업")).getAllByRole("option")).toHaveLength(1);

@@ -418,7 +418,8 @@ describe("calculator app", () => {
     expect(within(job).getAllByRole("option")).toHaveLength(1);
     expect(job).toHaveTextContent("캡틴");
     expect(job).toBeDisabled();
-    expect(screen.getByText("캡틴 전용 베타")).toBeInTheDocument();
+    expect(screen.getByText("BETA", { exact: true })).toBeVisible();
+    expect(screen.queryByText("캡틴 전용 베타")).not.toBeInTheDocument();
   });
 
   it("exposes every character setting and keeps level editable from 1 to 220", async () => {
