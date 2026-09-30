@@ -11,6 +11,7 @@ import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots
 import { MAX_BATCH_BYTES, MAX_BATCH_FILES, type ApplyOcrBatch } from "../ocr/batch";
 import { clipboardImages } from "../ocr/clipboard";
 import { EquipmentOcrBatchPanel } from "./EquipmentOcrBatchPanel";
+import { EquipmentHowToUse } from "./EquipmentHowToUse";
 import { CharacterIcon, GameIcon } from "./GameVisuals";
 
 type Props = {
@@ -75,7 +76,7 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
       <div className="setup-import-intro">
 
         <h1 id="setup-import-heading">나의 장비 작업실 <span aria-hidden="true">✦</span></h1>
-
+        <EquipmentHowToUse />
       </div>
       <div className={`setup-import-dropzone${dragging ? " is-dragging" : ""}`}
         onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }}
