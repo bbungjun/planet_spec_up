@@ -379,9 +379,6 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
       <AppHeader
         captainBeta={captainBeta}
         inputMode={inputMode}
-        savedAt={savedAt}
-        hasUnsavedChanges={hasUnsavedChanges}
-        storageError={storageError}
         onToggleMode={() => setInputMode((mode) => (
           mode === "cards" ? "bulk" : "cards"
         ))}
@@ -389,6 +386,12 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
         onLoad={handleLoad}
         onReset={handleReset}
       />
+      <div className="calculator-page-layout">
+      <aside className="calculator-sidebar" aria-label="무기 프리셋 및 저장">
+        <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave}
+          savedAt={savedAt} hasUnsavedChanges={hasUnsavedChanges} storageError={storageError} />
+      </aside>
+      <div className="calculator-page-main">
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave} onPendingChange={setPendingImport}>
         <div className="setup-import-identity">
@@ -411,7 +414,6 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave} />
       <div className="calculator-workspace" id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
@@ -452,6 +454,8 @@ export function CalculatorApp({ captainBeta = false }: { captainBeta?: boolean }
         onPendingChange={setPendingCandidates}
         onEditBaseStats={() => handleNavigate(input.character.pureMain?.trim() ? "character.pureSub" : "character.pureMain")} />
       <footer className="app-footer"><span>플래닛 <span>장비 계산기</span></span><p>이 브라우저에 저장 · 이미지 외부 전송 없음</p><a className="asset-credit" href="https://maplestory.io/" target="_blank" rel="noreferrer">장비 아이콘: MapleStory.io · © NEXON</a><a href="#page-top">맨 위로 ↑</a></footer>
+      </div>
+      </div>
       </fieldset>
     </main>
   );
