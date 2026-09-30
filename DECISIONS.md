@@ -3599,3 +3599,17 @@
 - 앱·산출물: public/guides/equipment-comparison-v2.png를 새 정적 자산으로 추가하고 EquipmentHowToUse의 이미지 경로·크기·alt·화면 읽기용 순서를 갱신했다. PNG916×1717·1,752,710바이트이며 생성 결과와 사본의 SHA-256이 일치한다. 기존 v1·등록 안내·두 버튼·모달 동작을 유지한다. 편집 사본과 최초/수정 프롬프트는 Git 제외 output/how-to-use/20261001-equipment-comparison의 v2 파일에 보존한다. 개인 원본 스크린샷은 Git·공개 자산에 넣지 않았다.
 - 검증 범위: 이미지 육안 검토, 소스 참조·Git diff/공백 검사와 기존 localhost3000의 새 정적 PNG HTTP200·image/png·파일 크기 일치를 확인했다. 이미지와 대체 문구만 바꿔 로컬 앱 테스트·타입·lint·build·브라우저/서버 실행·계산 QA를 추가하지 않았다. 직전 기능 회귀나 병행 신궁 통합을 이번 작업의 새 QA 결과로 표현하지 않는다.
 - 보존·Git: 작업 중 별도 신궁 통합이 staged 상태인 것을 확인해 그 인덱스를 건드리지 않았고, 통합 커밋c70049c 완료 후 안내 관련 파일만 변경했다. 이번 안내 이미지·컴포넌트 참조·AGENTS 정책과 이 기록만 dev-main에 선택 커밋·푸시한다. 선행 DECISIONS.md96줄 추가/1줄 삭제·기존3000 서버·신궁/도메인 병행 변경과 D-146·D-ENV-001을 보존하며 main/Production은 변경하지 않는다.
+
+## D-MARKSMAN-DEV-002 — 신궁 dev-main 통합·원격 Preview 성공 확인
+
+- 기록 시각: 2026-10-01 05:27:14 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태·요청: D-MARKSMAN-DEV-001의 개발 반영 완료 기록. 요청한 신궁 계산·직업 선택을 dev-main에 통합·푸시하고 해당 SHA의 원격 Preview 성공을 확인했다. 추가 QA·Production 반영 요청은 없다.
+- 이유: 사용자 이유 미명시. 에이전트 기록 목적은 원격 개발 반영·기존 미커밋 보존·미실행 QA와 비로그인 접속 한계를 구분해 보관하는 것이다.
+- Git·소스 결과: 통합 커밋은 c70049c2511db07c7a8d60bf763321b7e2d5925d이며 부모는7d30a9e76d0611d0008729144a717becf9f0790f와2163563061427317b460d61f172c149c0f492db6다. origin/dev-main의 실제SHA와 로컬HEAD가 일치했다. 대상 대비17파일212줄 추가/40줄 삭제이며 기존 미커밋96/1은 포함하지 않았다. 신궁/직업 선택15파일은 feature 결과, 기존 안내5경로는 대상 dev-main 결과와 각각 diff가 없음을 양쪽 담당자가 소스로 대조했다.
+- Preview 근거: GitHub Deployment6769358771의 SHA는 위 통합 커밋과 동일하며 environment=Preview·production_environment=false다. 최신 status는2026-09-30T20:25:16Z(2026-10-01 05:25:16 KST)에success·Deployment has completed를 반환했고 Vercel 통합 커밋 상태도success다. 개발 주소는 https://planet-spec-1g4lqcl63-youngjun3108-gmailcoms-projects.vercel.app 이다.
+- 접속·한계: 부모의 직접 HTTP 요청은 최종200이지만 https://vercel.com/login 및 Login – Vercel로 이동했다. 로그인 보호 상태이며 비로그인 앱 화면·브라우저 QA·계산 정확성·게임 실측이 통과했다고 표현하지 않는다. 원격 자동 빌드는 승인된 개발 반영의 필수 단계로만 구분한다.
+- 미커밋 복원: 정확한 scoped stash c4efda2141b034a52423cec7dc5b0129d5cbe411을 apply해 DECISIONS의 원래96줄 추가/1줄 삭제를 복원했다. Git 제외 원본 바이트 백업 SHA-256은71B157204CD1B7B9C2D69B64D1FD91BA9C945B1BA4A8067D83741C48A6788ABD로 유지되며 blob-ID 헤더를 제외한 복원 패치의 모든 내용은 초기 패치와 동일하다(payload SHA-25631E35ED5CA8AD03EC9F56839D5A268F9DCEB79B95D2F5C7C433EBB354F445463). 검증 후 이번 stash만 object ID로 찾아 제거했고 과거master 복구stash f8470c13489c7ccd9c26f4ca6c6fc4a91b5d9dda는 보존했다.
+- 병행 작업·보존: 완료 기록 직전 EquipmentHowToUse.tsx와 equipment-comparison-v2.png의 새로운 병행 변경을 확인했다. 이 파일들은 건드리거나 이번 문서 커밋에 포함하지 않는다. 기존 미커밋 결정 기록·개인 데이터·서버 프로세스·신궁 feature 브랜치/worktree를 유지하며 main/Production·DNS는 변경하지 않았다.
+- QA 후행·문서 범위: 이번 통합의 로컬 테스트·새 테스트·타입 검사·lint·build·브라우저·서버 실행·게임 실측·QA 에이전트는 전부 미실행이다. 이번 후속은 완료 기록만 추가하는 문서 커밋이며 앱 코드를 다시 변경하거나 과거 검증을 신궁 QA 합격으로 재사용하지 않는다.
+- Git·후속: 이 완료 기록만 선택 문서 커밋·origin/dev-main 일반푸시하고 최종 로컬/원격SHA·index 비어 있음·원래 미커밋96/1 및 병행 변경 보존을 확인한다. 최종 문서 SHA의 자동 Preview는 부모가 확인하며 추가 완료 기록 루프는 만들지 않는다.
