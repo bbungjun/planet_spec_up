@@ -3508,3 +3508,15 @@
 - 서비스 확인: 호스팅케이알 상태 정상·등록정보 미인증 표시 해소를 재확인했고 Vercel 두 신규 주소는 Invalid Configuration이다. 기존 https://planet-spec-up.vercel.app 은HTTP200 및 서비스 제목을 반환한다. 신규 주소의HTTPS 요청은ENOTFOUND로 실패한다.
 - 근거·안내: https://dns.google/resolve 및 https://cloudflare-dns.com/dns-query의 공개 응답, CentralNic RDAP와 양 서비스 실제 UI. 호스팅케이알 https://help.hosting.kr/hc/ko/articles/900001311506의 네임서버 변경 반영 약24시간 안내는 일반 안내이며 이 도메인의 확정 ETA로 적용하지 않는다.
 - 결과·보존: DNS·네임서버·배포 설정을 추가 변경하지 않았다. 기존 주소 사용 가능 상태를 안내하며 전파·HTTPS 정상화 완료를 과장하지 않는다. D-DOMAIN-CONNECT-001·D-146·D-ENV-001을 유지하고 이번 기록만 dev-main에 선택 커밋·푸시한다. 기존 문서·UI 작업을 보존하며 앱 테스트·빌드는 실행하지 않는다.
+
+## D-UI-HOWTO-DEV-001 — 안내 기능 전체 dev-main·Preview 반영 확인
+
+- 기록 시각: 2026-10-01 05:15:35 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 개발 반영 요청·요청 기능의 원격 브랜치 및 Preview 배포 성공 확인 완료.
+- 결정·요청: 이번 장비 등록·비교 안내와 두 버튼 배치/확대 변경을 개발 dev-main까지 전부 반영한다. D-ENV-001에 따른 개발 환경 반영이며 main/Production 요청이 아니다.
+- 이유: 사용자 이유 미명시.
+- 반영 범위·Git 근거: 등록 안내 모달4f0279c, 비교 안내efdc776, 두 한글 버튼 통합·확대038b137이 모두 현재 dev-main에 포함된다. 로컬 HEAD와 origin/dev-main이038b137bf283593a167634a540141d7847ef00df로 일치하며 요청 범위의 미커밋 앱/자산 변경은 없다. 선행 DECISIONS.md96줄 추가/1줄 삭제는 별도 작업 기록으로 보존한다.
+- 배포 근거: GitHub Deployment6769123769는 같은038b137 SHA·environment=Preview·production_environment=false이며2026-10-01 05:13:14 KST에success/Deployment has completed를 반환했다. 커밋의 Vercel 통합 상태도success다. 개발 주소는 https://planet-spec-ppe18oihc-youngjun3108-gmailcoms-projects.vercel.app 이다.
+- 접속·한계: 해당 개발 주소를 직접 요청하면 Vercel 로그인 페이지로 이동한다. 플랫폼의 배포 성공은 확인했으며 비로그인 원격 앱 UI를 확인한 것으로 표현하지 않는다. 실제 두 버튼·모달·PC/모바일 검증과31개 회귀·타입·린트·빌드 결과는 소스 변경 없는 직전 D-UI-HOWTO-003의 결과를 재사용한다.
+- 후속·보존: 이 완료 기록만 같은 dev-main에 선택 커밋·푸시하고 최종 원격SHA와 Preview 상태를 확인한다. 앱을 다시 수정하거나 무관한 브랜치를 병합하지 않는다. 운영 main의 확인 SHA8e80fbc4586bfa78c4f44c3048bd420652d415f3와 공개 버전, 사용자 데이터·DNS·기존3000 서버는 변경하지 않는다.
