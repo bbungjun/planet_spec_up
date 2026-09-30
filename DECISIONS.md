@@ -3440,3 +3440,14 @@
 - 근거·확인: 참고 사이트 본문, ICANN https://atlarge.icann.org/topics/idn/background 및 Vercel https://vercel.com/docs/domains/troubleshooting, https://vercel.com/docs/domains/working-with-domains/add-a-domain, https://vercel.com/docs/domains/working-with-domains/deploying-and-redirecting 공식 자료를 확인했다. Node URL로 행성.com과 xn--oj4b158a.com, www.행성.com과 www.xn--oj4b158a.com의 대응을 검증했다.
 - 결과: 한글 도메인은 IDN이며 Punycode는 같은 도메인의 ASCII 표현이다. 사용 가능한 한글.com 등록 → Vercel 프로젝트 Settings/Domains에 Punycode 추가 → 구매처 DNS에 해당 프로젝트가 제시하는 레코드 적용 → HTTPS·www 대표 주소 확인 순서로 설명한다. www 유무 사이의 리디렉션은 한글 변환과 별개이며 참고 사이트의 실제 호스팅·DNS 구성은 추정하지 않는다.
 - 구현·후속: 앱·DNS·계정 설정은 변경하지 않았다. 현행 metadata.ts의 SITE_URL 기반 대표 URL 처리를 확인했으며 실제 주소 교체 시 함께 점검할 사항이다. D-143·D-146·D-ENV-001을 유지한다. 앞선 D-DOMAIN-RESEARCH-001과 이번 기록만 비운영 dev-main에 선택 커밋·푸시하고 기존 DECISIONS.md의 다른 변경을 보존한다. 앱 변경이 없어 테스트·빌드는 실행하지 않는다.
+
+## D-DOMAIN-PURCHASE-001 — 플래닛스펙업.xyz 구매 완료 보고
+
+- 기록 시각: 2026-10-01 05:00:30 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 구매 완료 보고. 도메인 등록·소유권·사이트 연결은 직접 검증하지 않았으며 운영 연결·배포 승인으로 확대하지 않는다.
+- 결정·요청: 사용자가 플래닛스펙업.xyz 구매를 완료했다고 알렸다. 이유는 사용자 이유 미명시.
+- 검증·결과: Node domainToASCII/domainToUnicode 왕복 변환으로 플래닛스펙업.xyz = xn--tj1bw3gpwlt7cywxr6b.xyz를 확인했다. Vercel Settings/Domains에 퓨니코드를 추가하고 해당 도메인에 표시되는 DNS 값을 구매처에 설정하는 다음 단계를 안내한다.
+- 근거·후속: Vercel 공식 https://vercel.com/docs/domains/working-with-domains/add-a-domain 및 https://vercel.com/docs/domains/troubleshooting을 확인했다. 구매처에 맞는 DNS 안내를 위해 업체명을 질문했다. 실제 DNS·도메인·SITE_URL·운영 사이트는 변경하지 않았다. D-143·D-146·D-ENV-001·D-DOMAIN-RESEARCH-002를 유지한다.
+- Git·검증: 이번 기록만 dev-main에 선택 커밋·푸시하며 병행 UI 및 기존 결정 기록 변경은 보존한다. 문서 변경이므로 앱 테스트·빌드는 실행하지 않는다.
+- 추가 확인·안내: 사용자는 구매처를 호스팅케이알로 확인했다. 호스팅케이알 공식 A/CNAME 등록 안내에 따라 나의 서비스 > 도메인 > 네임서버 / DNS > 새 DNS 레코드 추가 경로를 안내한다. 루트 A 레코드의 이름은 빈칸, www는 CNAME의 이름으로 입력하고 값은 Vercel이 실제 표시하는 값을 사용한다. 이 절차는 호스팅케이알 네임서버 사용 기준이다.
