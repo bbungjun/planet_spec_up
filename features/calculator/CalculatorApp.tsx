@@ -380,7 +380,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   };
 
   return (
-    <main className="calculator-shell" aria-busy={initialLoading}>
+    <main className={`calculator-shell${inputMode === "bulk" ? " is-bulk-mode" : ""}`} aria-busy={initialLoading}>
       <a className="skip-link" href="#equipment-editor-area" onClick={() => document.getElementById("equipment-editor-area")?.focus()}>장비 입력으로 바로가기</a>
       <MapleBackdrop />
       {development && <p className="panel-description">개발 전용 · 별도 저장</p>}
@@ -397,7 +397,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
         onLoad={handleLoad}
         onReset={handleReset}
       />
-      <div className="calculator-page-layout">
+      <div className={`calculator-page-layout${inputMode === "bulk" ? " is-bulk-mode" : ""}`}>
       <aside className="calculator-sidebar" aria-label="무기 프리셋 및 저장">
         <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={() => {
           if (handleSave()) setSaveConfirmationOpen(true);
@@ -427,7 +427,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      <div className="calculator-workspace" id="equipment-workspace">
+      <div className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
             input={input}
