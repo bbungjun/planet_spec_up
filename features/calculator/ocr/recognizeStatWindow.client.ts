@@ -1,4 +1,10 @@
 "use client";
+
+/**
+ * 능력창 전용 OCR의 보존된 호환/회귀 경로. 현재 화면의 능력창 사진 등록 기능은 제거되어 있다.
+ * 밝은 능력창에는 장비 설명창의 흰 글자 마스크를 적용하지 않고 숫자 행을 별도 처리한다.
+ */
+
 import { paddleReadings } from "./recognizePaddle.client";
 import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES } from "./recognizeTooltip.client";
 import { parseStatWindow, reconcileStatReads, statRows, type StatRecognition } from "./parseStatWindow";
@@ -6,7 +12,10 @@ import { sameStatNumberRow, statNumberMissing, statNumberRegions, statNumberRows
 import { prepareStatNumbers, STAT_NUMBER_VIEWS } from "./prepareStatNumbers.client";
 import type { OcrReading } from "./types";
 
-/** Separate white stat-panel path: tooltip masking would erase these glyphs. */
+/**
+ * 텍스트 앵커로 능력창 영역을 찾아 2/3배로 읽고 순수+추가=합계 관계와 두 결과의 일치를 검사한다.
+ * 두 판독이 같은 숫자 행을 찾았으나 값이 빠진 경우 원본 숫자 셀을 모아 재판독한다. 실패하면 기본 결과를 유지하고 취소/완료 시 엔진 자원을 해제한다.
+ */
 export async function recognizeStatWindow(file: File, signal: AbortSignal, progress: (message: string)=>void): Promise<StatRecognition> {
   if (!isSupportedTooltipImage(file) || file.size > MAX_TOOLTIP_IMAGE_BYTES) throw new Error("12MB 이하 PNG/JPG/WebP 이미지를 선택해주세요.");
   const active = () => { if(signal.aborted) throw new DOMException("Cancelled","AbortError"); };

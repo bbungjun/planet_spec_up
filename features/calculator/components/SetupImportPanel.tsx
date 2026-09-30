@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 첫 화면의 스크린샷 일괄 등록과 검토 후 적용·저장을 연결하는 진입 UI.
+ * 사진은 임시 상태로 유지하고 진행 중 목록의 이탈 보호·저장 성공 안내를 상위 계산기와 공유한다.
+ */
+
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { CalculatorInput } from "../domain/types";
 import { getEquipmentSlotLabel, getVisibleEquipmentSlots } from "../domain/slots";
@@ -17,6 +22,10 @@ type Props = {
   children: ReactNode;
 };
 
+/**
+ * 입력 제한 안의 여러 파일을 목록으로 넘기고 검토한 배치의 적용·저장 성공 이후 사진 목록을 비운다.
+ * 후보 비교 영역의 이미지 붙여넣기는 가로채지 않으며 일반 텍스트 붙여넣기는 기본 동작을 유지한다.
+ */
 export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingChange, children }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const successMessage = useRef<HTMLDivElement>(null);

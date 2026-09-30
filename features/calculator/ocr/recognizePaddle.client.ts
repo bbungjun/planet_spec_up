@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 현재 장비/구매 후보 화면의 기본 PaddleOCR 판독 파이프라인.
+ * 설명창 분리 → 두 크기의 확대·반전 판독 → 줄별 재시도 → 제목 복구 시도 → 공통 검토 결과 순으로 실행한다.
+ */
+
 import { prepareTooltip } from "./prepareTooltip.client";
 import { contrastTooltip, enlargeTooltip, tooltipImageSize } from "./enlargeTooltip.client";
 import { applyRequirementRecovery, buildOcrReview, reviewText } from "./reviewRecognition";
@@ -17,12 +22,20 @@ type Options = Parameters<TooltipRecognizer["recognize"]>[1];
 const abortError = () => new DOMException("Cancelled", "AbortError");
 const sourceIds = new WeakMap<File, string>();
 let nextSource = 0, nextOperation = 0;
+/**
+ * File 객체에 안정적인 출처 ID를, 인식 호출마다 새로운 작업 ID를 부여한다.
+ * 실험 검증 증거가 다른 사진·다른 호출과 섞이지 않게 하는 식별자이며 파일 바이트 해시는 아니다.
+ */
 function sourceIdentity(file: File) {
   let sourceId = sourceIds.get(file);
   if (!sourceId) { sourceId = `image-${++nextSource}`; sourceIds.set(file, sourceId); }
   return { sourceId, operationId: `recognition-${++nextOperation}` };
 }
 
+/**
+ * Paddle의 텍스트·신뢰도·다각형을 공통 줄 판독 형식으로 바꾼다.
+ * 유효한 다각형만 해당 판독 이미지의 폭·높이로 정규화하고 판독 회차를 유지한다.
+ */
 export function paddleReadings(items: Item[], width: number, height: number, pass: number): OcrReading[] {
   return items.filter(item => item.text.trim() && item.poly.length >= 4 && item.poly.every(point => point.length >= 2 && point.every(Number.isFinite)))
     .map(item => {
@@ -32,6 +45,10 @@ export function paddleReadings(items: Item[], width: number, height: number, pas
     });
 }
 
+/**
+ * 첫 확대 이미지의 가로·세로를 각각 2/3로 줄여 두 번째 판독 이미지를 만든다.
+ * 작은 설명창에서 보통 3배/2배가 되지만, 모든 이미지가 항상 이 두 배율인 것은 아니다.
+ */
 async function smallerView(file: File): Promise<File> {
   const bitmap = await createImageBitmap(file);
   try {
@@ -48,6 +65,10 @@ async function smallerView(file: File): Promise<File> {
   } finally { bitmap.close(); }
 }
 
+/**
+ * 취소 신호가 오면 비동기 작업을 기다리는 호출을 즉시 거절한다.
+ * 실제 엔진 자원 종료는 별도의 취소 리스너/terminate가 담당한다.
+ */
 async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   if (signal.aborted) throw abortError();
   return new Promise<T>((resolve, reject) => {
@@ -57,14 +78,17 @@ async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
   });
 }
 
-/** Developer/test-only candidate path. Its real-image activation gate failed;
- * production callers use the unchanged D-150 path by omitting this option. */
+/**
+ * 지연 초기화한 한국어 PP-OCRv5/WASM 인식기를 생성하고 같은 인식기의 호출을 직렬화한다.
+ * 기본 경로는 기존 줄별 재시도를 사용한다. experimentalRequirementRecovery=true인 개발/시험 호출만 별도의 원본 요구 조건 검증을 사용하며, 실이미지 활성화 기준은 통과하지 못한 상태다.
+ */
 export function createPaddleTooltipRecognizer(configuration: { experimentalRequirementRecovery?: boolean } = {}): TooltipRecognizer {
   const experimentalRequirementRecovery = configuration.experimentalRequirementRecovery === true;
   let engine: Engine | undefined;
   let initializing: Promise<Engine> | undefined;
   let generation = 0;
   let queue: Promise<unknown> = Promise.resolve();
+  // 세대를 바꾸면 초기화 중인 엔진과 대기 중 작업도 현재 작업의 결과로 채택되지 않는다.
   const terminate = async () => {
     generation += 1;
     const current = engine;
@@ -72,6 +96,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
     initializing = undefined;
     await current?.dispose().catch(() => undefined);
   };
+  // 첫 호출에서만 모델을 준비하고 같은 초기화 Promise를 재사용한다. 이미지 인식은 브라우저 WASM에서 실행한다.
   const ensure = (version: number) => {
     initializing ??= (async () => {
       const { PaddleOCR } = await import("@paddleocr/paddleocr-js");
@@ -112,6 +137,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
         const ambiguous = error as { code?: string; regions?: OcrBounds[] };
         if (ambiguous.code !== "MULTIPLE_TOOLTIPS" || !ambiguous.regions?.length || options.region) throw error;
         const current = await withAbort(ensure(version), signal);
+        // 후보가 여러 개면 최대 4곳을 추가 판독한다. 알려진 장비 분류와 옵션 조건을 만족하는 곳이 하나여야 진행한다.
         const matches: Array<{ file: File; warnings: string[] }> = [];
         for (const region of ambiguous.regions.slice(0, 4)) {
           active();
@@ -128,6 +154,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
       }
       active(); options.onPrepared?.(prepared);
       const current = await withAbort(ensure(version), signal);
+      // 기본 경로도 대비 보정을 수행한다. enhance는 작은 이미지의 확대 상한만 3배에서 4배로 바꾼다.
       const first = await enlargeTooltip(prepared, options.enhance ? 4 : 3) ?? prepared;
       active();
       const second = await smallerView(first);
@@ -142,6 +169,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
           provenance: { ...identity, role: "discovery" as const, viewId: `discovery-${pass}`, readingId: `${identity.operationId}-discovery-${pass}-${index}` } })));
       }
       let review = buildOcrReview(readings, warnings);
+      // 기본 UI는 이 분기를 켜지 않는다. 기본 판독과 달리 원본 행 출처·완전성·변환 다양성을 추가 검증한다.
       if (experimentalRequirementRecovery) {
         const preparedSize = await tooltipImageSize(prepared);
         active();
@@ -160,6 +188,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
               active();
               if (!image) { observation.failure = "unavailable-verification-view"; continue; }
               observation.crop = image.crop;
+              // 인공 여백까지 포함한 표시 범위를 원본 좌표로 환산한다. 여백 밖/다른 행의 증거는 검증에 쓰지 않는다.
               observation.renderBounds = {
                 x: image.crop.x - image.padding / image.contentWidth * image.crop.width,
                 y: image.crop.y - image.padding / image.contentHeight * image.crop.height,
@@ -190,6 +219,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
       // Default preserves D-150, including unresolved requirement retries.
       // Only explicit experiment callers replace that path with verification;
       // the same requirement is never run through both recovery paths.
+      // 최대 12개 미해결 줄만 원래 색상 이미지에서 다시 자른다. 해결된 줄은 남은 변환/배율 시도를 중단한다.
       const targets = review.lines.filter(line => (!experimentalRequirementRecovery || !identifiedRequirementLabel(line)) && retryRecognitionLabel(line)).slice(0, 12);
       retryTargets: for (const [index, target] of targets.entries()) {
         progress("recognizing", experimentalRequirementRecovery ? .85 + .12 * index / targets.length : .75 + .23 * index / targets.length);
@@ -250,6 +280,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
     } finally { signal.removeEventListener("abort", cancel); }
   };
   return {
+    // 단일 엔진에 predict가 겹치지 않도록 호출을 순서대로 실행한다. 배치 병렬성은 별도 인식기들이 담당한다.
     recognize(file, options) {
       const version = generation;
       const identity = sourceIdentity(file);

@@ -1,10 +1,17 @@
 "use client";
 
+/**
+ * 설명창 분리 작업의 브라우저 실행 위치와 취소 수명을 관리한다.
+ * Worker·OffscreenCanvas 지원 환경에서는 분리를 작업자로 넘기고, 미지원 환경에서는 직접 실행한다.
+ */
+
 import { prepareTooltipImage } from "./prepareTooltipImage";
 import type { OcrBounds } from "./types";
 
-/** Keep desktop/chat text out of equipment parsing. Tight tooltip captures
- * retain their original pixels; broad screenshots must have one clear frame. */
+/**
+ * 파일·영역·잘림 경고를 전처리 구현에 전달하고 처리된 File을 반환한다.
+ * 작업자 경로는 완료·실패·취소 시 작업자를 종료한다. 작업자 생성 실패는 조용히 직접 실행하지 않고 오류로 알린다.
+ */
 export async function prepareTooltip(file: File, options: { region?: OcrBounds; signal?: AbortSignal; onWarnings?: (warnings: string[]) => void } = {}): Promise<File> {
   const { signal, region } = options;
   if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");

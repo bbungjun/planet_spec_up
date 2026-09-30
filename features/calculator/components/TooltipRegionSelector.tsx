@@ -1,8 +1,17 @@
 "use client";
 
+/**
+ * 자동 탐지에 실패한 설명창의 영역을 드래그 또는 키보드 숫자로 지정하는 모달.
+ * 이미지 표시 비율을 유지하며 선택값은 원본 폭·높이에 대한 상대 좌표로 인식기에 전달한다.
+ */
+
 import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import type { OcrBounds } from "../ocr/types";
 
+/**
+ * 드래그 좌표를 실제 표시 이미지의 경계 기준 0~1로 환산하고 유효한 사각형만 다시 읽기에 전달한다.
+ * 모달 종료 시 이전 포커스로 돌아가며 파일 미리보기 URL은 해제한다. 원본 이미지를 직접 수정하지 않는다.
+ */
 export function TooltipRegionSelector({ file, onSelect, onCancel }: { file: File; onSelect: (region: OcrBounds) => void; onCancel: () => void }) {
   const id = useId();
   const imageRef = useRef<HTMLImageElement>(null);
@@ -26,6 +35,7 @@ export function TooltipRegionSelector({ file, onSelect, onCancel }: { file: File
     setUrl(next);
     return () => URL.revokeObjectURL(next);
   }, [file]);
+  // 화면에서 축소/확대된 이미지의 좌표를 정규화하므로 선택 영역은 표시 배율과 무관하게 원본에 대응한다.
   const point = (event: PointerEvent<HTMLElement>) => {
     const rect = imageRef.current?.getBoundingClientRect();
     return rect ? { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) } : null;

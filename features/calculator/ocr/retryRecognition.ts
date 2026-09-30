@@ -1,10 +1,16 @@
+/**
+ * 항목을 식별할 수 있으나 값이 불확실한 줄의 재시도 대상·영역·증거 병합을 담당한다.
+ * 재인식으로 새 증거를 얻되 기존 숫자/% 충돌을 다수결로 덮어쓰지 않는다.
+ */
 import { parseEquipmentCategory, parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
 import { buildOcrReview, suggestReviewOptions } from "./reviewRecognition";
 import { retryRequirementLabel } from "./retryRequirements";
 import type { OcrBounds, OcrReview, OcrReviewLine } from "./types";
 
-/** Only an identified field can be recovered automatically. A new OCR reading,
- * rather than a spelling suggestion or confidence score, must supply its value. */
+/**
+ * 확인 필요 줄에서 요구 조건 또는 유일한 전투 옵션 이름을 식별한다.
+ * 항목이 모호하거나 좌표가 없으면 null을 반환한다. 이름 제안만으로 숫자를 자동 확정하지 않는다.
+ */
 export function retryRecognitionLabel(line: OcrReviewLine): string | null {
   if (line.status !== "check" || !line.bounds) return null;
   const requirement = retryRequirementLabel(line);
@@ -20,8 +26,10 @@ export function retryRecognitionLabel(line: OcrReviewLine): string | null {
 
 const center = (bounds: OcrBounds) => bounds.y + bounds.height / 2;
 
-/** Include a detached value on the same row and the value column evidenced by
- * nearby requirements. Never borrow its text/value, or cross another field. */
+/**
+ * 같은 줄에서 떨어진 숫자 조각과 인접 요구 조건의 숫자 열 위치를 고려해 재시도 범위를 넓힌다.
+ * 다른 필드의 경계를 넘거나 그 필드의 숫자 자체를 가져오지 않는다.
+ */
 export function retryRecognitionBounds(review: OcrReview, line: OcrReviewLine): OcrBounds | null {
   const bounds = line.bounds;
   if (!bounds || !retryRecognitionLabel(line)) return null;
@@ -47,8 +55,10 @@ export function retryRecognitionBounds(review: OcrReview, line: OcrReviewLine): 
   return { ...bounds, width: Math.max(bounds.width, Math.min(right, stop, limit) - bounds.x) };
 }
 
-/** Local retries can repair missing/misspelled fields but cannot outvote any
- * conflicting numeric evidence. Preserve the other rows and repeated options. */
+/**
+ * 같은 항목의 새로운 판독 회차만 해당 줄에 추가해 검토 상태를 다시 계산한다.
+ * 원래 줄과 다른 줄은 보존하며, 잘못 읽힌 이름에 남아 있는 숫자/% 충돌도 확인 필요 상태로 유지한다.
+ */
 export function mergeRecognitionRetry(review: OcrReview, id: string, text: string, pass: number): OcrReview {
   const line = review.lines.find(line => line.id === id);
   if (!line || line.readings.some(reading => reading.pass === pass)) return review;

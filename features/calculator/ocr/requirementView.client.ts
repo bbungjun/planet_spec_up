@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 원래 설명창의 작은 행 영역에서 부분 재인식용 이미지를 만든다.
+ * 기본 재시도는 gray/luma/color/soft × 3/4배, 실험 원본 검증은 color/luma × 2/3배로 구분한다.
+ */
+
 import type { OcrBounds } from "./types";
 
 export const REQUIREMENT_VIEWS = [
@@ -29,8 +34,10 @@ export type RequirementVerificationView = {
   padding: number;
 };
 
-/** The verifier owns padding and crop limits. Unlike optional legacy retries,
- * this adapter neither enlarges nor clips its exact original-region crop. */
+/**
+ * 실험 검증기가 지정한 원본 영역을 확대하고 사방 16px의 인공 여백을 추가한다.
+ * 잘라낼 영역을 임의로 넓히거나 자르지 않는다. 픽셀에 맞춘 실제 crop·출력 크기·여백을 함께 반환해 원본 좌표 환산에 사용한다.
+ */
 export async function requirementVerificationView(file: File, crop: OcrBounds, view: typeof VERIFICATION_VIEWS[number]): Promise<RequirementVerificationView | null> {
   if (typeof createImageBitmap !== "function" || Object.values(crop).some(value => !Number.isFinite(value))
     || crop.x < 0 || crop.y < 0 || crop.width <= 0 || crop.height <= 0 || crop.x + crop.width > 1 || crop.y + crop.height > 1) return null;
@@ -61,8 +68,10 @@ export async function requirementVerificationView(file: File, crop: OcrBounds, v
   } finally { bitmap.close(); }
 }
 
-/** Preserve small glyph strokes that the whole-tooltip white threshold clips.
- * The crop comes from detected text bounds, never item-specific coordinates. */
+/**
+ * 검출한 행의 주변 여유를 포함해 원본에서 다시 자르고 확대·변환 후 16px 여백을 추가한다.
+ * 변환별 색상 보존/채널 최솟값 반전/휘도 반전/완만한 대비를 적용한다. 유효하지 않은 영역이나 과도한 면적은 null로 건너뛴다.
+ */
 export async function requirementView(file: File, bounds: OcrBounds, view: RecoveryView): Promise<File | null> {
   if (typeof createImageBitmap !== "function" || Object.values(bounds).some(value => !Number.isFinite(value))
     || bounds.x < 0 || bounds.y < 0 || bounds.width <= 0 || bounds.height <= 0 || bounds.x + bounds.width > 1.01 || bounds.y + bounds.height > 1.01

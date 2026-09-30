@@ -1,11 +1,19 @@
 "use client";
 
+/**
+ * 능력창에서 놓친 숫자 셀을 원본에서 추출해 하나의 재판독 이미지로 모은다.
+ * 장비 툴팁 전처리와 별개인 보존된 경로이며 숫자 합성/정답 치환은 하지 않는다.
+ */
+
 import { statValueStart, type StatNumberRegion } from "./statNumberRegions";
 
 export const STAT_NUMBER_VIEWS = [{ scale: 3, soft: false }, { scale: 4, soft: true }] as const;
 export type StatNumberView = { file: File; width: number; height: number; regions: StatNumberRegion[] };
 
-/** Batch the detected value rows into one image, reusing the existing Paddle worker. */
+/**
+ * 검출 행의 숫자 시작 열부터 잘라 3배 원색/4배 완만한 보정 뷰를 만든다.
+ * 최대 12행을 여백과 함께 묶고 새 이미지의 행 좌표를 반환해 결과를 원래 항목에 연결한다. 과도한 면적이나 유효한 행이 없으면 null을 반환한다.
+ */
 export async function prepareStatNumbers(bitmap: ImageBitmap, regions: StatNumberRegion[], view: typeof STAT_NUMBER_VIEWS[number]): Promise<StatNumberView | null> {
   const rows: Array<{ region: StatNumberRegion; canvas: HTMLCanvasElement }> = [];
   for (const region of regions.slice(0, 12)) {

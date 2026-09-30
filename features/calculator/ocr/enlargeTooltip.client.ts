@@ -1,6 +1,15 @@
 "use client";
 
-/** Preserve pixel-font edges while improving recognition of small tooltips. */
+/**
+ * 작은 설명창의 픽셀 확대와 흰 글자 강조·반전 이미지를 생성한다.
+ * 원본 File은 덮어쓰지 않으며, 현재 Paddle 경로는 두 크기에 모두 대비 보정을 적용한다.
+ */
+
+
+/**
+ * 설명창 폭에 따라 확대 상한을 정하고 출력 면적을 1,200만 픽셀 기준으로 제한한다.
+ * imageSmoothingEnabled=false로 픽셀 경계를 유지한다. 확대가 필요 없거나 지원 기능이 없으면 null을 반환한다.
+ */
 export async function enlargeTooltip(file: File, maximumScale = 2): Promise<File | null> {
   if (typeof createImageBitmap !== "function") return null;
   const bitmap = await createImageBitmap(file);
@@ -23,14 +32,19 @@ export async function enlargeTooltip(file: File, maximumScale = 2): Promise<File
   }
 }
 
+/**
+ * 브라우저에서 이미지의 실제 폭·높이를 읽고 디코딩한 비트맵을 즉시 해제한다.
+ */
 export async function tooltipImageSize(file: File): Promise<{ width: number; height: number } | null> {
   if (typeof createImageBitmap !== "function") return null;
   const bitmap = await createImageBitmap(file);
   try { return { width: bitmap.width, height: bitmap.height }; } finally { bitmap.close(); }
 }
 
-/** An alternate view for difficult translucent backgrounds. The original is
- * always retained and compared; this view never overwrites the source image. */
+/**
+ * min(R,G,B)를 135~200 구간에서 대비·반전해 어두운 배경 위의 흰 글자를 강조한다.
+ * 135 이하는 흰색, 200 이상은 검은색이 된다. 색상 글자는 사라질 수 있어 원래 색상 이미지도 별도로 보존한다.
+ */
 export async function contrastTooltip(file: File): Promise<File> {
   if (typeof createImageBitmap !== "function") return file;
   const bitmap = await createImageBitmap(file);

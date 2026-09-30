@@ -1,3 +1,7 @@
+/**
+ * 장비 설명창의 텍스트를 항목명·숫자·%·요구 조건·부위로 해석하는 공통 파서.
+ * 원문과 미해석 줄을 보존하며, 숫자 추정과 이미지 좌표 기반 줄 대조는 이 모듈에서 수행하지 않는다.
+ */
 import { OCR_STAT_NAMES, type OcrStatName, type ParsedTooltipStats, type TooltipOption } from "./types";
 
 const aliases: Record<string, string> = {
@@ -12,14 +16,14 @@ const aliases: Record<string, string> = {
   방어율무시: "방어율무시", 방어력무시: "방어율무시", 몬스터방어율무시: "방어율무시", 몬스터방어력무시: "방어율무시",
 };
 
-/** Recognize an option heading even if OCR dropped its entire numeric value. */
+/** 숫자가 통째로 누락되어도 알려진 전투 옵션 이름을 식별해 검토·재시도에 사용한다. */
 export function readCombatOptionLabel(raw: string): string | null {
   const label = raw.normalize("NFKC").toUpperCase().replace(/^[\s._·ㆍᆞ•|+'"*«<>:;\-]+/, "")
     .split(/[:;+%]/, 1)[0].replace(/\s/g, "");
   return Object.hasOwn(aliases, label) ? aliases[label] : null;
 }
 
-/** Normalize only the requirement label and separators; ambiguous digits stay raw. */
+/** 요구 조건의 접두사·항목명·구분자만 정리하고 숫자 부분은 원문으로 남긴다. */
 export function readTooltipRequirement(raw: string): { label: string; valueText: string } | null {
   const match = raw.normalize("NFKC").toUpperCase().match(/(?:REQ|REG|RER|REIQ|RE[@®])\s*(STR|STA|DEX|OEX|INT|LUK|LEVEL|LEV|LEU|LEW)(?=\s|[:;!.]|\d|$)[\s:;!]*(.*?)\s*$/);
   if (!match) return null;
@@ -27,13 +31,19 @@ export function readTooltipRequirement(raw: string): { label: string; valueText:
   return { label, valueText: match[2].replace(/[\s;:,.]+$/, "") };
 }
 
-/** Use the declared field type only after the label/value boundary is known.
- * Keep unverified lookalikes (I/Q/S, etc.) unresolved and retain the raw text. */
+/**
+ * 항목과 값의 경계가 확인된 문맥에서 허용한 경우에만 O/B를 0/8로 정리한다.
+ * 정수/소수 형식에 맞지 않거나 I/Q/S 등 미확인 유사 문자가 남으면 null을 반환한다.
+ */
 function numericToken(value: string, allowDecimal: boolean, allowLookalikes: boolean): string | null {
   const normalized = allowLookalikes ? value.replace(/O/g, "0").replace(/B/g, "8") : value;
   return (allowDecimal ? /^\d+(?:\.\d+)?$/ : /^\d+$/).test(normalized) ? normalized : null;
 }
 
+/**
+ * 한 줄의 이름·숫자·%를 해석하고 착용 요구 조건과 장비 보너스를 분리한다.
+ * 총데미지·보공·방무에서 %가 빠졌으면 고정 수치로 추정하지 않고 null로 남겨 검토하게 한다.
+ */
 export function parseTooltipOption(raw: string): TooltipOption | null {
   const line = raw.normalize("NFKC").toUpperCase()
     .replace(/^[\s._·ㆍᆞ•|+'"*«<>:;\-]+/, "").replace(/[\s|;:,.]+$/, "").trim()
@@ -63,7 +73,12 @@ export function parseTooltipOption(raw: string): TooltipOption | null {
 }
 
 const equipmentCategories = ["얼굴장식", "눈장식", "어깨장식", "펜던트", "목걸이", "귀고리", "귀걸이", "한벌옷", "모자", "망토", "장갑", "신발", "상의", "하의", "반지", "훈장", "벨트", "건", "석궁", "아대", "무기"];
+/** 부위 문자열이 현재 알려진 장비 분류인지 검사하며 새 부위를 임의로 정상 분류로 확정하지 않는다. */
 export function isKnownEquipmentCategory(value: string): boolean { return equipmentCategories.includes(value); }
+/**
+ * 장비 분류 줄을 읽고 알려진 긴 부위명과 한 글자만 다른 유일 후보를 정리한다.
+ * 알 수 없는 분류는 원래 이름으로 남긴다. 이 제한적인 이름 정리는 숫자 옵션에 적용하지 않는다.
+ */
 export function parseEquipmentCategory(raw: string): string | null {
   const match = raw.normalize("NFKC").match(/[장잠창참]비\s*분류\s*[:：;]\s*([가-힣A-Za-z·]{1,30})/);
   if (!match) return null;
@@ -76,6 +91,10 @@ export function parseEquipmentCategory(raw: string): string | null {
   return candidates.length === 1 ? candidates[0] : label;
 }
 
+/**
+ * 전체 텍스트의 옵션·미해석 줄·분류를 보존하고 스탯/올스탯의 고정값과 %를 각각 합산한다.
+ * 요구 조건은 options에만 남겨 장비 보너스에 더하지 않는다. 판독 간 같은 줄의 중복 제거는 검토 모듈이 담당한다.
+ */
 export function parseMapleTooltip(text: string): ParsedTooltipStats {
   const stats = Object.fromEntries(OCR_STAT_NAMES.map(name => [name, { flat: 0, percent: 0 }])) as ParsedTooltipStats["stats"];
   const allStat = { flat: 0, percent: 0 };

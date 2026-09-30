@@ -1,10 +1,19 @@
 "use client";
 
+/**
+ * 현재 직업에 영향을 주는 미해결 판독 줄과 원본 이미지 근거를 연결하는 검토 UI.
+ * 제안은 자동 수정이 아니며 사용자 확인/제외와 이미지 잘림 확인을 공통 검토 객체에 반영한다.
+ */
+
 import { useEffect, useId, useState } from "react";
 import type { JobId } from "../domain/types";
 import type { OcrBounds, OcrReview, OcrReviewLine } from "../ocr/types";
 import { canConfirmReviewText, resolveReviewLine, reviewInputText, reviewQuestions, suggestReviewOptions } from "../ocr/reviewRecognition";
 
+/**
+ * 판독 줄의 상대 좌표로 원본 이미지의 해당 부분을 SVG 뷰포트에 보여준다.
+ * 숫자를 그려 넣거나 원본 픽셀을 변경하지 않는다.
+ */
 function EvidenceLine({ image, bounds }: { image: File; bounds: OcrBounds }) {
   const [url, setUrl] = useState<string | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -28,6 +37,9 @@ function EvidenceLine({ image, bounds }: { image: File; bounds: OcrBounds }) {
   </div>;
 }
 
+/**
+ * 한 줄의 원문/표시용 숫자/제안을 보여주고 명시적인 확인 또는 제외를 전달한다.
+ */
 function Issue({ line, image, onResolve }: { line: OcrReviewLine; image: File; onResolve: (text: string | null) => void }) {
   const id = useId();
   const [draft, setDraft] = useState(() => reviewInputText(line));
@@ -52,6 +64,9 @@ function Issue({ line, image, onResolve }: { line: OcrReviewLine; image: File; o
   </div>;
 }
 
+/**
+ * 직업별 확인 질문과 이미지 경고를 표시하고 변경된 검토 상태를 상위 등록 화면으로 돌려준다.
+ */
 export function OcrReviewIssues({ review, job, image, onChange }: { review: OcrReview; job: JobId; image: File; onChange: (review: OcrReview) => void }) {
   const questions = reviewQuestions(review, job);
   return <div className="ocr-review-issues">
