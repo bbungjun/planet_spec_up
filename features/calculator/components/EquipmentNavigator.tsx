@@ -71,7 +71,6 @@ export function EquipmentNavigator({
       <div className="panel-heading game-window-heading">
         <div>
 
-          <span className="game-window-label" aria-hidden="true">EQUIPMENT INVENTORY</span>
           <h2 id="equipment-heading">장비 슬롯</h2>
         </div>
         <span>{visibleSlots.length}개</span>

@@ -28,8 +28,8 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
   const invalid = Object.keys(simulation.errors).length > 0;
 
   return <section className="panel stat-simulator" id="stat-simulator" aria-label="추가 스탯 시뮬레이터">
-    <div className="game-window-heading"><span className="game-window-label" aria-hidden="true">STAT SIMULATOR</span><span>수동 스탯 비교</span></div>
-    <header className="simulator-heading"><div><h2>추가 스탯 시뮬레이터</h2><p>{preset.label} 기준 · 순수 스탯·버프 고정 · 원래 세팅에 저장되지 않음</p></div>
+    <div className="game-window-heading"><h2>추가 스탯 시뮬레이터</h2></div>
+    <header className="simulator-heading"><p>{preset.label} · 임시 비교(저장 안 됨)</p>
       <button type="button" className="secondary-button" onClick={() => setDeltas(emptySimulation())}>추가 수치 초기화</button>
     </header>
     {simulation.estimated && <p className="simulator-notice" role="status">순수 스탯 미입력 · 추정 기준 비교</p>}
@@ -53,7 +53,6 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
             {error && <p className="simulator-field-error" id={`${id}-error`}>{error}</p>}
           </div>;
         })}
-        <p className="simulator-note">각 행은 해당 옵션만 바꾼 효과입니다. 전체 결과는 모든 변경량을 함께 계산합니다.</p>
         <table className="simulator-total-table"><caption>전체 적용 결과</caption>
           <thead><tr><th scope="col">항목</th><th scope="col">현재</th><th scope="col">적용 후</th><th scope="col">증감</th></tr></thead>
           <tbody>{([["최대 스탯공", simulation.stat], ["환산공", simulation.converted]] as const).map(([label, value]) =>

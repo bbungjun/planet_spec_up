@@ -74,7 +74,6 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
     <div className="setup-import-start">
       <div className="setup-import-intro">
 
-        <p className="workshop-eyebrow">◆ MY EQUIPMENT ROOM</p>
         <h1 id="setup-import-heading">나의 장비 작업실 <span aria-hidden="true">✦</span></h1>
 
       </div>
@@ -91,8 +90,8 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
             acceptFiles(Array.from(event.currentTarget.files ?? []));
             event.currentTarget.value = "";
           }} />
-        <small>설명창 전체·마지막 옵션까지, 가려진 글자 없이 · Ctrl+V / 여러 장 끌어놓기</small>
-        <small className="setup-image-storage-note">사진은 임시 보관되며 새로고침하거나 페이지를 닫으면 사라집니다. 저장한 장비 옵션과 설정만 이 브라우저에 남습니다.</small>
+        <small>설명창 전체·마지막 옵션까지 가림 없이 · 여러 장 끌어놓기</small>
+        <small className="setup-image-storage-note">사진은 새로고침·종료 시 사라집니다. 저장한 옵션·설정만 이 브라우저에 남습니다.</small>
       </div>
     </div>
     <div className="workshop-character-bar">

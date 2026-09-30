@@ -35,9 +35,6 @@ export function BulkEditor({
         </div>
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
-      <p className="panel-description">
-        카드 입력과 같은 값을 편집합니다. 요구 조건은 사진의 인식값을 사용합니다.
-      </p>
 
       <div className="bulk-table-wrap" tabIndex={0} aria-label="전체 장비 옵션 표">
         <table>

@@ -21,6 +21,7 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
           <h2 id="attack-setup-heading">공격력 버프</h2>
         </div>
       </div>
+      <h3 className="attack-buff-group-heading">선택 버프(택1)</h3>
       <div className="buff-presets" role="group" aria-label="공격력 버프 선택">
         {ATTACK_BUFF_PRESETS.map(({label, attack}) => (
           <button type="button" key={label} aria-label={`${label} +${attack}`} aria-pressed={activePreset?.attack === attack}
@@ -29,9 +30,8 @@ export function AttackSetupPanel({ input, issues, onEquipmentChange, onStackable
           </button>
         ))}
       </div>
-      <p className="attack-setup-hint">사이다·혼테일·핑크빈·요괴대사 중 하나만 적용</p>
+      <h3 className="attack-buff-group-heading">추가 버프(중첩)</h3>
       <StackableBuffControls buffs={input.attackBuffs} onChange={onStackableBuffChange} />
-      <p className="attack-setup-hint">뿌리기·분노는 다른 버프와 중첩 가능</p>
       <div className="attack-source-fields">
         {([
           ["projectile", "불릿·표창 공격력"],

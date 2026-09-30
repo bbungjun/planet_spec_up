@@ -196,8 +196,8 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
     setImportOpen(false); setLastAddedId(id);
   };
   return <section className="panel candidate-comparison" id="candidate-comparison" aria-label="구매 후보 비교" data-candidate-comparison>
-    <div className="game-window-heading"><span className="game-window-label" aria-hidden="true">ITEM COMPARISON</span><span>구매 후보 비교</span></div>
-    <div className="comparison-toolbar"><div><h2>장비 비교 <span>{visibleCandidates.length}</span></h2>
+    <div className="game-window-heading"><h2>구매 후보 비교 <span>{visibleCandidates.length}</span></h2></div>
+    <div className="comparison-toolbar"><div>
       {input.character.job === "corsair" && <p className="comparison-condition" aria-live="polite">{activeWeaponPreset(input) === "hunting" ? "사냥 · 호밍 미적용" : "보스 표식 대상 · 호밍 +20%p"}</p>}</div>
       <div className="comparison-toolbar-actions"><select aria-label="비교 전투 프리셋" value={activeWeaponPreset(input)} disabled={!onPresetSelect} onChange={event => onPresetSelect?.(event.target.value as WeaponPresetId)}>{WEAPON_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select><button type="button" className="comparison-add-button" onClick={openImport} aria-label="비교 후보 추가"><Plus/></button></div>
     </div>
@@ -213,7 +213,7 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
       }}>{candidate.name} 삭제 취소</button>)}
       <button type="button" className="secondary-button" onClick={() => { setCandidates(current => current.filter(candidate => !removedIds.includes(candidate.id))); setRemovedIds([]); board.current?.focus(); }}>삭제 알림 닫기</button>
     </div>}
-    <p className="comparison-footnote">구매 후보·사진·가격은 임시 비교용이며, 새로고침하거나 페이지를 닫으면 사라집니다.</p>
+    <p className="comparison-footnote">후보·사진·가격은 새로고침·종료 시 사라집니다.</p>
     {importOpen && <CandidateDialog title="비교할 장비 추가" onClose={() => setImportOpen(false)}>
       <div className="candidate-input-method" role="group" aria-label="후보 입력 방식">
         <button type="button" aria-pressed={inputMethod === "photo"} onClick={() => setInputMethod("photo")}>사진 등록</button>
