@@ -5,7 +5,7 @@ import { calculateDamageResult } from "@/features/calculator/domain/calculate";
 import { switchWeaponPreset } from "@/features/calculator/domain/weapon-presets";
 
 function fixture() {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, {
     level: "199", pureMain: "1000", pureSub: "4", monsterDefense: "50",
     ignoreDefense: "20", guildIgnorePercent: "10", guildAttackFlat: "5", guildBossPercent: "5",
@@ -79,7 +79,7 @@ describe("option efficiency", () => {
   });
 
   it("leaves equivalent stats unavailable when +1 main stat is lost to rounding", () => {
-    const input = createDefaultInput("corsair");
+    const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
     input.equipment.projectile!.attackFlat = "0"; // Preserve the low-attack rounding boundary.
     Object.assign(input.character, { pureMain: "700", pureSub: "4", mapleWarrior: 0 });
     input.equipment.weapon!.attackFlat = "1";

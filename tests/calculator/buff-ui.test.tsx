@@ -8,7 +8,7 @@ import { serializeSetup, STORAGE_KEY } from "@/features/calculator/storage";
 beforeEach(() => localStorage.clear());
 
 it("applies setup buffs to simulator and presets without stacking", async () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   input.equipment.projectile!.attackFlat = "0"; // Keep this fixed no-ammunition reference setup.
   Object.assign(input.character, { guildBossPercent: "0", guildIgnorePercent: "0", guildAttackFlat: "0" });
   Object.assign(input.equipment.necklace!, { mainFlat: "251", subFlat: "115", mainPercent: "215", subPercent: "24" });

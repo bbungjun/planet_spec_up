@@ -13,7 +13,7 @@ describe("level milestones and direct guild bonuses",()=>{
     expect(levelAchievementBonus(level)).toEqual({attack,allStat});
   });
   it("adds allstat before potential and excludes it from Maple Warrior base",()=>{
-    const input=applyStatWindow(createDefaultInput("corsair"),photo);
+    const input=applyStatWindow(createDefaultInput("corsair"),photo); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
     Object.assign(input.equipment.necklace!,{mainFlat:"100",subFlat:"20",mainPercent:"100",subPercent:"80"});
     input.equipment.weapon!.attackFlat="100";
     const result=calculateDamageResult(input);
@@ -40,7 +40,7 @@ describe("level milestones and direct guild bonuses",()=>{
     expect(calculateDamageResult(input).totalAttack).toBe(207);
   });
   it("preserves legacy guild settings until direct bonuses are supplied, without double addition",()=>{
-    const input=createDefaultInput("corsair");input.equipment.weapon!.attackFlat="100";
+    const input=createDefaultInput("corsair");input.equipment.buff!.attackFlat="0";input.equipment.weapon!.attackFlat="100";
     delete input.character.guildAttackFlat;
     delete input.character.guildBossPercent;
     delete input.character.guildIgnorePercent;

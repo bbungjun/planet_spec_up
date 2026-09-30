@@ -379,8 +379,8 @@ describe("calculator app", () => {
     await user.type(screen.getByLabelText("무기 공격력"), "100");
     const statAttack = screen.getByLabelText("시뮬레이션 스탯 공격력 결과");
     const convertedAttack = screen.getByLabelText("시뮬레이션 환산 공격력 결과");
-    expect(statAttack).toHaveTextContent(/^4,050$/);
-    expect(convertedAttack).toHaveTextContent(/^5,062$/);
+    expect(statAttack).toHaveTextContent(/^5,184$/);
+    expect(convertedAttack).toHaveTextContent(/^6,480$/);
   });
 
   it("shows a level error and zero attacks when level zero is invalid", async () => {

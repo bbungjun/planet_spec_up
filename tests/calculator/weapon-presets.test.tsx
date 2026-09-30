@@ -124,7 +124,7 @@ it("separates OCR boss, total and ignore-defense and clears prior damage options
 });
 
 it("imports three weapons atomically into presets without summing them", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   const outcome = applyOcrBatch(input, "corsair", [
     {destination: "preset:chaos", label: "건", replacement: replacement("공격력 +110\n방어율 무시 +60%")},
     {destination: "preset:boss", label: "건", replacement: replacement("공격력 +100\n보스공격력 +60%")},

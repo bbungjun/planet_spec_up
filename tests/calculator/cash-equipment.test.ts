@@ -8,7 +8,7 @@ import { switchWeaponPreset } from "@/features/calculator/domain/weapon-presets"
 import { deserializeSetup, serializeSetup } from "@/features/calculator/storage";
 
 function base() {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { level: "120", pureMain: "600", pureSub: "22", mapleWarrior: 30 });
   Object.assign(input.equipment.weapon!, { attackFlat: "101", attackPercent: "21", mainFlat: "10", subFlat: "5", mainPercent: "30", subPercent: "20", requiredSub: "0", requiredLevel: "0" });
   for (const slot of ["ring_1", "ring_2", "ring_3", "ring_4"] as const) {

@@ -16,12 +16,15 @@ it("defaults projectile attack to 20 while excluding it from all equipment desti
     for (const slot of ["projectile", "blessing_1", "blessing_2", "buff"]) {
       expect(getVisibleEquipmentSlots(input)).not.toContain(slot);
     }
-    expect(calculateDamageResult(input).totalAttack).toBe(25);
+    expect(calculateDamageResult(input).totalAttack).toBe(60); // projectile 20 + guild 5 + Pink Bean 35
   }
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   const user = userEvent.setup();
   render(<CalculatorApp />);
   await waitFor(() => expect(screen.getByLabelText("직업")).toBeEnabled());
+  expect(screen.getByRole("button", { name: "핑크빈 +35" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "뿌리기 +30" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByRole("button", { name: "분노 +12" })).toHaveAttribute("aria-pressed", "false");
   expect(screen.queryByRole("button", { name: "표창·불릿 편집" })).not.toBeInTheDocument();
   await user.selectOptions(screen.getByLabelText("직업"), "night_lord");
   expect(confirm).not.toHaveBeenCalled();
@@ -32,7 +35,7 @@ it("defaults projectile attack to 20 while excluding it from all equipment desti
 });
 
 it("uses the direct value once outside attack percent and preserves it through save and reload", async () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.equipment.weapon!, { attackFlat: "100", attackPercent: "100" });
   localStorage.setItem(STORAGE_KEY, serializeSetup(input));
   const user = userEvent.setup();

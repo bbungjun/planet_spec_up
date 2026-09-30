@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calculateDamageResult } from "./domain/calculate";
-import { createDefaultInput, DEFAULT_PROJECTILE_ATTACK } from "./domain/defaults";
+import { createDefaultInput, DEFAULT_BUFF_ATTACK, DEFAULT_PROJECTILE_ATTACK } from "./domain/defaults";
 import type { StackableAttackBuffId } from "./domain/attack-buffs";
 import { JOB_RULES } from "./domain/job-rules";
 import { addEquipmentSlot, getEquipmentSlotLabel, isNonEquipmentSlot, removeEquipmentSlot } from "./domain/slots";
@@ -53,7 +53,8 @@ function hasEquipmentValues(input: CalculatorInput): boolean {
     || (input.customSlots?.length ?? 0) > 0 || Object.entries(input.equipment).some(
     ([slot, equipment]) => equipment !== undefined
       && Object.entries(equipment).some(([field, value]) => value.trim() !== ""
-        && !(slot === "projectile" && field === "attackFlat" && value === DEFAULT_PROJECTILE_ATTACK)),
+        && !(slot === "projectile" && field === "attackFlat" && value === DEFAULT_PROJECTILE_ATTACK)
+        && !(slot === "buff" && field === "attackFlat" && value === DEFAULT_BUFF_ATTACK)),
   );
 }
 

@@ -12,7 +12,7 @@ import { applyOcrBatch } from "@/features/calculator/ocr/batch";
 import { matchingSlots } from "@/features/calculator/domain/slots";
 
 const baseline = () => {
-  const input = createDefaultInput("aran");
+  const input = createDefaultInput("aran"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { level: "160", pureMain: "800", pureSub: "4", mapleWarrior: 0,
     guildAttackFlat: "0", guildBossPercent: "0", guildIgnorePercent: "0", aranFlatAttack: "20" });
   Object.assign(input.equipment.weapon!, { attackFlat: "100", attackPercent: "10", requiredSub: "0", requiredLevel: "0" });

@@ -111,7 +111,7 @@ it("keeps the equipment category when only the original OCR pass read it", () =>
 });
 
 it("stores equipment damage, recalculates it and never adds it twice on re-apply", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   input.character.bossAndTotalDamage = "10";
   const replacement = mapRecognizedStats(parseMapleTooltip(weaponText), "corsair");
   input.equipment.weapon = applyStatReplacement(input.equipment.weapon!, replacement);

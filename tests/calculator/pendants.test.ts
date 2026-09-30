@@ -8,7 +8,7 @@ import { applyOcrBatch } from "@/features/calculator/ocr/batch";
 import { deserializeSetup, serializeSetup } from "@/features/calculator/storage";
 
 function baseline() {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { pureMain: "600", pureSub: "100", mapleWarrior: 0 });
   input.equipment.weapon!.attackFlat = "100";
   input.equipment.necklace = { ...emptyEquipment(), pendantId: "horntail", mainFlat: "10", attackFlat: "2", requiredLevel: "0", requiredSub: "0" };

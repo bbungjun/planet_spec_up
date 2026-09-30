@@ -12,7 +12,7 @@ function result(attack: number, damage: number): CalculationResult {
 }
 
 it("compares the two potential tradeoffs with ammo excluded and summon attack independent", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   input.equipment.projectile!.attackFlat = "20";
   const a = compareHuntingSkills(input, result(222, 21), result(252, 9));
   expect(a.map(row => [row.before, row.after])).toEqual([
@@ -25,7 +25,7 @@ it("compares the two potential tradeoffs with ammo excluded and summon attack in
 });
 
 it("recalculates summon DEX/STR, ignores boss damage, and never invents a rate from zero", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   input.equipment.projectile!.attackFlat = "0";
   const before = result(222, 21), after = result(252, 21);
   expect(compareHuntingSkills(input, before, after)[3].difference).toBe(0);
@@ -38,7 +38,7 @@ it("recalculates summon DEX/STR, ignores boss damage, and never invents a rate f
 });
 
 function setup() {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { level: "120", pureMain: "600", pureSub: "22", mapleWarrior: 0,
     guildAttackFlat: "0", guildBossPercent: "0", guildIgnorePercent: "0" });
   input.equipment.projectile!.attackFlat = "20";

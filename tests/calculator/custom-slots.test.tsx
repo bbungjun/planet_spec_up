@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 it("counts independent unknown and repeated gear slots and persists them without rejecting old setups", () => {
-  let input = createDefaultInput("corsair");
+  let input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   const legacy = deserializeSetup(serializeSetup(input));
   expect(legacy).toMatchObject({ ok: true });
 

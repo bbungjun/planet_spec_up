@@ -27,7 +27,7 @@ it("compares complete options and item names, not only equipment categories", ()
 });
 
 it("applies multiple new and existing gear records atomically without losing earlier additions", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   const make = (text: string) => mapRecognizedStats(parseMapleTooltip(text), "corsair");
   const entries = [
     {destination: "weapon" as const, label: "무기", replacement: make("공격력 +100")},

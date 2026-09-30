@@ -27,7 +27,7 @@ it("labels Night Lord's LUK and unregistered pure stats as estimates", () => {
 });
 
 it("explains unavailable calculations instead of showing misleading zeros or infinities", () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   input.equipment.projectile!.attackFlat = "0"; // Preserve this low-attack rounding case.
   const { rerender } = render(<OptionEfficiencyPanel input={input} />);
   expect(screen.getByRole("status")).toHaveTextContent("무기 공격력");

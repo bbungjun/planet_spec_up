@@ -385,3 +385,11 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .save-confirmation-mark{display:grid;place-items:center;width:44px;height:44px;margin:0 auto 16px;border-radius:50%;background:var(--accent-soft);color:var(--success);font-size:24px;font-weight:700}
 .save-confirmation-dialog h2{margin:0 0 24px;font-size:20px;line-height:1.5}
 .save-confirmation-dialog button{width:100%;min-height:44px;font-size:14px}
+
+/* White text in the simulator's stat rows, with muted green/blue label cells. */
+.stat-simulator .preset-stat-sheet{--stat-main:#526b3d;--stat-label:#3c6683;--stat-paper:#405361}
+:root .stat-simulator .preset-stat-sheet :is(dt,dd,dd strong,dd small,.preset-base-stats>div:not(:last-child) dt){color:#fff;text-shadow:none}
+:root .stat-simulator .preset-stat-sheet dt{border-color:#ffffff40}
+:root .stat-simulator .preset-stat-sheet dd{border-color:#ffffff30}
+.stat-simulator .preset-stat-context{padding:7px 9px;border-radius:3px;background:var(--stat-paper);color:#fff;font-size:12px}
+.stat-simulator .preset-stat-context span{color:inherit}

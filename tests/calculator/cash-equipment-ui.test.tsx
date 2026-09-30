@@ -8,7 +8,7 @@ import { deserializeSetup, serializeSetup, STORAGE_KEY } from "@/features/calcul
 beforeEach(() => { localStorage.clear(); vi.restoreAllMocks(); });
 
 it("places the cash panel below guild skills, updates set bonuses, and saves/restores independently of normal rings", async () => {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { pureMain: "600", pureSub: "22" });
   Object.assign(input.equipment.weapon!, { attackFlat: "101", attackPercent: "21" });
   for (const slot of ["ring_1", "ring_2", "ring_3", "ring_4"] as const) input.equipment[slot]!.mainFlat = "10";

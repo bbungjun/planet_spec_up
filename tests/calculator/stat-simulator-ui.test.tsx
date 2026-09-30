@@ -7,7 +7,7 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 import { STORAGE_KEY, serializeSetup } from "@/features/calculator/storage";
 
 function fixture() {
-  const input = createDefaultInput("corsair");
+  const input = createDefaultInput("corsair"); input.equipment.buff!.attackFlat = "0"; // Fixed no-buff reference.
   Object.assign(input.character, { level: "120", pureMain: "600", pureSub: "22", mapleWarrior: 0,
     guildAttackFlat: "0", guildBossPercent: "0", guildIgnorePercent: "0" });
   input.equipment.projectile!.attackFlat = "0";

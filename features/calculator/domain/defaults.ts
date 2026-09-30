@@ -2,6 +2,7 @@ import { JOB_RULES } from "./job-rules";
 import type { CalculatorInput, EquipmentInput, JobId } from "./types";
 
 export const DEFAULT_PROJECTILE_ATTACK = "20";
+export const DEFAULT_BUFF_ATTACK = "35";
 
 export function emptyEquipment(): EquipmentInput {
   return {
@@ -20,6 +21,7 @@ export function createDefaultInput(job: JobId): CalculatorInput {
   const rule = JOB_RULES[job];
 
   return {
+    attackBuffs: { sprinkling: false, rage: false },
     character: {
       job,
       ...(job === "aran" ? { aranWeaponConstant: "5", aranFlatAttack: "0", aranCombo: "0", aranComboCritical: true, aranHighMastery: false } : {}),
@@ -46,6 +48,7 @@ export function createDefaultInput(job: JobId): CalculatorInput {
       rule.visibleSlots.map((slot) => [slot, {
         ...emptyEquipment(),
         ...(slot === "projectile" && job !== "aran" ? { attackFlat: DEFAULT_PROJECTILE_ATTACK } : {}),
+        ...(slot === "buff" ? { attackFlat: DEFAULT_BUFF_ATTACK } : {}),
       }]),
     ),
   };
