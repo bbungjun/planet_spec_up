@@ -78,11 +78,17 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
         <h1 id="setup-import-heading">나의 장비 작업실 <span aria-hidden="true">✦</span></h1>
       </div>
       <div className={`setup-import-dropzone${dragging ? " is-dragging" : ""}`}
+        role="region" aria-labelledby="setup-import-dropzone-heading" tabIndex={disabled ? -1 : 0}
+        aria-busy={files !== null}
         onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }}
         onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
         onDrop={event => { event.preventDefault(); setDragging(false); acceptFiles(Array.from(event.dataTransfer.files)); }}>
+        <strong id="setup-import-dropzone-heading" className="setup-import-dropzone-heading"><GameIcon name="upload" /> 여기에 스크린샷 끌어놓기</strong>
+        <div className="setup-import-actions">
+          <span className="setup-import-paste"><kbd>Ctrl</kbd><span aria-hidden="true">+</span><kbd>V</kbd> 붙여넣기</span>
+        </div>
         <button type="button" className="setup-import-button" aria-label="장비 스크린샷 한 번에 선택" disabled={disabled || files !== null} onClick={() => fileInput.current?.click()}>
-          <GameIcon name="upload" /> {files ? `${files.length}장 확인 중` : "스크린샷으로 장비 등록"}<kbd>Ctrl V</kbd>
+          {files ? `${files.length}장 확인 중` : "스크린샷으로 장비 등록"}
         </button>
         <input ref={fileInput} className="equipment-ocr-file-input" type="file" multiple
           accept="image/png,image/jpeg,image/webp" aria-label="프리셋 등록 스크린샷" tabIndex={-1}
@@ -90,8 +96,6 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
             acceptFiles(Array.from(event.currentTarget.files ?? []));
             event.currentTarget.value = "";
           }} />
-        <small>설명창 전체·마지막 옵션까지 가림 없이 · 여러 장 끌어놓기</small>
-        <small className="setup-image-storage-note">사진은 새로고침·종료 시 사라집니다. 저장한 옵션·설정만 이 브라우저에 남습니다.</small>
       </div>
       <div className="equipment-guide-buttons" role="group" aria-label="계산기 사용 방법">
         <EquipmentHowToUse kind="registration" />
@@ -116,7 +120,7 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
       }} onClose={() => { setFiles(null); setError(null); }} />}
     {savedCount > 0 && <div ref={successMessage} className="setup-import-success" role="status" tabIndex={-1}>
       <div><strong>{savedCount}개 장비와 프리셋 저장 완료</strong></div>
-      <a href="#weapon-presets-heading">프리셋 확인 →</a>
+      <a href="#equipment-editor-area" onClick={() => document.getElementById("equipment-editor-area")?.focus()}>등록한 장비 확인 →</a>
     </div>}
   </section>;
 }

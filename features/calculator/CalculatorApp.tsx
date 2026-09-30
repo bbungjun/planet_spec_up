@@ -422,22 +422,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
           <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} marksmanBeta={marksmanBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
-      <div className="character-settings-content" id="character-settings">
-      <GuildSkillsPanel character={input.character} issues={result.issues} onChange={handleCharacterChange} />
-      <CashEquipmentPanel input={input} issues={result.issues} onChange={handleCashEquipmentChange} />
-      <div className="calculator-setup">
-          <CharacterPanel
-            showIdentity={false}
-            character={input.character}
-            issues={result.issues}
-            onChange={handleCharacterChange}
-            onJobChange={handleJobChange}
-          />
-          <AttackSetupPanel input={input} issues={result.issues}
-            onEquipmentChange={handleEquipmentChange}
-            onStackableBuffChange={handleStackableBuffChange} />
-      </div>
-      </div>
       <div ref={equipmentWorkspaceRef} className={`calculator-workspace${inputMode === "bulk" ? " is-bulk-mode" : ""}`} id="equipment-workspace">
         <EquipmentInputTabs mode={inputMode} onChange={setInputMode} />
         <div className="calculator-left" aria-label="장비 목록" hidden={inputMode === "bulk"}>
@@ -472,6 +456,22 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
             )}
             <CalculationIssues input={input} result={result} onNavigate={handleNavigate} />
           </div>
+      </div>
+      <div className="character-settings-content" id="character-settings">
+      <GuildSkillsPanel character={input.character} issues={result.issues} onChange={handleCharacterChange} />
+      <CashEquipmentPanel input={input} issues={result.issues} onChange={handleCashEquipmentChange} />
+      <div className="calculator-setup">
+          <CharacterPanel
+            showIdentity={false}
+            character={input.character}
+            issues={result.issues}
+            onChange={handleCharacterChange}
+            onJobChange={handleJobChange}
+          />
+          <AttackSetupPanel input={input} issues={result.issues}
+            onEquipmentChange={handleEquipmentChange}
+            onStackableBuffChange={handleStackableBuffChange} />
+      </div>
       </div>
       <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}

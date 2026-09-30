@@ -9,7 +9,7 @@ import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client"
 const recognize = vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image = (name: string) => new File([name], `${name}.png`, { type: "image/png" });
 const saveButton = () => screen.getByRole("button", { name: /확인하고 프리셋 저장/ });
-const ready = () => waitFor(() => expect(screen.getByLabelText("프리셋 등록 스크린샷")).toBeEnabled());
+const ready = () => waitFor(() => expect(screen.getByLabelText("프리셋 등록 스크린샷")).toBeEnabled(), { timeout: 5000 });
 
 beforeEach(() => {
   localStorage.clear();

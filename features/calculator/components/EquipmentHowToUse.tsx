@@ -69,6 +69,7 @@ function EquipmentGuideDialog({ id, kind, onClose }: { id: string; kind: GuideKi
     <div className="equipment-guide-content" role="region" aria-label={`${guide.title} 안내 이미지`} tabIndex={0}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={guide.image} width={guide.width} height={guide.height} decoding="async" alt={guide.alt} />
+      {kind === "registration" && <p className="equipment-guide-storage-note">사진은 새로고침·종료 시 사라집니다. 저장한 옵션·설정만 이 브라우저에 남습니다.</p>}
       <div className="equipment-guide-text">
         {kind === "comparison" ? <>
           <h3>장비 비교 순서</h3>
@@ -90,10 +91,10 @@ function EquipmentGuideDialog({ id, kind, onClose }: { id: string; kind: GuideKi
         <h3>방법 2. 영역 캡처 후 붙여넣기</h3>
         <ol>
           <li>아이템에 커서를 올립니다.</li>
-          <li>Win + Shift + S를 누르고 설명창 전체를 드래그해 캡처합니다.</li>
+          <li>Win + Shift + S를 누르고 마지막 옵션까지 가림 없이 보이는 설명창 전체를 드래그해 캡처합니다.</li>
           <li>이 안내를 닫고 계산기 상단 장비 등록 영역에서 Ctrl + V로 붙여넣습니다.</li>
         </ol>
-        <p>사진을 선택하거나 붙여넣으면 장비 인식이 시작됩니다.</p>
+        <p>여러 사진을 장비 등록 영역에 끌어놓아도 됩니다. 사진을 선택하거나 붙여넣으면 장비 인식이 시작됩니다.</p>
         </>}
       </div>
     </div>
