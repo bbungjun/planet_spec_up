@@ -3443,3 +3443,14 @@
 - 메타데이터·소스: 신궁 페이지에 실제 신궁 지원 범위·마스터 기준·게임 실측 검증 미완료와 해당 canonical/공유 설명을 추가했다. 광범위 SEO 수정은 하지 않았다. 변경 위치는 app/marksman/page.tsx, CalculatorApp.tsx, components/AppHeader.tsx·CharacterPanel.tsx, hooks/useSavedSetup.ts, storage.ts, AGENTS.md와 이 기록이다.
 - 확인·미실행: 입력/저장/페이지 이동과 기존 beforeunload 연결을 소스로 대조하고 Git diff/공백을 확인했다. 테스트·새 테스트 작성·타입 검사·lint·build·브라우저·Playwright/CUA·서버·게임 실측·QA 에이전트는 전부 미실행이며 소스 대조를 QA 합격으로 표현하지 않는다.
 - Git·후속: 부모의 요구사항별 최종 소스 대조를 완료했다. 이번8파일만 같은 비운영 기능 브랜치에 커밋·일반푸시하고 실제 원격SHA를 확인한다. 이 기록 시점에는 커밋·푸시 진행 전이며 완료 결과는 후속 기록으로 추가한다. 원본 앱 루트의 병행 안내UI·도메인·결정 기록·staging과 서버를 건드리지 않았고 원본 변경을 재병합하지 않았다. dev-main/main 병합·푸시와 개발/Production 배포는 하지 않는다.
+
+## D-JOB-SELECT-002 — 직업 선택 UI 소스 대조·기능 브랜치 푸시 완료
+
+- 기록 시각: 2026-10-01 05:09:23 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태·요청: D-JOB-SELECT-001의 구현 완료 기록. 추가 직업·계산 정책·QA·개발/운영 서버 반영 요청은 없다.
+- 이유: 사용자 이유 미명시. 에이전트 기록 목적은 직업 선택 소스 반영·저장 보존과 미실행 QA·Git 결과를 구분해 보관하는 것이다.
+- 소스 결과: 부모의 요구사항별 대조에서 상단 직업 nav 제거·활성3직업 선택·동일 직업 no-op·전체 페이지 이동·신궁 초기 입력/선택/snapshot·기존 키 보존·신궁 전용 load/save/clear·다른 직업/개인 기본값 차단·개발 나이트로드·기존 beforeunload 연결과 정책 변경을 확인했다. 이는 실행 테스트·브라우저/게임 QA 합격이 아니다.
+- Git 결과: 이번8파일을 `fbca6eecde342de9cc9f1cdea77de02e513d25c6` (`feat: select captain aran and marksman from job menu`)로 커밋하고 `origin/feat/marksman-support`에 일반푸시했다. 실제 원격SHA와 로컬HEAD가 일치하고 기능 커밋 직후 worktree clean임을 확인했다. diff·스테이징 공백 검사에서 오류가 없었다.
+- 보존·미실행: 계산 domain·원본 앱 루트의 병행 변경/staging·개발서버는 변경하지 않았다. 테스트·새 테스트·타입 검사·lint·build·브라우저·Playwright/CUA·서버 실행·게임 실측·QA 에이전트는 전부 유예했다. dev-main/main 병합·푸시와 개발/Production 배포를 하지 않았다.
+- 후속: 이 완료 기록도 같은 기능 브랜치에 문서 커밋·푸시하고 최종 원격SHA 일치·clean tree를 응답에 남긴다. 이번 공개용 선택·신궁 페이지의 구현 소스와 실제 운영 배포를 구분한다.
