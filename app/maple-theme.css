@@ -380,3 +380,9 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .calculator-sidebar .preset-storage-status{margin:10px 0 0;color:var(--muted);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 .calculator-sidebar [role="alert"]{color:var(--danger)}
 @media(max-width:1099px){.calculator-page-layout{grid-template-columns:minmax(0,1fr)}.calculator-sidebar{grid-column:1;grid-row:1;position:static;max-height:none;overflow:visible}.calculator-page-main{grid-column:1;grid-row:2}.calculator-sidebar .weapon-presets{margin:16px 0 0}}
+
+/* Finish the menu window at the same outer edges as the main/sidebar layout. */
+.app-header,.app-toolbar{max-width:1500px}
+.app-toolbar{padding:8px 14px;border:1px solid var(--window-edge);border-radius:8px;background:linear-gradient(var(--surface),var(--surface-raised));box-shadow:inset 0 1px var(--window-glint),0 3px 8px #2a4c6014}
+@media(max-width:700px){.app-toolbar{padding:8px 10px}.app-header-actions .secondary-button{flex:1 0 auto;white-space:nowrap}}
+@media(max-width:370px){.app-header-actions .secondary-button{flex-basis:calc(50% - 3px)}}
