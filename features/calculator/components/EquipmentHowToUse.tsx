@@ -14,10 +14,10 @@ const GUIDES = {
   comparison: {
     title: "장비 비교 방법",
     buttonLabel: "장비 비교 하는법",
-    image: "/guides/equipment-comparison-v1.png",
-    width: 1024,
-    height: 1536,
-    alt: "비교 대상 추가, Ctrl + V로 사진 붙여넣기, 원본 옵션 확인 후 후보로 비교하는 방법",
+    image: "/guides/equipment-comparison-v2.png",
+    width: 916,
+    height: 1717,
+    alt: "비교 대상 추가, 경매장 매물 영역 캡처, Ctrl + V로 붙여넣기, 원본 옵션 확인 후 후보로 비교하는 방법",
   },
 } as const;
 
@@ -74,6 +74,7 @@ function EquipmentGuideDialog({ id, kind, onClose }: { id: string; kind: GuideKi
           <h3>장비 비교 순서</h3>
           <ol>
             <li>이 안내를 닫고 장비 비교 영역의 비교 대상 추가를 누릅니다.</li>
+            <li>경매장 매물에 커서를 올리고 Win + Shift + S를 누릅니다. 마지막 옵션까지 화면에 보이게 한 뒤 아이템 설명창의 테두리 전체를 선택해 캡처합니다.</li>
             <li>사진 등록 창에서 복사한 장비 이미지를 Ctrl + V로 붙여넣습니다. 가격 대비 효율을 보려면 구매 가격을 억 메소 단위로 입력합니다.</li>
             <li>인식값과 원본 옵션을 확인하고 원본의 모든 옵션을 확인했습니다에 체크한 뒤 후보로 비교를 누릅니다.</li>
             <li>현재 장비와 후보의 최대 스탯공·환산공 상승률, 구매 가격과 가격 대비 효율을 비교합니다.</li>
