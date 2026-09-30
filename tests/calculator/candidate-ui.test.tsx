@@ -8,7 +8,7 @@ import * as recognition from "@/features/calculator/ocr/recognizeTooltip.client"
 const recognize=vi.fn<recognition.TooltipRecognizer["recognize"]>();
 const image=()=>new File(["fake pixels"],"candidate.png",{type:"image/png"});
 function seed(){const input=createDefaultInput("corsair");input.equipment.projectile!.attackFlat="0";Object.assign(input.character,{level:"120",pureMain:"600",pureSub:"22",mapleWarrior:0,guildAttackFlat:"0",guildBossPercent:"0",guildIgnorePercent:"0"});Object.assign(input.equipment.weapon!,{attackFlat:"100",requiredLevel:"0",requiredSub:"0",bossDamagePercent:"50"});localStorage.setItem(STORAGE_KEY,serializeSetup(input));return input;}
-const panel=()=>screen.getByRole("region",{name:"구매 후보 비교"});
+const panel=()=>screen.getByRole("region",{name:"장비 비교"});
 it("keeps candidate review numeric and requires confirmation again after a manual edit",async()=>{
  seed();const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);
  const {user,area}=await importPhoto("장비분류: 건\nREQ LEV: 0\nREQ STR: 0\n공격력 +110");
@@ -64,18 +64,22 @@ async function add(name="후보 A"){
 it("OCR review creates temporary before/after comparisons and preserves original gear and saves",async()=>{
  seed();const saved=localStorage.getItem(STORAGE_KEY);render(<CalculatorApp/>);const user=await add();
  const card=screen.getByRole("article",{name:"후보 A 비교 결과"});expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,182");expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
- expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("환산 공격력 비교")).toHaveTextContent("-873");
+ expect(within(within(card).getByLabelText("선택 프리셋 비교")).getByLabelText("환산 공격력 비교")).toHaveTextContent("-829");
  expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
  await user.click(screen.getByRole("button",{name:"무기 편집"}));expect(screen.getByLabelText("무기 공격력",{exact:true})).toHaveValue(100);
  await user.click(screen.getByRole("button",{name:"저장"}));const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)!);expect(stored.input.equipment.weapon.attackFlat).toBe("100");expect(stored.input.candidates).toBeUndefined();
  await user.type(within(card).getByLabelText("후보 A 구매 가격"),"0.3");expect(within(card).getByLabelText("후보 A 구매 가격")).toHaveValue(.3);
- expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("-88.91%");
+ expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("-74.5%");
  fireEvent.change(within(card).getByLabelText("후보 A 구매 가격"),{target:{value:"0.6"}});
- expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("-44.45%");
+ expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("-37.25%");
  fireEvent.change(within(card).getByLabelText("후보 A 구매 가격"),{target:{value:"0"}});
  expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("—");
  await add("후보 B");expect(screen.getAllByRole("article")).toHaveLength(2);
  await user.click(screen.getByRole("button",{name:"후보 A 삭제"}));expect(screen.queryByRole("article",{name:"후보 A 비교 결과"})).not.toBeInTheDocument();
+ await user.click(screen.getByRole("button",{name:"후보 A 삭제 취소"}));
+ const restored=within(screen.getByRole("article",{name:"후보 A 비교 결과"}));
+ expect(restored.getByRole("img",{name:"후보 A 원본 이미지"})).toBeInTheDocument();
+ expect(restored.getByLabelText("후보 A 구매 가격")).toHaveValue(0);
 });
 it("routes pasted candidate images from the dialog close-button focus without starting original registration",async()=>{
  seed();render(<CalculatorApp/>);await waitFor(()=>expect(within(panel()).getByRole("button",{name:"비교 카드 추가"})).toBeEnabled());
@@ -301,10 +305,12 @@ it("adds a photo-free candidate, edits its options, compares presets and saves o
   await user.type(area.getByLabelText("새 후보 구매 가격"),"0.3");
   await user.click(area.getByRole("button",{name:"후보로 비교"}));
   const card=screen.getByRole("article",{name:"후보 1 비교 결과"});
+  expect(screen.getByText("보스 표식 대상 · 호밍 +20%p")).toBeInTheDocument();
   expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("2,400");
-  expect(within(card).getByLabelText("후보 1 1억 메소당 환산공 상승률")).toHaveTextContent("-88.91%");
+  expect(within(card).getByLabelText("후보 1 1억 메소당 환산공 상승률")).toHaveTextContent("-74.5%");
   expect(within(card).queryByRole("img")).not.toBeInTheDocument();expect(recognize).not.toHaveBeenCalled();
   await user.selectOptions(screen.getByLabelText("비교 전투 프리셋"),"chaos");
+  expect(screen.getByText("보스 표식 대상 · 호밍 +20%p")).toBeInTheDocument();
   expect(within(card).getByLabelText("최대 스탯공 비교")).toHaveTextContent("현재 4,364");
   await user.click(within(card).getByRole("button",{name:"후보 1 상세 보기"}));
   const detail=within(screen.getByRole("dialog",{name:"후보 1 상세"}));

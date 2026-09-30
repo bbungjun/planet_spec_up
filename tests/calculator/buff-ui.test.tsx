@@ -29,7 +29,7 @@ it("applies setup buffs to simulator and presets without stacking", async () => 
   await user.click(selectPinkBean);
   await user.click(selectPinkBean);
   expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).toHaveTextContent("20,346");
-  expect(screen.getByLabelText("시뮬레이션 환산 공격력 결과")).toHaveTextContent("32,553");
+  expect(screen.getByLabelText("시뮬레이션 환산 공격력 결과")).toHaveTextContent("36,622");
   expect(selectPinkBean).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("button", { name: "핑크빈 +35" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByLabelText("공격력 버프 직접 입력")).toHaveValue(35);

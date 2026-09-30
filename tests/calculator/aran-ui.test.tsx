@@ -6,6 +6,19 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 
 afterEach(() => { window.localStorage.clear(); vi.restoreAllMocks(); });
 
+it("keeps an empty Aran beta clean until the user changes its own input", async () => {
+  render(<CalculatorApp aranBeta />);
+  await waitFor(() => expect(screen.getByRole("button", { name: "저장" })).toBeEnabled());
+  const blocked = () => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+  expect(blocked()).toBe(false);
+  fireEvent.change(screen.getByLabelText("순수 STR"), { target: { value: "800" } });
+  expect(blocked()).toBe(true);
+});
+
 it("switches to Aran, auto derives combo critical and saves to an isolated development key", async () => {
   const captain=serializeSetup(createDefaultInput("corsair"));
   window.localStorage.setItem(CAPTAIN_BETA_STORAGE_KEY,captain);

@@ -132,6 +132,7 @@ export type CalculationResult = {
   criticalMultiplier: number;
   formulaInputs: {
     bossAndTotalDamage: number;
+    homingDamagePercent?: number;
   };
   pureMain: number;
   pureSub: number;

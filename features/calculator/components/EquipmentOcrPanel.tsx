@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 장비 한 장/구매 후보 사진의 업로드·판독 진행·숫자 검토·적용을 연결하는 UI.
+ * 후보 입력은 원본 장비와 분리하며, 새 파일·직업·대상 변경 후 늦게 도착한 결과를 작업 ID와 취소 신호로 차단한다.
+ */
+
 import {
   useCallback,
   useId,
@@ -80,6 +85,10 @@ const progressMessage = (
     : `장비 옵션을 인식하는 중입니다 (${percent}%).`;
 };
 
+/**
+ * 파일 선택/붙여넣기/드롭과 영역·대비 재시도, 검토값·중복 확인·펜던트/반지 목적지를 관리한다.
+ * 판독 완료는 적용 완료가 아니다. 사용자 수정은 원본 확인 체크를 해제하고 적용 시 캡처한 대상과 검토 상태를 다시 확인한다.
+ */
 export function EquipmentOcrPanel({
   target,
   purpose = "equipment",
@@ -134,6 +143,7 @@ export function EquipmentOcrPanel({
     setPreviewUrl(null);
   }, []);
 
+  // 작업 번호와 AbortSignal을 함께 바꿔 이전 사진의 결과가 새 대상·검토값을 덮어쓰지 않게 한다.
   const cancelCurrent = useCallback((clearProposal = true) => {
     operationIdRef.current += 1;
     const active = activeOperationRef.current;
@@ -163,6 +173,7 @@ export function EquipmentOcrPanel({
     }
   }, [clearPreview, recognizer]);
 
+  // 파일·대상을 시작 시점에 캡처한다. 결과/진행/미리보기 콜백은 현재 작업인지 확인한 뒤 화면 상태를 갱신한다.
   const processFile = useCallback((file: File, region?: OcrBounds, enhance = false) => {
     cancelCurrent();
 
@@ -434,7 +445,7 @@ export function EquipmentOcrPanel({
         <figure className="equipment-ocr-preview">
           {purpose === "candidate" && <figcaption>장비 사진</figcaption>}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewUrl} alt="선택한 장비 스크린샷 미리보기" />
+          <img src={previewUrl} alt="선택한 장비 스크린샷 미리보기" width={600} height={400} />
         </figure>
       )}
 
@@ -509,6 +520,9 @@ export function EquipmentOcrPanel({
                 <label htmlFor={`${panelId}-${field}`}>{purpose === "candidate" ? label.replace(/^인식 /, "") : label}</label>
                 <input
                   id={`${panelId}-${field}`}
+                  name={`ocr-${panelId}-${field}`}
+                  autoComplete="off"
+                  inputMode={step === 1 ? "numeric" : "decimal"}
                   aria-label={label}
                   type="number"
                   min={0}

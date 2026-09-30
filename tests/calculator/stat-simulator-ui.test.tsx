@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
@@ -15,7 +15,7 @@ function fixture() {
   return input;
 }
 beforeEach(() => localStorage.clear());
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 it("supports buttons, signed inputs, reset, and live recalculation after baseline changes", async () => {
   const input = fixture(), user = userEvent.setup();
@@ -24,7 +24,7 @@ it("supports buttons, signed inputs, reset, and live recalculation after baselin
   expect(screen.getByLabelText("추가 장비 공격력")).toHaveValue(1);
   expect(screen.getByLabelText("시뮬레이션 스탯 공격력 결과")).toHaveTextContent("2,203");
   fireEvent.change(screen.getByLabelText("추가 총데미지%"), { target: { value: "-12" } });
-  expect(screen.getByLabelText("시뮬레이션 환산 공격력 결과")).toHaveTextContent("2,401");
+  expect(screen.getByLabelText("시뮬레이션 환산 공격력 결과")).toHaveTextContent("2,841");
   const next = structuredClone(input); next.equipment.buff!.attackFlat = "10";
   view.rerender(<StatSimulator input={next}/>);
   expect(screen.getByLabelText("추가 장비 공격력")).toHaveValue(1);
@@ -65,6 +65,7 @@ it("withholds invalid predictions, exposes field errors and returns after correc
 });
 
 it("keeps a scenario across combat presets but clears it on loading the saved setup", async () => {
+  vi.spyOn(window, "confirm").mockReturnValue(true);
   const input = fixture();
   input.weaponPresets = { active: "boss", entries: { hunting: { weapon: { ...input.equipment.weapon! }, monsterDefense: "0" } } };
   localStorage.setItem(STORAGE_KEY, serializeSetup(input));

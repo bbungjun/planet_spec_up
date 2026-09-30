@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 여러 장비 사진의 개별 진행·검토·목적지·중복·재시도와 일괄 적용을 보여준다.
+ * OCR 완료 순서 대신 원래 사진 선택 순서로 장비 칸을 배정하고 완료된 검토값을 보존한다.
+ */
+
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { EquipmentSlot, JobId } from "../domain/types";
 import { JOB_RULES } from "../domain/job-rules";
@@ -41,6 +46,9 @@ type Row = {
 };
 type Props = { files: File[]; job: JobId; choices: OcrSlotChoice[]; onApply: ApplyOcrBatch; onClose: () => void; createRecognizer?: () => TooltipRecognizer; saveOnApply?: boolean };
 
+/**
+ * 분리 미리보기와 전체 원본을 각각 보여주고 생성한 객체 URL을 파일 변경/종료 시 해제한다.
+ */
 function ImagePreview({file, original = file}: {file: File; original?: File}) {
   const [url, setUrl] = useState<string | null>(null);
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
@@ -56,10 +64,14 @@ function ImagePreview({file, original = file}: {file: File; original?: File}) {
   }, [file, original]);
   return url ? <div><a className="ocr-batch-image-link" href={url} target="_blank" rel="noreferrer" aria-label={`${original.name} ${originalUrl ? "인식 영역" : "원본"} 크게 보기 (새 탭)`}>
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img className="ocr-batch-preview" src={url} alt={`${original.name} ${originalUrl ? "인식 영역" : "원본"}`} loading="lazy" />
+    <img className="ocr-batch-preview" src={url} alt={`${original.name} ${originalUrl ? "인식 영역" : "원본"}`} width={600} height={400} loading="lazy" />
   </a>{originalUrl && <p className="ocr-crop-caption"><a href={originalUrl} target="_blank" rel="noreferrer">전체 원본 보기</a></p>}</div> : null;
 }
 
+/**
+ * 워커 풀 결과를 선택 순서로 정리하고 반지/펜던트·무기 프리셋 등 목적지를 제안한다.
+ * 선택된 검토 항목만 공통 일괄 적용 경계로 넘기며, 실패 사진은 개별 재시도하고 취소 후 결과 전파를 막는다.
+ */
 export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, createRecognizer, saveOnApply = false}: Props) {
   const id = useId();
   const [recognizerFactory] = useState(() => createRecognizer ?? createBrowserTooltipRecognizer);
@@ -104,6 +116,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
     const update = (index: number, patch: Partial<Row>) => {
       if (!controller.signal.aborted) setRows(current => current.map((row, i) => i === index && row.attempt === 0 ? {...row, ...patch} : row));
     };
+    // 병렬 판독이 먼저 끝난 사진이 반지 칸이나 중복 우선순위를 가져가지 않도록 선택 순서로 처리한다.
     const flushInOrder = () => {
       while (!controller.signal.aborted && results.has(nextReview)) {
         const index = nextReview++;
@@ -191,6 +204,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
     ...row, review, text: reviewText(review),
     replacement: { ...mapReviewedStats(review, job), ...row.overrides },
   }));
+  // 개별 실패만 새 인식기로 재시도한다. 다른 완료 사진의 입력값은 유지하고 이 행의 이전 증거만 초기화한다.
   const retry = async (index: number, region?: OcrBounds, replacementFile?: File) => {
     const original = rowsRef.current[index];
     if (!original || rowBusy(original) || original.state === "applied" || retryOperations.current.has(index) || applicationLock.current) return;
@@ -335,7 +349,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
 
               <div className="equipment-ocr-proposal-grid">{fields.map(([key, label]) => <div className="field" key={key}>
                 <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 인식 {label}</label>
-                <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={(key === "ignoreDefensePercent" || key === "criticalRate") ? 100 : key.endsWith("Percent") ? 999 : 9999} step={(key.endsWith("Percent") || key === "criticalRate") ? "any" : 1}
+                <input id={`${id}-batch-${index}-${key}`} name={`ocr-batch-${index}-${key}`} autoComplete="off" inputMode={(key.endsWith("Percent") || key === "criticalRate") ? "decimal" : "numeric"} type="number" min={0} max={(key === "ignoreDefensePercent" || key === "criticalRate") ? 100 : key.endsWith("Percent") ? 999 : 9999} step={(key.endsWith("Percent") || key === "criticalRate") ? "any" : 1}
                   value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied" || rowBusy(row)} onChange={event => {
                     const value = event.currentTarget.value, review = overrideReviewRequirement(row.review, job, key, value);
                     edit(index, { replacement: {...row.replacement!, [key]: value}, overrides: { ...row.overrides, [key]: value },

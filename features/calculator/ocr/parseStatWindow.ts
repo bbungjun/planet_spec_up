@@ -1,3 +1,7 @@
+/**
+ * 능력창 판독에서 직업·레벨·순수/최종 스탯과 공격력 범위를 해석하는 보존된 모듈.
+ * 현재 수동 순수 스탯 UI와 별개이며 검산 관계와 미완성 초안을 유지한다.
+ */
 import { JOB_RULES } from "../domain/job-rules";
 import { isStatWindowSnapshot } from "../domain/statWindow";
 import type { JobId, StatWindowSnapshot } from "../domain/types";
@@ -6,7 +10,9 @@ import type { OcrReading } from "./types";
 export type StatDraft = { job?: JobId; level?: number; pure: StatWindowSnapshot["pure"]; total: StatWindowSnapshot["total"]; maxAttack?: number; minAttack?: number; totalDamagePercent?: number; bossDamagePercent?: number; ignoreDefensePercent?: number; criticalRate?: number; accuracy?: number };
 export type StatRecognition = { draft: StatDraft; warnings: string[]; automatic: boolean };
 const clean = (text: string) => text.normalize("NFKC").replace(/,/g, "").replace(/\s/g, "");
-/** Join nearby fragments on the same text baseline, preserving horizontal order. */
+/**
+ * 같은 텍스트 기준선 근처의 조각을 수평 순서로 묶는다. 좌표 없는 판독은 별도 줄로 남긴다.
+ */
 export function statRows(readings: OcrReading[]): string[] {
   const positioned = readings.filter(r => r.bounds).sort((a,b) => a.bounds!.y - b.bounds!.y);
   const rows: OcrReading[][] = [];
@@ -17,6 +23,10 @@ export function statRows(readings: OcrReading[]): string[] {
   }
   return [...rows.map(row => row.sort((a,b) => a.bounds!.x-b.bounds!.x).map(r=>r.text).join(" ")), ...readings.filter(r=>!r.bounds).map(r=>r.text)];
 }
+/**
+ * 능력창 줄에서 값을 읽고 순수+추가=합계 관계 및 같은 필드의 숫자 충돌을 검사한다.
+ * 누락·불일치는 warnings에 남기고 이 단계만으로 자동 등록 가능 상태를 만들지 않는다.
+ */
 export function parseStatWindow(lines: string[]): StatRecognition {
   const draft: StatDraft = { pure: {}, total: {} }, warnings: string[] = [];
   const seen = new Map<string, number>();
@@ -59,6 +69,10 @@ export function parseStatWindow(lines: string[]): StatRecognition {
   for (const stat of rule ? [rule.mainStat,rule.subStat] : ["DEX","STR"] as const) if(draft.pure[stat] === undefined) warnings.push(`${stat}의 합계(순수+추가)가 완전히 보이는 사진이 필요합니다.`);
   return {draft,warnings:[...new Set(warnings)],automatic:false};
 }
+/**
+ * 두 초안의 완전한 일치, 네 스탯의 순수값 존재, 경고 없음, 저장 스냅샷 유효성을 함께 확인한다.
+ * 하나라도 부족하면 automatic=false로 남기며 두 결과의 수치를 평균하거나 다수결로 정하지 않는다.
+ */
 export function reconcileStatReads(first: StatRecognition, second: StatRecognition): StatRecognition {
   const draft = second.draft, warnings=[...first.warnings,...second.warnings];
   const stable = JSON.stringify(first.draft) === JSON.stringify(second.draft);

@@ -1,3 +1,7 @@
+/**
+ * 지원 요구 조건의 식별과 행 경계 계산을 담당한다.
+ * 기본 재시도와 개발/시험용 원본 검증이 공유하지만, 출처 증거가 있는 검증 대상만 실험 덮어쓰기에 사용할 수 있다.
+ */
 import { JOB_RULES } from "../domain/job-rules";
 import { parseTooltipOption, readTooltipRequirement } from "./parseMapleTooltip";
 import { buildOcrReview } from "./reviewRecognition";
@@ -5,6 +9,9 @@ import type { LocatedRequirement, OcrReview, OcrReviewLine, RequirementField } f
 
 const usedRequirements = new Set(["LEV", ...Object.values(JOB_RULES).map(rule => rule.subStat)]);
 
+/**
+ * 여러 판독이 같은 요구 조건 이름으로 식별되고 해당 이름이 레벨/지원 직업의 부스탯일 때 반환한다.
+ */
 export function identifiedRequirementLabel(line: OcrReviewLine): RequirementField | null {
   const labels = new Set(line.readings.map(reading => readTooltipRequirement(reading.text)?.label).filter(label => label !== undefined));
   if (labels.size !== 1) return null;
@@ -12,8 +19,10 @@ export function identifiedRequirementLabel(line: OcrReviewLine): RequirementFiel
   return usedRequirements.has(label) ? label as RequirementField : null;
 }
 
-/** Locate every supported requirement, including matching discovery values.
- * Missing provenance belongs to the legacy review path and gains no override. */
+/**
+ * 출처 ID가 일치하는 기본 판독에서 요구 조건 행과 주변 필드의 경계를 찾아 원본 검증 대상을 만든다.
+ * 행 겹침·동일 항목 중복·이미지 끝 잘림을 검사하며 인접 필드의 숫자를 포함시키지 않는다. 이미 일치한 요구 조건도 실험 검증 대상으로 검사한다.
+ */
 export function locateRequirementVerification(review: OcrReview, identity: { sourceId: string; operationId: string }, size: { width: number; height: number }): LocatedRequirement[] {
   const center = (box: NonNullable<OcrReviewLine["bounds"]>) => box.y + box.height / 2;
   const candidates = review.lines.filter(line => identifiedRequirementLabel(line) && line.bounds
@@ -78,13 +87,18 @@ export function locateRequirementVerification(review: OcrReview, identity: { sou
   });
 }
 
+/**
+ * 좌표가 있고 확인 필요 상태인 지원 요구 조건 줄만 기본 재시도 대상으로 식별한다.
+ */
 export function retryRequirementLabel(line: OcrReviewLine): string | null {
   if (line.status !== "check" || !line.bounds) return null;
   return identifiedRequirementLabel(line);
 }
 
-/** A reread contributes evidence only for the same observed requirement row.
- * Existing conflicting numbers remain blocking; no majority vote overrides them. */
+/**
+ * 기존 요구 조건과 같은 이름의 새 판독을 추가해 그 줄의 검토 상태를 다시 계산한다.
+ * 기존의 충돌 숫자를 버리지 않으며 같은 판독 회차를 중복 증거로 쓰지 않는다.
+ */
 export function mergeRequirementRetry(review: OcrReview, id: string, text: string, pass: number): OcrReview {
   const line = review.lines.find(line => line.id === id);
   if (!line || line.readings.some(reading => reading.pass === pass)) return review;

@@ -1,20 +1,32 @@
+/**
+ * 전체 화면에서 장비 설명창 후보를 색상 테두리와 어두운 내부의 픽셀 규칙으로 찾는다.
+ * 이 단계는 글자를 읽지 않는다. 여러 후보가 남으면 호출자가 추가 OCR 또는 영역 선택으로 구분한다.
+ */
 export type TooltipRect = { x: number; y: number; width: number; height: number };
 type Pixels = { width: number; height: number; data: ArrayLike<number> };
 type Edge = { x: number; top: number; bottom: number; color: number[] };
 
+/**
+ * 두 사각형의 겹치는 면적을 구해 중복 프레임과 합성 프레임 판정에 사용한다.
+ */
 function intersection(a: TooltipRect, b: TooltipRect): number {
   return Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x))
     * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
 }
 
+/**
+ * 별도 설명창 두 개를 함께 감싼 큰 사각형인지 검사해 하나의 장비 후보로 오인하지 않게 한다.
+ */
 function compositeFrame(candidate: TooltipRect, all: TooltipRect[]): boolean {
   const children = all.filter(other => other !== candidate && other.width >= candidate.width * .4 && other.width < candidate.width * .8 && other.height > candidate.height * .6
     && intersection(candidate, other) / (other.width * other.height) > .9);
   return children.some((first, i) => children.slice(i + 1).some(second => intersection(first, second) / Math.min(first.width * first.height, second.width * second.height) < .15));
 }
 
-/** Find tall, closed, colored frames with a dark interior. Coordinates and
- * colors come from pixels, never from a particular screenshot or item name. */
+/**
+ * 길고 연속된 색상 세로선·닫힌 가로선·어두운 내부를 만족하는 설명창 후보를 찾는다.
+ * 좌표와 색은 현재 이미지에서 측정하며 특정 아이템 이름이나 고정 위치에 맞추지 않는다.
+ */
 function detectStrictFrames({ width, height, data }: Pixels): TooltipRect[] {
   const colorAt = (x: number, y: number) => {
     const offset = (y * width + x) * 4;
@@ -92,8 +104,10 @@ function detectStrictFrames({ width, height, data }: Pixels): TooltipRect[] {
   }));
 }
 
-/** Fallback uses hue continuity or a dark boundary's contrast, so translucent
- * edges need not have identical RGB values on every side. */
+/**
+ * 엄격한 RGB 일치가 실패할 때 색상 계열의 연속성 또는 어두운 경계의 대비로 후보를 찾는다.
+ * neutral은 어두운 테두리 탐지이며, 반투명 배경 때문에 변하는 테두리 색을 허용하는 보조 경로다.
+ */
 function detectFlexibleFrames({ width, height, data }: Pixels, neutral: boolean): TooltipRect[] {
   const channel = (x: number, y: number, c: number) => data[(y * width + x) * 4 + c];
   const family = (x: number, y: number) => {
@@ -181,6 +195,10 @@ function detectFlexibleFrames({ width, height, data }: Pixels, neutral: boolean)
   return distinct;
 }
 
+/**
+ * 큰 세로 설명창과 함께 검출된 작은 퀵슬롯 형태를 후보에서 제외한다.
+ * 비슷한 폭의 짧은 실제 설명창은 유지해 작은 이미지라는 이유만으로 버리지 않는다.
+ */
 function withoutSmallControls(candidates: TooltipRect[]): TooltipRect[] {
   // Quick-slot buttons can share a tooltip's dark frame and bright icon.
   // Only suppress compact controls when the same image contains a much larger
@@ -190,6 +208,10 @@ function withoutSmallControls(candidates: TooltipRect[]): TooltipRect[] {
       && other.width >= rect.width * 2 && other.height >= rect.height * 2));
 }
 
+/**
+ * 엄격한 프레임과 색상/어두운 경계의 보조 탐지 결과를 함께 수집한다.
+ * 겹치는 후보와 여러 창을 감싼 후보, 작은 조작 버튼을 정리해 사각형 목록을 반환한다.
+ */
 export function detectTooltipRegions(pixels: Pixels): TooltipRect[] {
   const strict = detectStrictFrames(pixels);
   // A strict inventory frame must not hide a translucent tooltip candidate.

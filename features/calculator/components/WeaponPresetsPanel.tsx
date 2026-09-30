@@ -7,16 +7,16 @@ type Props = {
   input: CalculatorInput;
   onSelect: (id: WeaponPresetId) => void;
   onSave: () => void;
+  savedAt: string | null;
+  hasUnsavedChanges: boolean;
+  storageError: string | null;
 };
 
-export function WeaponPresetsPanel({ input, onSelect, onSave }: Props) {
+export function WeaponPresetsPanel({ input, onSelect, onSave, savedAt, hasUnsavedChanges, storageError }: Props) {
   const active = activeWeaponPreset(input);
   return (
     <section className="panel weapon-presets" aria-labelledby="weapon-presets-heading">
-      <div className="panel-heading">
-        <div><h2 id="weapon-presets-heading">무기 프리셋</h2></div>
-        <button type="button" className="secondary-button" onClick={onSave}>프리셋 저장</button>
-      </div>
+      <div className="panel-heading"><h2 id="weapon-presets-heading">무기 프리셋</h2></div>
       <div className="weapon-preset-grid">
         {WEAPON_PRESETS.map(preset => {
           const saved = getWeaponPreset(input, preset.id);
@@ -30,16 +30,21 @@ export function WeaponPresetsPanel({ input, onSelect, onSave }: Props) {
               <strong>{preset.label}</strong><span>{preset.hint}</span>
               <small>{!hasWeaponInput ? "무기 미등록" : active === preset.id ? "편집 중" : ready ? "무기 등록됨" : "입력 확인"}</small>
             </button>
-            <details className="weapon-preset-details"><summary>{preset.label} 수치</summary><dl>
+            <div className="weapon-preset-metrics"><dl>
               <div><dt>최대 스탯공</dt><dd>{ready ? result.statAttack.toLocaleString("ko-KR") : "—"}</dd></div>
-              <div><dt>대상별 환산공</dt><dd>{ready ? result.convertedAttack.toLocaleString("ko-KR") : "—"}</dd></div>
-              <div><dt>몬스터 방어율</dt><dd>{preview.character.monsterDefense || "0"}%</dd></div>
+              <div><dt>환산 공격력</dt><dd>{ready ? result.convertedAttack.toLocaleString("ko-KR") : "—"}</dd></div>
             </dl>
             {ready && result.issues.some(issue => isWearBlocked(issue)) && <p className="equipment-wear-warning">착용 불가 · 가정값</p>}
-            </details>
+            </div>
           </div>;
         })}
       </div>
+      <button type="button" className="secondary-button preset-save-button" onClick={onSave}>프리셋 저장</button>
+      {storageError === null ? (
+        <p role="status" aria-label="저장 상태" className="preset-storage-status">
+          {hasUnsavedChanges ? "저장하지 않은 변경 있음" : savedAt === null ? "저장된 세팅 없음" : <>저장됨 <time dateTime={savedAt}>{new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(savedAt))}</time></>}
+        </p>
+      ) : <p role="alert" className="preset-storage-status">{storageError}</p>}
     </section>
   );
 }

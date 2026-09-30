@@ -22,13 +22,13 @@ describe("option efficiency", () => {
   it("recalculates independent +1 options with fixed pure stats, existing floors and equipment-only attack%", () => {
     const input = fixture(), before = structuredClone(input);
     // DEX=1750, STR=24, attack=floor(100*1.1)+30+5=145.
-    // Stat attack=9169; converted=floor(9169*1.55*0.8)=11369.
-    expect(calculateDamageResult(input)).toMatchObject({ mainStat: 1750, subStat: 24, totalAttack: 145, convertedAttack: 11369 });
+    // Stat attack=9169; boss homing adds 20%p: floor(9169*1.75*0.8)=12836.
+    expect(calculateDamageResult(input)).toMatchObject({ mainStat: 1750, subStat: 24, totalAttack: 145, convertedAttack: 12836 });
     const result = calculateOptionEfficiency(input);
     expect(result).toMatchObject({ estimated: false, unavailableReason: null });
-    expect(result.rows.map(row => row.convertedAttackGain)).toEqual([8, 72, 79, 79, 73, 73, 142, 0]);
-    expect(result.rows.map(row => row.equivalentMainStat)).toEqual([1, 9, 9.875, 9.875, 9.125, 9.125, 17.75, 0]);
-    expect(result.rows[2].increasePercent).toBeCloseTo(79 / 11369 * 100, 12);
+    expect(result.rows.map(row => row.convertedAttackGain)).toEqual([9, 81, 90, 90, 73, 73, 161, 0]);
+    expect(result.rows.map(row => row.equivalentMainStat)).toEqual([1, 9, 10, 10, 73 / 9, 73 / 9, 161 / 9, 0]);
+    expect(result.rows[2].increasePercent).toBeCloseTo(90 / 12836 * 100, 12);
     expect(input).toEqual(before);
   });
 

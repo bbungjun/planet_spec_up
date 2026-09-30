@@ -35,11 +35,8 @@ export function BulkEditor({
         </div>
         <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
-      <p className="panel-description">
-        카드 입력과 같은 값을 편집합니다. 요구 조건은 사진의 인식값을 사용합니다.
-      </p>
 
-      <div className="bulk-table-wrap" role="region" aria-label="전체 장비 옵션 표 · 좌우 스크롤" tabIndex={0}>
+      <div className="bulk-table-wrap" role="region" tabIndex={0} aria-label="전체 장비 옵션 표">
         <table>
           <thead>
             <tr>
@@ -82,6 +79,9 @@ export function BulkEditor({
                         <div className="field">
                           <input
                             id={id}
+                            name={path}
+                            autoComplete="off"
+                            inputMode={step === 1 ? "numeric" : "decimal"}
                             aria-label={label}
                             type="number"
                             min={0}

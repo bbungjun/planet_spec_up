@@ -300,7 +300,7 @@ describe("calculator app", () => {
   it("uses 44px controls and tabular numerals for editable and result values", async () => {
     const user = userEvent.setup();
     render(<Page />);
-    await user.click(screen.getByRole("button", {name:"무기 편집"}));
+    await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
 
     const level = screen.getByLabelText("레벨");
@@ -313,6 +313,21 @@ describe("calculator app", () => {
       .toContain("tabular-nums");
     expect(window.getComputedStyle(result).fontVariantNumeric)
       .toContain("tabular-nums");
+  });
+
+  it("opens all equipment options from the slot list without losing card values", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+    expect(screen.queryByRole("complementary", { name: "계산 결과" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("펜던트 1 DEX"), "25");
+    const allOptions = screen.getByRole("button", { name: "전체 장비 옵션" });
+    expect(allOptions).toHaveAttribute("aria-pressed", "false");
+    await user.click(allOptions);
+    expect(allOptions).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("heading", { name: "전체 장비 옵션" })).toBeInTheDocument();
+    expect(screen.getByLabelText("일괄 입력 펜던트 1 DEX")).toHaveValue(25);
+    await user.click(screen.getByRole("button", { name: "카드 입력 보기" }));
+    expect(screen.getByLabelText("펜던트 1 DEX")).toHaveValue(25);
   });
 
   it("pairs invalid-field text with a visible icon", async () => {
@@ -360,12 +375,12 @@ describe("calculator app", () => {
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
 
     expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
+
     await user.type(screen.getByLabelText("무기 공격력"), "100");
     const statAttack = screen.getByLabelText("시뮬레이션 스탯 공격력 결과");
     const convertedAttack = screen.getByLabelText("시뮬레이션 환산 공격력 결과");
-
     expect(statAttack).toHaveTextContent(/^4,050$/);
-    expect(convertedAttack).toHaveTextContent(/^4,252$/);
+    expect(convertedAttack).toHaveTextContent(/^5,062$/);
   });
 
   it("shows a level error and zero attacks when level zero is invalid", async () => {
@@ -392,7 +407,7 @@ describe("calculator app", () => {
     expect(document.getElementById(errorId!))
       .toHaveTextContent("Enter a value from 1 to 220.");
     expect(screen.queryByLabelText("시뮬레이션 스탯 공격력 결과")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("레벨")).toHaveAttribute("aria-invalid", "true");
+    expect(convertedAttack).not.toBeInTheDocument();
   });
 
   it("offers only Captain on the public beta page", () => {
@@ -402,10 +417,12 @@ describe("calculator app", () => {
     expect(within(job).getAllByRole("option")).toHaveLength(1);
     expect(job).toHaveTextContent("캡틴");
     expect(job).toBeDisabled();
-    expect(screen.getByText("캡틴 전용 베타")).toBeInTheDocument();
+    expect(screen.getByText("BETA", { exact: true })).toBeVisible();
+    expect(screen.queryByText("캡틴 전용 베타")).not.toBeInTheDocument();
   });
 
   it("exposes every character setting and keeps level editable from 1 to 220", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     render(<CalculatorApp />);
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
@@ -539,6 +556,7 @@ describe("calculator app", () => {
 
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
+
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20");
     await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
     await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");
@@ -557,6 +575,7 @@ describe("calculator app", () => {
 
     await user.click(screen.getByRole("button", { name: "무기 편집" }));
     await user.type(screen.getByLabelText("무기 공격력"), "100");
+
     await user.type(screen.getByLabelText("기타 보스공격력%"), "20.5");
     await user.clear(screen.getByLabelText("길드 보스 공격력 (%)"));
     await user.type(screen.getByLabelText("길드 보스 공격력 (%)"), "3");

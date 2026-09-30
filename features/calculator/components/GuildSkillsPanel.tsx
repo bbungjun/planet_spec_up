@@ -15,7 +15,7 @@ export function GuildSkillsPanel({ character, issues, onChange }: Props) {
     <div className="guild-skills-fields">{fields.map(({ field, label, unit, max, fallback }) => {
       const error = issues.find(issue => issue.path === `character.${field}` && issue.severity === "error");
       return <div className="field" key={field}><label htmlFor={`guild-${field}`}>{label}{unit && ` (${unit})`}</label>
-        <input id={`guild-${field}`} type="number" min={0} max={max} step={1} value={character[field] ?? String(fallback)}
+        <input id={`guild-${field}`} name={`character.${field}`} autoComplete="off" inputMode="numeric" type="number" min={0} max={max} step={1} value={character[field] ?? String(fallback)}
           data-field-path={`character.${field}`} aria-invalid={error ? true : undefined} aria-describedby={error ? `guild-${field}-error` : undefined}
           onChange={event => onChange(field, event.currentTarget.value)} />
         <small>0~{max}{unit}</small>{error && <span className="field-error" id={`guild-${field}-error`}>{error.message}</span>}

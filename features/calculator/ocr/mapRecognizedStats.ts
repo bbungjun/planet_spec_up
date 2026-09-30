@@ -1,11 +1,22 @@
+/**
+ * 검토 객체가 없는 호환 판독이나 중복 비교에서 파싱 합계를 직업별 입력 필드로 변환한다.
+ * 기본 Paddle의 실제 적용 경로는 미인식 키를 보존하는 mapReviewedStats를 우선 사용한다.
+ */
 import { JOB_RULES } from "../domain/job-rules";
 import type { JobId } from "../domain/types";
 import type { ParsedTooltipStats, StatReplacement } from "./types";
 
+/**
+ * 호환 합산 경로의 0 합계는 빈 문자열로 표시하고 그 외 값은 입력용 문자열로 바꾼다.
+ */
 function asFieldValue(value: number): string {
   return value === 0 ? "" : String(value);
 }
 
+/**
+ * 파싱된 주·부스탯/올스탯과 공격력·%·요구 조건을 직업별 장비 필드로 매핑한다.
+ * 호환 규칙상 주·부스탯 0 합계와 초기 데미지 필드는 빈 문자열을 포함한다. 미인식 키를 생략하는 검토 기반 매핑과 동일한 계약으로 취급하지 않는다.
+ */
 export function mapRecognizedStats(
   parsed: ParsedTooltipStats,
   job: JobId,

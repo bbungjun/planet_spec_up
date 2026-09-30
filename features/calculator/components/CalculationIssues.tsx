@@ -29,50 +29,35 @@ const CHARACTER_FIELD_LABELS: Partial<Record<keyof CharacterInput, string>> = {
 function issueContext(path: string, rule: JobRule, input: CalculatorInput): string {
   const [group, candidate, fieldCandidate] = path.split(".");
   if (path === "cashEquipment.auroraRingCount") return "오로라 반지 개수";
-
   if (group === "equipment") {
     const slot = candidate as EquipmentSlot;
     const field = fieldCandidate as keyof EquipmentInput;
-    const fieldDefinition = EQUIPMENT_FIELD_DEFINITIONS.find(
-      (definition) => definition.field === field,
-    );
+    const fieldDefinition = EQUIPMENT_FIELD_DEFINITIONS.find(definition => definition.field === field);
     const slotLabel = getEquipmentSlotLabel(input, slot);
     if (field === "pendantId") return `${slotLabel} 종류`;
     if (slotLabel !== undefined && fieldDefinition !== undefined) {
-      return `${slotLabel} ${
-        fieldDefinition.suffix(rule.mainStat, rule.subStat)
-      }`;
+      return `${slotLabel} ${fieldDefinition.suffix(rule.mainStat, rule.subStat)}`;
     }
   }
-
-  if (group === "character") {
-    return CHARACTER_FIELD_LABELS[candidate as keyof CharacterInput] ?? path;
-  }
-
+  if (group === "character") return CHARACTER_FIELD_LABELS[candidate as keyof CharacterInput] ?? path;
   return path;
 }
-
 
 export function CalculationIssues({ input, result, onNavigate }: { input: CalculatorInput; result: CalculationResult; onNavigate: (path: string) => void }) {
   if (!result.issues.length) return null;
   const rule = JOB_RULES[input.character.job];
-  return (
-    <section className="panel calculation-issues" aria-labelledby="issues-heading">
-      <h3 id="issues-heading">확인할 항목</h3>
-      {result.issues.some(isWearBlocked) && <p className="equipment-wear-warning" role="status">착용 불가 장비 포함 · 가정값</p>}
-      <ul>
-        {result.issues.map((issue, index) => {
-          const severityLabel = issue.severity === "error" ? "오류" : "경고";
-          const context = issueContext(issue.path, rule, input);
-          return <li key={`${issue.path}-${issue.code}-${index}`}>
-            <button type="button" className={`issue-button is-${issue.severity}`}
-              aria-label={`${severityLabel} ${context}: ${issue.message}`} onClick={() => onNavigate(issue.path)}>
-              <span>{severityLabel}</span>
-              <div><strong>{context}</strong><div>{issue.message}</div></div>
-            </button>
-          </li>;
-        })}
-      </ul>
-    </section>
-  );
+  return <section className="panel calculation-issues" aria-labelledby="issues-heading">
+    <h3 id="issues-heading">확인할 항목</h3>
+    {result.issues.some(isWearBlocked) && <p className="equipment-wear-warning" role="status">착용 불가 장비 포함 · 가정값</p>}
+    <ul>{result.issues.map((issue, index) => {
+      const severityLabel = issue.severity === "error" ? "오류" : "경고";
+      const context = issueContext(issue.path, rule, input);
+      return <li key={`${issue.path}-${issue.code}-${index}`}>
+        <button type="button" className={`issue-button is-${issue.severity}`}
+          aria-label={`${severityLabel} ${context}: ${issue.message}`} onClick={() => onNavigate(issue.path)}>
+          <span>{severityLabel}</span><div><strong>{context}</strong><div>{issue.message}</div></div>
+        </button>
+      </li>;
+    })}</ul>
+  </section>;
 }

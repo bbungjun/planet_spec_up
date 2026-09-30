@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * 여러 이미지의 OCR 작업을 고정 워커 풀로 실행하고 원래 선택 인덱스와 함께 결과를 전달한다.
+ * 동일 바이트 파일은 한 번만 판독한다. 장비 슬롯 배정과 적용은 UI/일괄 적용 모듈의 책임이다.
+ */
+
 import { imageFingerprint } from "./batch";
 import { createBrowserTooltipRecognizer, isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, type TooltipRecognizer } from "./recognizeTooltip.client";
 import type { OcrReview } from "./types";
@@ -7,6 +12,9 @@ import type { OcrReview } from "./types";
 export const MAX_OCR_CONCURRENCY = 3;
 type Capacity = { hardwareConcurrency?: number; deviceMemory?: number };
 
+/**
+ * 사진 수·CPU·메모리·가장 큰 파일 크기를 고려해 1~3개의 병렬 인식기 수를 정한다.
+ */
 export function batchConcurrency(count: number, capacity: Capacity = typeof navigator === "undefined" ? {} : navigator, largestImageBytes = 0): number {
   const cores = capacity.hardwareConcurrency ?? 4;
   const memory = capacity.deviceMemory ?? 8;
@@ -32,8 +40,10 @@ type Options = {
   takePriorityTask?: () => ((recognizer: TooltipRecognizer) => Promise<void>) | undefined;
 };
 
-/** A fixed pool owns separate OCR workers. Only OCR is parallel; consumers
- * receive source indices so deduplication and slot assignment can stay ordered. */
+/**
+ * 선택 순서로 입력을 검사·해시한 뒤 각 워커의 개별 인식기로 판독한다.
+ * 동일 이미지의 결과를 재사용하고, 취소 후 결과 전파를 막으며 모든 소유 인식기의 종료를 관리한다.
+ */
 export async function recognizeBatch(files: File[], options: Options): Promise<void> {
   const { signal } = options;
   if (signal.aborted) return;

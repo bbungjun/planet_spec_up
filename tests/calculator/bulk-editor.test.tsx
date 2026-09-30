@@ -48,6 +48,7 @@ it("shares raw string values between card and bulk modes in both directions", as
 });
 
 it("renders only the current job slots and stat columns", async () => {
+  vi.spyOn(window, "confirm").mockReturnValue(true);
   const user = userEvent.setup();
   render(<CalculatorApp />);
 
@@ -67,6 +68,7 @@ it("renders only the current job slots and stat columns", async () => {
 });
 
 it("overwrites one saved slot, loads it, and restores it on a fresh mount", async () => {
+  vi.spyOn(window, "confirm").mockReturnValue(true);
   const savedAt = "2026-07-27T12:34:56.789Z";
   vi.spyOn(Date.prototype, "toISOString").mockReturnValue(savedAt);
   const user = userEvent.setup();

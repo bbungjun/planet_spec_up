@@ -115,12 +115,10 @@ export function EquipmentEditor({
       <div className="panel-heading game-window-heading">
         <div>
 
-          <span className="game-window-label" aria-hidden="true">ITEM INFORMATION</span>
           <h2 id="editor-heading">{slotLabel} 옵션</h2>
         </div>
-        <span className="job-chip">{rule.mainStat} / {rule.subStat}</span>
       </div>
-      <div className="equipment-item-banner"><span className="equipment-item-icon"><EquipmentIcon slot={selectedSlot} job={input.character.job} label={slotLabel} /></span><div><small>{selectedSlot === "weapon" ? "선택 프리셋" : "공통 장비"}</small><h3>{slotLabel}</h3><span>{rule.label} · {rule.mainStat} / {rule.subStat}</span></div><span className="equipment-item-sparkle" aria-hidden="true">✦</span></div>
+      <div className="equipment-item-banner"><span className="equipment-item-icon"><EquipmentIcon slot={selectedSlot} job={input.character.job} label={slotLabel} /></span><div><small>{selectedSlot === "weapon" ? "선택 프리셋" : "공통 장비"}</small><h3>{slotLabel}</h3></div><span className="equipment-item-sparkle" aria-hidden="true">✦</span></div>
 
       {issues.filter(issue => issue.path.startsWith(`equipment.${selectedSlot}.`) && isWearBlocked(issue)).map(issue => <p className="equipment-wear-warning" role="status" key={issue.path+issue.code}>{issue.message}</p>)}
 
@@ -152,6 +150,9 @@ export function EquipmentEditor({
               <label htmlFor={id}><span className="candidate-sr-only">{slotLabel} </span>{suffix(rule.mainStat, rule.subStat)}</label>
               <input
                 id={id}
+                name={path}
+                autoComplete="off"
+                inputMode={step === 1 ? "numeric" : "decimal"}
                 type="number"
                 min={0}
                 max={max}

@@ -1,3 +1,7 @@
+/**
+ * 여러 장비의 중복 판정, 등록 제한, 적용 목적지와 일괄 반영을 관리한다.
+ * 이미지 자체의 중복과 이름·옵션이 같은 별도 장비를 구분한다.
+ */
 import { matchingSlots, RING_SLOTS } from "../domain/slots";
 import { checkPendantRequirements, isPendantCategory, isPendantId, isPendantSlot, PENDANT_SLOTS } from "../domain/pendants";
 import type { CalculatorInput, EquipmentInput, EquipmentSlot, JobId, WeaponPresetId } from "../domain/types";
@@ -17,12 +21,19 @@ export type ApplyOcrBatch = (job: JobId, entries: OcrBatchEntry[]) => string | n
 export const MAX_BATCH_FILES = 50;
 export const MAX_BATCH_BYTES = 120 * 1024 * 1024;
 
+/**
+ * 장비에 공백이 아닌 입력값이 하나라도 있는지 확인한다. 명시적으로 입력한 0도 등록값이다.
+ */
 export function occupied(equipment: EquipmentInput): boolean {
   return Object.values(equipment).some(value => (value ?? "").trim() !== "");
 }
 
 export { matchingSlots } from "../domain/slots";
 
+/**
+ * 같은 분류의 기존 장비와 매핑된 옵션을 비교해 중복 안내를 반환한다.
+ * 같은 옵션의 별도 반지·펜던트가 존재하므로 이 분류는 옵션 일치만으로 제외하지 않는다.
+ */
 export function existingDuplicate(parsed: ParsedTooltipStats, job: JobId, choices: OcrSlotChoice[]): string | null {
   // Up to four distinct rings may have identical names and options.
   if (parsed.category === "반지" || isPendantCategory(parsed.category)) return null;
@@ -33,6 +44,10 @@ export function existingDuplicate(parsed: ParsedTooltipStats, job: JobId, choice
   return match ? `이미 입력된 ${match.label}와 인식값이 같습니다.` : null;
 }
 
+/**
+ * 등급 표식으로 확인한 이름과 정렬한 옵션 목록으로 장비 비교용 서명을 만든다.
+ * 장비 분류나 옵션이 없으면 서명을 만들지 않으며, 이미지 바이트 해시와는 다른 기준이다.
+ */
 export function tooltipIdentity(text: string): { name: string | null; signature: string | null } {
   const parsed = parseMapleTooltip(text);
   const name = tooltipHeader(text)?.name ?? null;
@@ -42,7 +57,10 @@ export function tooltipIdentity(text: string): { name: string | null; signature:
   return {name, signature: JSON.stringify([parsed.category, name?.replace(/\s/g, "") ?? null, options])};
 }
 
-/** Browser-local content hash; the filename is intentionally not part of it. */
+/**
+ * 파일명과 무관하게 이미지 바이트의 SHA-256을 브라우저 안에서 계산한다.
+ * Web Crypto를 사용할 수 없으면 null을 반환해 해시 기반 중복 확정을 생략한다.
+ */
 export async function imageFingerprint(file: File): Promise<string | null> {
   if (!globalThis.crypto?.subtle) return null;
   const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -55,6 +73,10 @@ export async function imageFingerprint(file: File): Promise<string | null> {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * 적용값이 하나 이상 있고 모든 숫자가 필드별 허용 범위 안에 있는지 확인한다.
+ * 고정 수치는 정수, % 수치는 소수를 허용하며 빈칸 자체를 0으로 추정하지 않는다.
+ */
 export function validReplacement(value: StatReplacement): boolean {
   return Object.values(value).some(raw => raw !== undefined && raw !== "") && Object.entries(value).every(([key, raw]) => {
     if (raw === "" || raw === undefined) return true;
@@ -64,7 +86,10 @@ export function validReplacement(value: StatReplacement): boolean {
   });
 }
 
-/** Validate the whole import first, then replace records in one immutable update. */
+/**
+ * 직업·숫자·부위·무기 프리셋·반지/펜던트 제한을 검사하며 작업용 새 객체를 구성한다.
+ * 한 항목이라도 실패하면 input:null로 전체 반영을 거절한다. 호출자가 성공한 객체만 적용하므로 원본과 저장값은 부분 변경되지 않는다.
+ */
 export function applyOcrBatch(input: CalculatorInput, job: JobId, entries: OcrBatchEntry[]): {input: CalculatorInput; error: null} | {input: null; error: string} {
   if (input.character.job !== job) return {input: null, error: "직업이 바뀌었습니다. 이미지를 다시 선택하세요."};
   const seen = new Set<string>();

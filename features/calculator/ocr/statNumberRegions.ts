@@ -1,3 +1,7 @@
+/**
+ * 능력창 OCR의 숫자 행 위치·누락 여부와 좁힌 판독 결과의 연결을 담당한다.
+ * 실제 검출한 항목명/좌표를 사용하며 특정 스크린샷의 고정 좌표나 정답 숫자를 쓰지 않는다.
+ */
 import type { StatDraft } from "./parseStatWindow";
 import type { OcrBounds, OcrReading } from "./types";
 
@@ -7,6 +11,9 @@ export type StatNumberRegion = { label: StatNumberLabel; bounds: OcrBounds };
 
 const labelPattern = /^(STR|DEX|INT|LUK|레벨|공격력|총데미지|보스데미지|보스공격력|방어율무시|방어무시|크리티컬확률|크리확률|명중률|명중율)(?=$|[:：\d(])/i;
 const compact = (text: string) => text.normalize("NFKC").replace(/\s/g, "");
+/**
+ * 능력창 항목 이름의 알려진 표기 차이만 정리하고 숫자가 시작되는 문자열 위치를 반환한다.
+ */
 function labelMatch(text: string) {
   const match = compact(text).match(labelPattern);
   if (!match) return null;
@@ -18,7 +25,10 @@ const validBounds = (bounds?: OcrBounds): bounds is OcrBounds => !!bounds
   && Object.values(bounds).every(Number.isFinite) && bounds.x >= 0 && bounds.y >= 0
   && bounds.width > 0 && bounds.height > 0 && bounds.x + bounds.width <= 1.01 && bounds.y + bounds.height <= 1.01;
 
-/** Use detected labels and nearby text on the same baseline, never screen coordinates. */
+/**
+ * 검출 항목과 같은 기준선의 숫자 조각에서 최대 12개 숫자 영역을 계산한다.
+ * 이미지 가로세로비를 고려하고 다음 필드나 한글 설명을 넘어서 숫자 영역을 확장하지 않는다.
+ */
 export function statNumberRegions(readings: OcrReading[], aspectRatio = 1): StatNumberRegion[] {
   if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) return [];
   const positioned = readings.filter((reading): reading is OcrReading & { bounds: OcrBounds } => validBounds(reading.bounds));
@@ -47,6 +57,9 @@ export function statNumberRegions(readings: OcrReading[], aspectRatio = 1): Stat
   return regions.slice(0, 12);
 }
 
+/**
+ * 두 판독의 항목명이 같고 영역이 충분히 겹칠 때 같은 숫자 행으로 판단한다.
+ */
 export function sameStatNumberRow(first: StatNumberRegion, second: StatNumberRegion): boolean {
   if (first.label !== second.label) return false;
   const a = first.bounds, b = second.bounds;
@@ -55,6 +68,9 @@ export function sameStatNumberRow(first: StatNumberRegion, second: StatNumberReg
   return x > Math.min(a.width, b.width) * .5 && y > Math.min(a.height, b.height) * .5;
 }
 
+/**
+ * 해당 항목의 필요한 값이 초안에 누락되었는지 검사한다. 스탯은 순수/합계, 공격력은 최소/최대가 모두 필요하다.
+ */
 export function statNumberMissing(label: StatNumberLabel, draft: StatDraft): boolean {
   if (label === "STR" || label === "DEX" || label === "INT" || label === "LUK")
     return draft.pure[label] === undefined || draft.total[label] === undefined;
@@ -63,7 +79,10 @@ export function statNumberMissing(label: StatNumberLabel, draft: StatDraft): boo
   return draft[key] === undefined;
 }
 
-/** Find the light value cell inside a detected row; preserve red digits and parentheses. */
+/**
+ * 밝은 숫자 셀의 시작 열을 찾아 왼쪽의 색상 항목명 셀을 분리한다.
+ * 좁은 글자 획 사이만 연결해 빨간 숫자·괄호를 보존하고 전체 항목명 셀을 덮지 않는다.
+ */
 export function statValueStart(pixels: Uint8ClampedArray, width: number, height: number): number {
   if (width < 1 || height < 1 || pixels.length !== width * height * 4) return 0;
   const light: boolean[] = [];
@@ -93,7 +112,10 @@ export function statValueStart(pixels: Uint8ClampedArray, width: number, height:
   return best.width ? Math.max(0, best.start - 2) : 0;
 }
 
-/** Attach only the detected field name. Never invent digits, signs or a missing %. */
+/**
+ * 숫자 전용 판독에 이미 검출한 항목명만 붙여 파싱 가능한 줄을 만든다.
+ * 숫자·부호·%를 새로 생성하지 않으며 다른 항목명이나 허용하지 않은 문자가 섞이면 null을 반환한다.
+ */
 export function statNumberText(label: StatNumberLabel, text: string): string | null {
   let value = compact(text).replace(/,/g, "");
   const match = labelMatch(value);
@@ -105,6 +127,9 @@ export function statNumberText(label: StatNumberLabel, text: string): string | n
   return `${label} ${value}`;
 }
 
+/**
+ * 모아 놓은 숫자 이미지의 각 행 좌표에 속하는 조각을 수평 순서로 연결한다.
+ */
 export function statNumberRows(readings: OcrReading[], regions: StatNumberRegion[]): string[] {
   const lines: string[] = [];
   for (const region of regions) {

@@ -1,3 +1,7 @@
+/**
+ * 서로 다른 판독의 같은 줄을 대조해 검토 상태와 직업별 적용값을 만드는 공통 경계.
+ * 화면 안내·차단·텍스트·값 매핑이 같은 검토 객체를 사용하며, 숫자 충돌과 원시 판독 증거를 보존한다.
+ */
 import { JOB_RULES } from "../domain/job-rules";
 import type { JobId } from "../domain/types";
 import { isKnownEquipmentCategory, parseEquipmentCategory, parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
@@ -7,6 +11,10 @@ import { verifyRequirementRecovery } from "./verifyRequirementRecovery";
 const combatLabels = new Set(["STR", "DEX", "INT", "LUK", "올스탯", "공격력", "총데미지", "보스데미지", "방어율무시", "크리티컬확률"]);
 const requirementLabel = (text: string): string | null => readTooltipRequirement(text)?.label ?? null;
 const referenceLabel = /(?:HP|MP|마력|마법\s*공격력|방[어머미]력|방무력|명중|회피|이동|점프|피격|흑수정|업그레이드|가능\s*횟수)/i;
+/**
+ * 사용자가 확인할 수 있는 항목과 실제 숫자 표기인지 검사한다.
+ * 수동 확인 입력에 남은 OCR 유사 문자 O/B 등을 숫자로 간주해 통과시키지 않는다.
+ */
 export function canConfirmReviewText(text: string): boolean {
   const option = parseTooltipOption(text);
   if (!option || !(option.requirement || combatLabels.has(option.label) || referenceLabel.test(option.label))) return false;
@@ -17,12 +25,18 @@ export function canConfirmReviewText(text: string): boolean {
   return /(?:[:;]\s*\+?|\+)\s*\d+(?:\.\d+)?\s*%?\s*[;,.]?\s*$/.test(text.normalize("NFKC"));
 }
 
+/**
+ * 해석 가능한 옵션을 표시용 숫자 표기로 정리한다. 이는 검토 상태의 자동 확정이 아니다.
+ */
 export function normalizedReviewOption(text: string): string | null {
   const option = parseTooltipOption(text);
   if (!option || !(option.requirement || combatLabels.has(option.label) || referenceLabel.test(option.label))) return null;
   return option.requirement ? `REQ ${option.label} : ${option.value}` : `${option.label} +${option.value}${option.percent ? "%" : ""}`;
 }
 
+/**
+ * 줄 편집기에 해석된 숫자 또는 식별한 항목명과 빈 값의 초안을 제공한다.
+ */
 export function reviewInputText(line: OcrReviewLine): string {
   const normalized = normalizedReviewOption(line.text);
   if (normalized) return normalized;
@@ -32,8 +46,10 @@ export function reviewInputText(line: OcrReviewLine): string {
   return label ? `${label} : ` : line.text;
 }
 
-/** Suggestions are display-only. Even a unique label match needs the user's
- * explicit confirmation. Only the shared numeric normalization is used. */
+/**
+ * 판독 증거에서 표시용 옵션 후보를 최대 4개 제안한다.
+ * 유일한 글자 유사도 후보도 사용자 확인이 필요한 제안이며 숫자나 장비에 자동 적용하지 않는다.
+ */
 export function suggestReviewOptions(line: OcrReviewLine): string[] {
   const suggestions = new Set<string>();
   for (const reading of line.readings) {
@@ -60,7 +76,10 @@ const center = (bounds: OcrBounds) => bounds.y + bounds.height / 2;
 const union = (a: OcrBounds, b: OcrBounds): OcrBounds => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
   width: Math.max(a.x + a.width, b.x + b.width) - Math.min(a.x, b.x), height: Math.max(a.y + a.height, b.y + b.height) - Math.min(a.y, b.y) });
 
-/** Join only adjacent label/value fragments with supporting image coordinates. */
+/**
+ * 같은 판독 회차에서 위치가 뒷받침하는 요구 조건 접두사·항목명·숫자 조각을 연결한다.
+ * 다른 회차나 멀리 떨어진 줄을 문자열 순서만으로 합치지 않는다.
+ */
 export function joinSpatialReadings(readings: OcrReading[]): OcrReading[] {
   const consumed = new Set<OcrReading>();
   const prefixed = readings.map(prefix => {
@@ -100,6 +119,10 @@ export function joinSpatialReadings(readings: OcrReading[]): OcrReading[] {
   return joined;
 }
 
+/**
+ * 크기가 다른 판독을 정규화된 줄 위치로 묶어 중복 잠재 줄의 이중 합산을 막는다.
+ * 같은 옵션의 회차 간 일치, 숫자/% 충돌, 요구 조건과 본문 구분, 큰 고정 스탯 등을 검사해 recognized/check 상태와 이유를 반환한다.
+ */
 export function buildOcrReview(input: OcrReading[], warnings: string[] = []): OcrReview {
   const readings = joinSpatialReadings(input);
   const groups: OcrReading[][] = [];
@@ -157,12 +180,19 @@ export function buildOcrReview(input: OcrReading[], warnings: string[] = []): Oc
     warnings: [...warnings, ...(categoryConflict ? ["장비 부위가 서로 다르게 읽혔어요. 적용 위치를 선택해주세요."] : [])] };
 }
 
+/**
+ * 무시하지 않은 줄·확정 헤더·장비 분류를 내부 파싱용 텍스트로 조합한다.
+ * 확인 필요 줄도 포함하므로 이 문자열을 파싱했다고 그 수치가 적용 가능한 것은 아니다.
+ */
 export function reviewText(review: OcrReview): string {
   return [...(review.header ? [review.header.name, review.header.marker] : []),
     ...review.lines.filter(line => line.status !== "ignored").map(line => line.text), ...(review.category ? [`장비분류: ${review.category}`] : [])].join("\n");
 }
 
-/** Only observed or explicitly confirmed keys replace existing gear. */
+/**
+ * 확인 필요/제외 줄을 빼고 인식 또는 사용자 확인된 줄만 직업별 교체 필드로 매핑한다.
+ * 올스탯은 주·부스탯에 함께 반영하고 요구 조건은 장비 보너스와 분리한다. 없는 키를 임의의 0으로 만들지 않는다.
+ */
 export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement {
   const replacement: StatReplacement = {};
   const { mainStat, subStat } = JOB_RULES[job];
@@ -185,13 +215,19 @@ export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement
   return replacement;
 }
 
+/**
+ * 한 줄을 사용자가 숫자로 확인하거나 명시적으로 제외한 새 검토 객체를 만든다.
+ * 수동 변경이므로 해당 줄의 이전 자동 복구 증명은 제거하고 다른 줄은 보존한다.
+ */
 export function resolveReviewLine(review: OcrReview, id: string, text: string | null): OcrReview {
   return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined }
     : { ...line, text, recovery: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
 }
 
-/** Numeric proposal edits are explicit human overrides too, even when the
- * issue-line editor is never opened. Preserve other fields and clear proof. */
+/**
+ * 요구 레벨/부스탯 숫자 필드의 수동 편집도 실험 검증 증거보다 우선하는 명시적 변경으로 처리한다.
+ * 검증 출처가 있는 해당 줄만 확인/제외하며 다른 요구 조건과 옵션은 유지한다.
+ */
 export function overrideReviewRequirement(review: OcrReview | null, job: JobId, field: keyof StatReplacement, value: string): OcrReview | null {
   if (!review || (field !== "requiredLevel" && field !== "requiredSub")) return review;
   const label = field === "requiredLevel" ? "LEV" : JOB_RULES[job].subStat;
@@ -203,8 +239,10 @@ export function overrideReviewRequirement(review: OcrReview | null, job: JobId, 
   return next;
 }
 
-/** One finalized review is shared by display, blocking, text and stat mapping.
- * Raw discovery evidence remains visible even when original verification wins. */
+/**
+ * 출처·행 좌표가 그대로인 실험 대상에 원본 검증 결과를 적용한다.
+ * 사용자 확인/제외는 덮어쓰지 않고 기존 판독도 남긴다. 검증 실패는 확인 필요로 유지하며 기본 판독기 활성화 승인을 뜻하지 않는다.
+ */
 export function applyRequirementRecovery(review: OcrReview, target: LocatedRequirement, observations: RequirementObservation[]): OcrReview {
   const line = review.lines.find(line => line.id === target.lineId);
   if (!line || line.status === "confirmed" || line.status === "ignored" || !line.readings.length
@@ -229,11 +267,18 @@ export function applyRequirementRecovery(review: OcrReview, target: LocatedRequi
   return { ...review, lines: review.lines.map(item => item.id === line.id ? updated : item) };
 }
 
+/**
+ * 수동으로 편집한 내부 텍스트를 검토 객체로 만들고 유효한 숫자 옵션 줄만 확인 상태로 표시한다.
+ */
 export function editedTextReview(text: string): OcrReview {
   const review = buildOcrReview(text.split(/\r?\n/).map(text => ({ text, pass: 0 })));
   return { ...review, lines: review.lines.map(line => canConfirmReviewText(line.text) ? { ...line, status: "confirmed" } : line) };
 }
 
+/**
+ * 확인 필요 줄 중 현재 직업의 입력에 영향을 주는 항목과 미식별 옵션을 추린다.
+ * 다른 직업의 부스탯 요구치나 참고 전용 수치는 현재 직업 비교를 불필요하게 막지 않는다.
+ */
 export function reviewQuestions(review: OcrReview, job: JobId): OcrReviewLine[] {
   return review.lines.filter(line => {
     if (line.status !== "check") return false;
@@ -248,12 +293,19 @@ export function reviewQuestions(review: OcrReview, job: JobId): OcrReviewLine[] 
   });
 }
 
+/**
+ * 직업별 미해결 질문 또는 아직 원본 확인되지 않은 이미지 경고가 있으면 적용을 보류한다.
+ */
 export function reviewBlocked(review: OcrReview, job: JobId): boolean {
   return reviewQuestions(review, job).length > 0 || (review.warnings.length > 0 && !review.imageConfirmed);
 }
 
 type EngineLine = { text: string; confidence?: number; bbox: { x0: number; y0: number; x1: number; y1: number } };
 export type EnginePage = { text: string; blocks?: Array<{ paragraphs: Array<{ lines: EngineLine[] }> }> | null };
+/**
+ * Tesseract의 블록/줄 좌표를 공통 정규화 판독으로 변환한다.
+ * 블록 정보가 없으면 텍스트 줄만 반환하므로 호출자가 위치 증거 부족을 별도 경고해야 한다.
+ */
 export function pageReadings(data: EnginePage, width: number, height: number, pass: number): OcrReading[] {
   return data.blocks?.flatMap(block => block.paragraphs.flatMap(paragraph => paragraph.lines.map(line => ({
     text: line.text, confidence: line.confidence, pass,

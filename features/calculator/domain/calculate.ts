@@ -51,6 +51,8 @@ export type CalculationSnapshot = {
   bossAndTotalDamage: number;
   totalDamagePercent?: number;
   isBoss?: boolean;
+  /** Captain's Advanced Homing adds percentage points to the boss damage term. */
+  homingDamagePercent?: number;
   monsterDefense: number;
   ignoreDefense: number;
   criticalRate?: number;
@@ -114,6 +116,8 @@ export function calculateFromSnapshot(
   const bossAndTotalDamage = (snapshot.totalDamagePercent ?? 0) + (snapshot.isBoss === false ? 0 : snapshot.bossAndTotalDamage
     + guildBoss
     + (snapshot.guildActiveBoss ? 10 : 0));
+  const homingDamagePercent = snapshot.job === "corsair" && snapshot.isBoss !== false
+    ? (snapshot.homingDamagePercent ?? 0) : 0;
 
   if (!Number.isInteger(snapshot.level) || snapshot.level < 1 || snapshot.level > MAX_CHARACTER_LEVEL) {
     return {
@@ -127,6 +131,7 @@ export function calculateFromSnapshot(
       criticalMultiplier,
       formulaInputs: {
         bossAndTotalDamage,
+        homingDamagePercent,
       },
       pureMain: 0,
       pureSub: 0,
@@ -175,7 +180,7 @@ export function calculateFromSnapshot(
   );
   const convertedAttack = calculateConvertedAttack(
     statAttack,
-    bossAndTotalDamage,
+    bossAndTotalDamage + homingDamagePercent,
     defenseMultiplier,
     criticalMultiplier,
   );
@@ -191,6 +196,7 @@ export function calculateFromSnapshot(
     criticalMultiplier,
     formulaInputs: {
       bossAndTotalDamage,
+      homingDamagePercent,
     },
     pureMain,
     pureSub,
@@ -270,6 +276,7 @@ export function createCalculationSnapshot(input: CalculatorInput): CalculationSn
     bossAndTotalDamage: character.bossAndTotalDamage + character.bossDamagePercent + sumOption("damagePercent") + sumOption("bossDamagePercent"),
     totalDamagePercent: character.totalDamagePercent + sumOption("totalDamagePercent"),
     isBoss: activeWeaponPreset(input) !== "hunting",
+    homingDamagePercent: character.job === "corsair" && activeWeaponPreset(input) !== "hunting" ? 20 : 0,
     monsterDefense: character.monsterDefense,
     ignoreDefense: character.ignoreDefense + sumOption("ignoreDefensePercent"),
     criticalRate: character.criticalRate,

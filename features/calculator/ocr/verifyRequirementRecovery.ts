@@ -1,3 +1,7 @@
+/**
+ * 원본 요구 조건의 출처·행 완전성·다양한 변환/배율의 일치를 검사하는 실험 검증기.
+ * 실이미지의 희미한 일부 글자에서 활성화 기준을 통과하지 못했으며 기본 판독의 성공 보증으로 사용하지 않는다.
+ */
 import { parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
 import type { LocatedRequirement, OcrBounds, RequirementObservation, RequirementRecovery } from "./types";
 
@@ -16,11 +20,11 @@ const belongsToRenderedRow = (box: OcrBounds, crop: OcrBounds, rendered: OcrBoun
   && overlap(box.x, box.width, crop.x, crop.width) > box.width / 2
   && overlap(box.y, box.height, crop.y, crop.height) > box.height / 2;
 
-/** All four original-region views are examined; eligible readings must span
- * both transformations and scales and agree on a complete requirement.
- * Discovery votes and engine confidence never participate in this decision.
- * Experimental criterion only: actual-model dim partial glyphs defeated this
- * rule. It is not an approval gate for the default production recognizer. */
+/**
+ * 같은 원본 행의 4개 검증 뷰를 모두 검사하고 유효 숫자가 두 변환·두 배율에 걸쳐 일치하는지 확인한다.
+ * 출처 불일치·행 잘림·다른 필드·충돌 숫자는 unresolved로 남긴다. 기본 탐지의 표 수나 엔진 신뢰도는 이 검증의 투표로 쓰지 않는다.
+ * 빈 판독은 숫자를 만들지 않으며, 잘못된 숫자 조각이 남은 판독은 일치를 방해하는 증거로 보존한다.
+ */
 export function verifyRequirementRecovery(target: LocatedRequirement, observations: RequirementObservation[]): RequirementRecovery {
   const unresolved = (reason: string): RequirementRecovery => ({ rule: "requirement-original-v1", status: "unresolved",
     target, observations, reason, supersededReadingIds: [] });

@@ -19,6 +19,7 @@ import type {
   JobId,
 } from "./domain/types";
 import { useSavedSetup } from "./hooks/useSavedSetup";
+import { usePageLeaveGuard } from "./hooks/usePageLeaveGuard";
 import { AppHeader } from "./components/AppHeader";
 import { MapleBackdrop } from "./components/GameVisuals";
 import { BulkEditor } from "./components/BulkEditor";
@@ -73,12 +74,17 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   );
   const [inputMode, setInputMode] = useState<InputMode>("cards");
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(captureWeaponPreset(createDefaultInput(aranBeta ? "aran" : "corsair"))));
+  const [pendingCandidates, setPendingCandidates] = useState(false);
+  const [pendingImport, setPendingImport] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const result = useMemo(() => calculateDamageResult(input), [input]);
+  const hasUnsavedChanges = !initialLoading && JSON.stringify(captureWeaponPreset(input)) !== savedSnapshot;
+  usePageLeaveGuard(hasUnsavedChanges || pendingCandidates || pendingImport);
 
   const handleStackableBuffChange = (buff: StackableAttackBuffId, enabled: boolean) => {
     setInput(current => ({
@@ -99,6 +105,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
         }
 
         setInput(saved.value.input);
+        setSavedSnapshot(JSON.stringify(captureWeaponPreset(saved.value.input)));
         setSelectedSlot(firstSlot(saved.value.input.character.job));
         setSavedAt(saved.value.savedAt);
         setStorageError(null);
@@ -217,6 +224,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       // or privacy-mode failure leaves the old setup and the review intact.
       const timestamp = save(next);
       setInput(next);
+      setSavedSnapshot(JSON.stringify(next));
       setSavedAt(timestamp);
       setStorageError(null);
       return null;
@@ -254,7 +262,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     if (aranBeta && job !== "aran") return;
     if (job === input.character.job) return;
     if (
-      hasEquipmentValues(input)
+      (hasEquipmentValues(input) || hasUnsavedChanges || pendingCandidates || pendingImport)
       && !window.confirm("직업을 바꾸면 장비 값·무기 프리셋 3개·추가한 부위가 초기화됩니다. 계속할까요?")
     ) {
       return;
@@ -274,6 +282,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     setSetupRevision(revision => revision + 1);
     try {
       clear();
+      setSavedSnapshot(JSON.stringify(captureWeaponPreset(createDefaultInput(job))));
       setSavedAt(null);
       setStorageError(null);
     } catch {
@@ -304,7 +313,9 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       return;
     }
     try {
-      setSavedAt(save(captureWeaponPreset(input)));
+      const next = captureWeaponPreset(input);
+      setSavedAt(save(next));
+      setSavedSnapshot(JSON.stringify(next));
       setStorageError(null);
     } catch {
       setStorageError("세팅을 저장할 수 없습니다.");
@@ -325,7 +336,11 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
         return;
       }
 
+      if ((hasUnsavedChanges || pendingCandidates || pendingImport)
+        && !window.confirm("저장하지 않은 입력·임시 후보·인식 목록이 사라집니다. 저장된 세팅을 불러올까요?")) return;
+
       setInput(saved.value.input);
+      setSavedSnapshot(JSON.stringify(captureWeaponPreset(saved.value.input)));
       setSelectedSlot(firstSlot(saved.value.input.character.job));
       setSetupRevision(revision => revision + 1);
       setSavedAt(saved.value.savedAt);
@@ -333,13 +348,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     } catch {
       setStorageError("저장 데이터를 불러올 수 없습니다.");
     }
-  };
-
-  const handleShowAllOptions = () => {
-    setInputMode("bulk");
-    window.requestAnimationFrame(() => {
-      document.getElementById("equipment-editor-area")?.scrollIntoView({ block: "start" });
-    });
   };
 
   const handleNavigate = (path: string) => {
@@ -359,8 +367,16 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     setFocusRequest((request) => request + 1);
   };
 
+  const handleShowAllOptions = () => {
+    setInputMode("bulk");
+    window.requestAnimationFrame(() => {
+      document.getElementById("equipment-editor-area")?.scrollIntoView?.({ block: "start" });
+    });
+  };
+
   return (
     <main className="calculator-shell" aria-busy={initialLoading}>
+      <a className="skip-link" href="#equipment-editor-area" onClick={() => document.getElementById("equipment-editor-area")?.focus()}>장비 입력으로 바로가기</a>
       <MapleBackdrop />
       {development && <p className="panel-description">개발 전용 · 별도 저장</p>}
       {input.character.job === "aran" && <p className="panel-description" role="status">아란 참고 모델 · 콤보 크리20은 공식 효과를 자동 적용합니다. 폴암 계수 기본5·기타 추가공 기본0(효과 없음)·추가공의 공% 제외·공통 AP 범위는 참고 가정입니다. 스탯공·환산공·후보 상승률·효율은 게임 실측 미검증이며 전체 DPS가 아닙니다.</p>}
@@ -369,8 +385,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
         captainBeta={captainBeta}
         aranBeta={aranBeta}
         inputMode={inputMode}
-        savedAt={savedAt}
-        storageError={storageError}
         onToggleMode={() => setInputMode((mode) => (
           mode === "cards" ? "bulk" : "cards"
         ))}
@@ -378,8 +392,14 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
         onLoad={handleLoad}
         onReset={handleReset}
       />
+      <div className="calculator-page-layout">
+      <aside className="calculator-sidebar" aria-label="무기 프리셋 및 저장">
+        <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave}
+          savedAt={savedAt} hasUnsavedChanges={hasUnsavedChanges} storageError={storageError} />
+      </aside>
+      <div className="calculator-page-main">
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
-        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave}>
+        input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave} onPendingChange={setPendingImport}>
         <div className="setup-import-identity">
           <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
@@ -400,7 +420,6 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
-      <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave} />
       <div className="calculator-workspace" id="equipment-workspace">
         <div className="calculator-left" aria-label="장비 목록">
           <EquipmentNavigator
@@ -414,32 +433,35 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
             onShowAllOptions={handleShowAllOptions}
           />
         </div>
-        <div className="calculator-center" id="equipment-editor-area" aria-label="장비 입력">
-          {inputMode === "cards" ? (
-            <EquipmentEditor
-              input={input}
-              selectedSlot={selectedSlot}
-              issues={result.issues}
-              onEquipmentChange={handleEquipmentChange}
-              onSelectSlot={setSelectedSlot}
-              onOcrApply={handleOcrApply}
-              onOcrAddAsNew={handleOcrAddAsNew}
-              onOcrBatchApply={handleOcrBatchApply}
-            />
-          ) : (
-            <BulkEditor
-              input={input}
-              issues={result.issues}
-              onEquipmentChange={handleEquipmentChange}
-            />
-          )}
-          <CalculationIssues input={input} result={result} onNavigate={handleNavigate} />
-        </div>
+          <div className="calculator-center" id="equipment-editor-area" tabIndex={-1} aria-label="장비 입력">
+            {inputMode === "cards" ? (
+              <EquipmentEditor
+                input={input}
+                selectedSlot={selectedSlot}
+                issues={result.issues}
+                onEquipmentChange={handleEquipmentChange}
+                onSelectSlot={setSelectedSlot}
+                onOcrApply={handleOcrApply}
+                onOcrAddAsNew={handleOcrAddAsNew}
+                onOcrBatchApply={handleOcrBatchApply}
+              />
+            ) : (
+              <BulkEditor
+                input={input}
+                issues={result.issues}
+                onEquipmentChange={handleEquipmentChange}
+              />
+            )}
+            <CalculationIssues input={input} result={result} onNavigate={handleNavigate} />
+          </div>
       </div>
       <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}
+        onPendingChange={setPendingCandidates}
         onEditBaseStats={() => handleNavigate(input.character.pureMain?.trim() ? "character.pureSub" : "character.pureMain")} />
       <footer className="app-footer"><span>플래닛 <span>장비 계산기</span></span><p>이 브라우저에 저장 · 이미지 외부 전송 없음</p><a className="asset-credit" href="https://maplestory.io/" target="_blank" rel="noreferrer">장비 아이콘: MapleStory.io · © NEXON</a><a href="#page-top">맨 위로 ↑</a></footer>
+      </div>
+      </div>
       </fieldset>
     </main>
   );
