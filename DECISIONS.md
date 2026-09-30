@@ -3417,3 +3417,26 @@
 - 검증 중 보정: 모바일 원본 보기 문구의 줄바꿈을 막았다. 키보드 Ctrl+End에서 숨김 대체 설명이 모달 바깥 스크롤 영역을 만들던 문제는 설명의 위치 기준을 이미지 영역으로 한정하고 영역에 키보드 포커스를 제공해 수정했다. 최종 바깥 dialog의 scrollHeight=clientHeight·scrollTop0, 제목줄 위치17px 유지와 안쪽 이미지 하단 스크롤을 확인했다.
 - 근거·후속: output/how-to-use/guide-modal-desktop.jpg에 실제 로컬 구현 화면을 저장했다. 기존 localhost3000의 HTTP200과 새 버튼 마크업도 확인했으며 사용자 서버는 유지한다.3129 확인용 탭·서버만 종료한다. Production·원격 UI QA·실제 게임 OCR 검증과 구분하며 main/Production 배포는 수행하지 않는다.
 - Git: 앱 루트 dev-main에서 이번 컴포넌트·연결·스타일·지정 이미지·AGENTS 정책 및 이 기록만 커밋·푸시한다. 선행 DECISIONS.md96줄 추가/1줄 삭제는 보존한다.
+
+## D-DOMAIN-RESEARCH-001 — 국내 도메인 구매 사이트 추천
+
+- 기록 시각: 2026-10-01 04:45:44 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 조사·추천 요청 완료 — 새 사용자 결정 없음. 구매·도메인 연결·운영 배포 승인이 아니다.
+- 결정·요청: 도메인을 구매할 수 있는 한국 사이트들을 추천한다.
+- 이유: 사용자 이유 미명시.
+- 근거: 2026-10-01 가비아 https://domain.gabia.com/ 및 https://event.gabia.com/domain/famous/, 호스팅케이알 https://www.hosting.kr/domain/search, 닷홈 https://www.dothome.co.kr/domain/index.php, 카페24 https://hosting.cafe24.com/?controller=new_domain_search 공식 페이지를 확인했다.
+- 결과·한계: 가비아·호스팅케이알·닷홈·카페24의 관리 기능과 할인 조건을 비교해 추천한다. 가비아 신규 첫해 .com 19,800원·.kr 16,500원은 VAT 포함이다. 카페24 주요 도메인 할인가는 2년 이상 구매 시 최초 1년에 적용되며, 닷홈 표시가의 VAT 포함 여부와 업체별 실제 결제·연장 견적은 미확인이다. 첫해 표시가만으로 장기 최저가를 단정하지 않는다.
+- 구현·검증: 소스·설정 변경 없이 조사 기록만 추가했다. D-143·D-146·D-ENV-001을 유지하며 이 기록만 dev-main에 선택 커밋·푸시한다. 기존 병행 변경을 보존하고 구매·결제·DNS 변경·Production 반영은 수행하지 않는다.
+- Git 결과: 기록 추가 직후 병행 온보딩 작업 6개 파일의 스테이징을 확인했다. 해당 인덱스·변경을 건드리지 않고 이번 기록은 로컬에 보존했으며 커밋·푸시는 수행하지 않았다.
+
+## D-DOMAIN-RESEARCH-002 — 한글 도메인과 Vercel 연결 원리 안내
+
+- 기록 시각: 2026-10-01 04:49:00 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 방법 설명 요청 완료 — 새 사용자 결정 없음. 구매·DNS 변경·운영 반영 승인이 아니다.
+- 결정·요청: 제시한 사이트처럼 행성.com을 입력하면 접속되는 원리와 구현 방법을 설명한다.
+- 이유: 사용자 이유 미명시. https://www.xn--oj4b158a.com/ 을 접속 사례로 제시했다.
+- 근거·확인: 참고 사이트 본문, ICANN https://atlarge.icann.org/topics/idn/background 및 Vercel https://vercel.com/docs/domains/troubleshooting, https://vercel.com/docs/domains/working-with-domains/add-a-domain, https://vercel.com/docs/domains/working-with-domains/deploying-and-redirecting 공식 자료를 확인했다. Node URL로 행성.com과 xn--oj4b158a.com, www.행성.com과 www.xn--oj4b158a.com의 대응을 검증했다.
+- 결과: 한글 도메인은 IDN이며 Punycode는 같은 도메인의 ASCII 표현이다. 사용 가능한 한글.com 등록 → Vercel 프로젝트 Settings/Domains에 Punycode 추가 → 구매처 DNS에 해당 프로젝트가 제시하는 레코드 적용 → HTTPS·www 대표 주소 확인 순서로 설명한다. www 유무 사이의 리디렉션은 한글 변환과 별개이며 참고 사이트의 실제 호스팅·DNS 구성은 추정하지 않는다.
+- 구현·후속: 앱·DNS·계정 설정은 변경하지 않았다. 현행 metadata.ts의 SITE_URL 기반 대표 URL 처리를 확인했으며 실제 주소 교체 시 함께 점검할 사항이다. D-143·D-146·D-ENV-001을 유지한다. 앞선 D-DOMAIN-RESEARCH-001과 이번 기록만 비운영 dev-main에 선택 커밋·푸시하고 기존 DECISIONS.md의 다른 변경을 보존한다. 앱 변경이 없어 테스트·빌드는 실행하지 않는다.
