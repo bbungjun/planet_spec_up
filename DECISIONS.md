@@ -3117,3 +3117,14 @@
 - 흐름 검증: 합성 캡틴 입력에서 STR+10의 최대 스탯공4955→4967·순수STR4 유지·효율 행 표시·시뮬레이션의 저장값 불변과 새로고침 초기화를 확인했다. 보스 호밍+20%p/사냥 미적용·프리셋 무기 보존·카드↔전체 옵션 값 보존·저장/복원을 확인했다. 빈 아란 세팅의 잘못된 변경 경고가 없으며 장비 크확20.5와 하이 마스터리 선택을 저장하고 DEX 임시 비교를 확인했다. 아란 저장 후 캡틴 키가 그대로 유지되고 캡틴 화면에서 원래 합성 입력이 복원됐다. 브라우저 콘솔 오류·경고0개다.
 - 근거·한계: 실행 로그는 Git 제외 output/integration-*.log, 화면/브라우저 점검 스크립트는 output/playwright/integration-*에 보존한다. 실제 게임 측정·개인 사진 무수정 OCR·독립 사용자 POC·Preview/Production 검증을 수행한 것은 아니다. 기존 docs/captain-converted-attack-qa.md의 미완료 게임 QA는 유지하며 운영 배포 가능으로 승격하지 않는다.
 - Git·보존: origin/main 8e80fbc·아란0375ccf·OCR e034c10의 조상이 최종 통합 계보에 포함됨을 확인했다. 게시판 경로·코드가 없는 상태와 원본 루트의 DECISIONS.md 선행63줄 추가/1줄 삭제·아란 자료 보존을 확인했다. 이번 선택 이식·회귀·정책·기록만 integration/aran-ocr에 커밋하고 병합 커밋과 함께 푸시한 뒤 원격SHA를 대조한다. 원본 기능 브랜치·worktree·로컬/원격 main은 유지한다. 검토용3117 서버를 유지하며 원본 루트의 기존 개발서버는 바꾸지 않는다.
+
+## D-INTEGRATION-004 — main 반영과 Vercel 자동 운영 배포 관계 안내
+
+- 기록 시각: 2026-09-30 19:07:55 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 동작 설명 요청 완료 — 새 사용자 결정 없음. main 병합·푸시·운영 배포 승인이 아니다.
+- 결정·요청: main에 병합하면 Vercel 배포에도 반영되는지 묻는다.
+- 이유: 사용자 이유 미명시.
+- 근거·확인: AGENTS.md D-146/§10, vercel.json의 npm run build:vercel, Vercel 공식 Git 배포 문서(https://vercel.com/docs/git), 실제 GitHub Deployment API. 원격main 8e80fbc의 environment=Production 기록과 통합5bdc7a7의 environment=Preview 기록을 확인했다. Vercel 대시보드의 설정값 자체는 이번에 다시 열지 않았다.
+- 안내 결과: 이 프로젝트의 기록된 연결 기준으로 GitHub main에 병합하거나 로컬 병합을 origin/main에 푸시하면 Production 자동 빌드·배포가 시작되고 성공 시 공개 주소에 반영된다. 로컬 main에서만 병합하고 푸시하지 않은 상태는 원격 배포를 유발하지 않는다. 다른 작업 브랜치 푸시는 Preview이며 운영 사이트 반영과 구분한다. 배포 시작을 성공·공개 반영 완료로 취급하지 않는다.
+- 범위·Git: 설명 기록만 기존 비운영 integration/aran-ocr에 커밋·푸시한다. 앱 코드 변경이 없어 테스트·빌드는 반복하지 않는다. main·공개 서버·Vercel 설정과 원본 앱 루트의 미커밋 변경은 보존한다.
