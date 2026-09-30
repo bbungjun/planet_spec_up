@@ -19,6 +19,7 @@ export function getVisibleEquipmentSlots(input: CalculatorInput): EquipmentSlot[
 }
 
 export function getEquipmentSlotLabel(input: CalculatorInput, slot: EquipmentSlot): string {
+  if (slot === "projectile" && input.character.job === "marksman") return "화살";
   if (builtinIds.has(slot)) return EQUIPMENT_SLOT_LABELS[slot as BuiltinEquipmentSlot];
   return input.customSlots?.find(({ id }) => id === slot)?.label ?? "추가 장비";
 }

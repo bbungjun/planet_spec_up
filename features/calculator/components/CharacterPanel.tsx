@@ -9,6 +9,7 @@ import type {
 } from "../domain/types";
 import { WEAPON_LABELS } from "../labels";
 import { levelAchievementBonus, MAX_CHARACTER_LEVEL, pureStatPool } from "../domain/level";
+import { MARKSMAN_MASTER_SKILLS } from "../domain/marksman";
 
 export type CharacterChangeHandler = <Field extends keyof CharacterInput>(
   field: Field,
@@ -23,6 +24,7 @@ type CharacterPanelProps = {
   showIdentity?: boolean;
   captainBeta?: boolean;
   aranBeta?: boolean;
+  marksmanBeta?: boolean;
 };
 
 type NumericFieldProps = {
@@ -88,16 +90,17 @@ function NumericField({
   );
 }
 
-export function CharacterIdentityFields({ character, issues, onChange, onJobChange, captainBeta = false, aranBeta = false }: CharacterPanelProps) {
+export function CharacterIdentityFields({ character, issues, onChange, onJobChange, captainBeta = false, aranBeta = false, marksmanBeta = false }: CharacterPanelProps) {
   const bonus = levelAchievementBonus(Number(character.level));
+  const publicJobSelection = captainBeta || aranBeta || marksmanBeta;
   return <>
     <div className="field">
       <label htmlFor="character-job">직업</label>
-      <select id="character-job" value={character.job} disabled={captainBeta || aranBeta} onChange={event => onJobChange(event.currentTarget.value as JobId)}>
-        {!captainBeta && <option value="marksman">신궁</option>}
+      <select id="character-job" value={character.job} onChange={event => onJobChange(event.currentTarget.value as JobId)}>
         <option value="corsair">캡틴</option>
-        {!captainBeta && <option value="night_lord">나이트로드</option>}
-        {!captainBeta && <option value="aran">아란 · 참고 모델</option>}
+        <option value="aran">아란 · 참고 모델</option>
+        <option value="marksman">신궁</option>
+        {!publicJobSelection && <option value="night_lord">나이트로드</option>}
       </select>
     </div>
     <NumericField label="레벨" path="character.level" value={character.level} min={1} max={MAX_CHARACTER_LEVEL} step={1}
@@ -154,7 +157,7 @@ export function CharacterPanel({
         </div>
 
         <div className="field">
-          <label htmlFor="character-sharp-eyes">샤프 아이즈</label>
+          <label htmlFor="character-sharp-eyes">{character.job === "marksman" ? "샤프 아이즈 액티브" : "샤프 아이즈"}</label>
           <select
             id="character-sharp-eyes"
             value={character.sharpEyes}
@@ -197,6 +200,12 @@ export function CharacterPanel({
           {([ ["aranCombo", "현재 콤보", 0, 99999, 1], ["aranFlatAttack", "기타·콤보 추가 공격력 (하이 마스터리 제외)", 0, 9999, 1], ["aranWeaponConstant", "폴암 계수 (참고 가정)", 0.01, 10, "any"] ] as const).map(([field, label, min, max, step]) => <NumericField key={field} label={label} path={`character.${field}`} value={character[field] ?? ""} min={min} max={max} step={step} issues={issues} onChange={value => onChange(field, value)} />)}
         </div>
         <small>마스터20 기준: 크확10%·크리 총비율100%, 콤보10마다 +6%p·+10%p(최대10중첩). 미습득은 체크 해제, 스킬1~19레벨은 미지원입니다. 크리데미지는 일반 피해 대비 총비율입니다. 추가 공격력은 공% 제외 후가산 가정으로 입력하세요.</small>
+      </fieldset>}
+
+      {character.job === "marksman" && <fieldset className="settings-group">
+        <legend>신궁 마스터 스킬</legend>
+        <p>크로스보우 엑스퍼트{MARKSMAN_MASTER_SKILLS.crossbowExpert.level} · 공격력 +{MARKSMAN_MASTER_SKILLS.crossbowExpert.attack} 자동 적용 (공% 제외)</p>
+        <small>크리티컬 샷20의 40%·100%에 샤프 아이즈 본인 패시브 +{MARKSMAN_MASTER_SKILLS.sharpEyesPassive.criticalRate}%p·+{MARKSMAN_MASTER_SKILLS.sharpEyesPassive.criticalDamage}%p를 더합니다. 액티브는 위 선택을 따릅니다.</small>
       </fieldset>}
 
       <dl className="job-summary" aria-label="현재 직업 규칙">

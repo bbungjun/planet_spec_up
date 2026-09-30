@@ -13,6 +13,7 @@ import {
   mapleWarriorRate,
 } from "./formulas";
 import { JOB_RULES } from "./job-rules";
+import { MARKSMAN_MASTER_SKILLS } from "./marksman";
 import { normalizeInput } from "./normalize";
 import { activeWeaponPreset } from "./weapon-presets";
 import { getVisibleEquipmentSlots } from "./slots";
@@ -93,9 +94,11 @@ export function calculateFromSnapshot(
     snapshot.ignoreDefense + guildIgnore,
   );
   const sharpEyes = SHARP_EYES_BONUSES[snapshot.sharpEyes];
+  // The master's own passive is independent of the selected active/usable buff.
+  const marksmanPassive = snapshot.job === "marksman" ? MARKSMAN_MASTER_SKILLS.sharpEyesPassive : null;
   const aranCritical = aranComboCritical(snapshot.aranCombo ?? 0, snapshot.aranComboCritical ?? (snapshot.job === "aran"));
-  const baseCriticalRate = snapshot.job === "aran" ? aranCritical.rate : rule.baseCriticalRate;
-  const rawBaseCriticalDamage = snapshot.job === "aran" ? aranCritical.damage : rule.baseCriticalDamage;
+  const baseCriticalRate = snapshot.job === "aran" ? aranCritical.rate : rule.baseCriticalRate + (marksmanPassive?.criticalRate ?? 0);
+  const rawBaseCriticalDamage = snapshot.job === "aran" ? aranCritical.damage : rule.baseCriticalDamage + (marksmanPassive?.criticalDamage ?? 0);
   // An Aran hit without damage effects retains the ordinary-hit baseline, not zero damage.
   const baseCriticalDamage = snapshot.job === "aran" && rawBaseCriticalDamage + sharpEyes.criticalDamage === 0
     ? 100 : rawBaseCriticalDamage;
@@ -166,9 +169,12 @@ export function calculateFromSnapshot(
   const extraStr = snapshot.job === "night_lord"
     ? snapshot.nightLordStrStat + (snapshot.cashAllStat ?? 0)
     : 0;
+  const jobFlatAttack = snapshot.job === "aran"
+    ? (snapshot.aranFlatAttack ?? 0) + (snapshot.aranHighMastery ? 10 : 0)
+    : snapshot.job === "marksman" ? MARKSMAN_MASTER_SKILLS.crossbowExpert.attack : 0;
   const totalAttack = calculateTotalAttack(
     snapshot.percentEligibleAttack,
-    snapshot.flatAttack + guildAttack + levelBonus.attack + (snapshot.job === "aran" ? (snapshot.aranFlatAttack ?? 0) + (snapshot.aranHighMastery ? 10 : 0) : 0),
+    snapshot.flatAttack + guildAttack + levelBonus.attack + jobFlatAttack,
     snapshot.attackPercent,
   );
   const statAttack = calculateStatAttack(

@@ -6,12 +6,14 @@ import type {
 } from "./types";
 import { MAX_CHARACTER_LEVEL, pureStatPool } from "./level";
 import { createDefaultCashEquipment, type NormalizedCashEquipmentInput } from "./cash-equipment";
+import { MARKSMAN_ARROW_ATTACK_MAX } from "./marksman";
 
 export type NumberRule = {
   path: string;
   min: number;
   max: number;
   integer?: boolean;
+  message?: string;
 };
 
 export type NormalizedEquipmentInput = Record<Exclude<keyof EquipmentInput, "pendantId">, number>;
@@ -79,7 +81,7 @@ export function parseNumber(
         severity: "error",
         path: rule.path,
         code: "INVALID_NUMBER",
-        message: `Enter a value from ${rule.min} to ${rule.max}.`,
+        message: rule.message ?? `Enter a value from ${rule.min} to ${rule.max}.`,
       }],
     };
   }
@@ -179,7 +181,11 @@ export function normalizeInput(input: CalculatorInput): NormalizedInputResult {
         path: `equipment.${slot}.subPercent`, min: 0, max: 999,
       }, issues),
       attackFlat: readNumber(values.attackFlat, {
-        path: `equipment.${slot}.attackFlat`, min: 0, max: 9999, integer: true,
+        path: `equipment.${slot}.attackFlat`, min: 0,
+        max: input.character.job === "marksman" && slot === "projectile" ? MARKSMAN_ARROW_ATTACK_MAX : 9999,
+        integer: true,
+        ...(input.character.job === "marksman" && slot === "projectile"
+          ? { message: `화살 공격력을 0~${MARKSMAN_ARROW_ATTACK_MAX} 사이의 정수로 입력해주세요.` } : {}),
       }, issues),
       attackPercent: readNumber(values.attackPercent, {
         path: `equipment.${slot}.attackPercent`, min: 0, max: 999,
