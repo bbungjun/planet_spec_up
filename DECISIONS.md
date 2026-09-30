@@ -3235,3 +3235,18 @@
 - 검증: 독립 Playwright stat-color-reference로 현재 루트 Vinext3000의 PC1440x1000 기본/다크 화면을 직접 확인했다. 수치칸 배경#fff·수치/보조 설명#243442·항목명#fff·지정 녹색/파란색의 computed style을 모두 확인하고 실제 캡처를 검토했다. 브라우저 콘솔 오류·경고0개와diff check를 확인했다. CSS/문서만 변경해 새 테스트·빌드·타입·린트 실행은 반복하지 않았으며 직전571개 테스트를 이번 색상 수정의 새 실행 결과로 표현하지 않는다.
 - 보존·후속: 검증용 합성 수치만 입력한 독립 세션을 사용했고 사용자 실제 저장값·이미지 파일을 수정하지 않았다. 원본 이미지는 색상 참조로만 읽고 Git/외부 전송하지 않았다. 검토용 캡처는 Git 제외 output/playwright/stat-reference-light.png·stat-reference-dark.png에 둔다. 기존 캐릭터 저장 제보의 원인 미확정과 핑크빈 기본값 정책은 유지한다.
 - Git: 이번 CSS·AGENTS 정정·이 기록만 dev-main에 선택 커밋·푸시하고 원격SHA를 확인한다. 선행 DECISIONS.md63줄 추가/1줄 삭제와 main/Production은 보존한다.
+
+## D-UI-FONT-001 — 현행 디자인 확정과 Noto Sans KR 전체 적용
+
+- 기록 시각: 2026-09-30 21:05:26 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 디자인 확정·전체 글꼴 변경·dev-main 반영 요청. 구현과 로컬 검증 완료, 원격 Preview 결과는 푸시 후 확인한다.
+- 결정·요청: 현재 디자인을 확정하고 글꼴 전부를 Noto Sans KR로 변경해 dev-main 브랜치에 반영한다. 구현은 Sol high로 진행하도록 지정했다.
+- 이유: 사용자 이유 미명시.
+- 구현 담당·범위: 요청에 따라 gpt-6-sol/high 하위 에이전트가 같은 앱 루트 dev-main5e67322에서 폰트 구현·검증을 수행했다. 루트는 검토·기록·선택 커밋·푸시·배포 확인을 담당한다. D-UI-STAT-002의 흰 수치칸과 게임창 색상/구성을 확정했으며 다른 UI 개선안의 일괄 구현이나 main/Production 배포로 확대하지 않는다.
+- 폰트 결과: @fontsource-variable/noto-sans-kr5.3.0을 정확한 버전과 lockfile로 고정하고 layout에서 wght.css를 불러온다. Noto Sans KR Variable100~900을 같은 origin의 WOFF2 자산으로 제공하며 font-display:swap·unicode-range 분할을 사용한다. 본문·숫자·폼·textarea·버튼·단축키·장식/의사요소의 Arial/Consolas/Georgia/맑은 고딕 등 개별 지정을 교체했다. 숫자는 기존 tabular-nums 정렬을 유지하며1280px에서 제목의 작업실이 글자 중간에 갈라지지 않도록 h1 word-break:keep-all을 추가했다.
+- 출처·라이선스: Google Fonts Noto Sans KR(https://github.com/google/fonts/tree/main/ofl/notosanskr), Fontsource Noto Sans KR Variable5.3.0·Google Inc. 배포물. SIL OFL1.1 전문을 public/fonts/Noto-Sans-KR-OFL.txt로 포함했다. 개인 사진이나 정적 게임 이미지 안 문자를 바꾸는 요청으로 해석하지 않고 OCR 인식 모델·검산 자료·계산·저장 로직은 보존했다. AGENTS.md에 디자인 확정과 폰트 정책을 반영했다.
+- 검증: 최종 Vercel용 로컬 Next 빌드·별도 타입 검사·layout ESLint·diff check 통과. 폰트 변경에 필요하지 않은 전체 계산 회귀를 반복하지 않았으며 이전571개 테스트를 이번 작업에서 재실행한 것으로 표현하지 않는다. 부모 검토에서도 npm ls의5.3.0 일치·기존 글꼴 이름과 monospace 지정 검색0개·라이선스 전문을 확인했다.
+- 브라우저 검증: 독립 Vinext3125와 Next production 모드 로컬3126에서 PC 라이트/다크 및1280/1440px를 확인했다. Vinext의 보이는 텍스트/폼354~355개와 의사요소에서 다른 computed font0개, 실제woff2 요청16개·298,536바이트 모두localhost origin, 외부 폰트 요청0개다. Next는 로드된 폰트16개·동일origin /_next/static/media 요청16개·라이선스HTTP200·콘솔 오류/경고0개를 확인했다. 처음3125의IPv4 접속 거부는 서버가::1로 바인딩돼localhost 주소로 바로잡았으며 이후 확인은 정상 수행했다. 제목 줄바꿈 보정 뒤 최종 빌드를 다시 통과했다.
+- 근거·한계: 폰트 전체 빌드 자산은124개·3,519,780바이트이며 실제 화면은 필요한 부분만 요청한다. 검토 캡처는 Git 제외 output/playwright/noto-kr-pc-1280.png·noto-kr-pc-dark.png에 보관했다. 실기기 모바일·실제 게임·OCR 무수정 검증은 이번 글꼴 변경 범위가 아니다. 원격 Preview는 앞선 배포에서 Vercel 로그인 보호를 확인했으므로 플랫폼 배포 성공과 로그인 없는 실제 페이지 QA를 구분한다.
+- Git·후속: 이번 폰트/스타일/라이선스/정책과 이 기록만 dev-main에 선택 커밋·푸시하고 원격SHA 및 해당 Preview 배포 결과를 확인한다. 원래 DECISIONS.md63줄 추가/1줄 삭제·기존3000 개발서버·main/Production을 보존했다. 구현자가 만든3125/3126 검증 서버와 브라우저는 종료했다.

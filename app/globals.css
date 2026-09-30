@@ -62,8 +62,8 @@
   --color-background: var(--bg);
   --color-foreground: var(--text);
   --font-sans:
-    "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    "Noto Sans KR Variable", sans-serif;
+  --font-mono: "Noto Sans KR Variable", sans-serif;
 }
 
 * {
@@ -83,9 +83,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family:
-    "Noto Sans KR",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
+    "Noto Sans KR Variable",
     sans-serif;
 }
 
@@ -93,6 +91,10 @@ button,
 input,
 select {
   min-height: 44px;
+  font: inherit;
+}
+
+textarea {
   font: inherit;
 }
 
@@ -591,7 +593,7 @@ time,
   color: var(--muted);
   margin: 12px 0 0;
   padding: 10px;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-family: "Noto Sans KR Variable", sans-serif;
   font-size: 0.74rem;
   line-height: 1.5;
 }

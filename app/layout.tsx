@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { createMetadata } from "@/features/site/metadata";
 import { THEME_INIT_SCRIPT } from "@/features/calculator/theme";
+import "@fontsource-variable/noto-sans-kr/wght.css";
 import "./globals.css";
 // Keep the approved game-inspired presentation after shared component layout rules.
 import "./maple-theme.css";

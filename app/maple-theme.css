@@ -18,7 +18,7 @@
   --paper:#304956; --stat-paper:#424e49; --stat-label:#496e89; --stat-main:#52642f;
   --panel-shadow:inset 0 0 0 3px #4e6a7b,inset 0 0 0 4px #738d9e,0 4px 0 #10283a40,0 7px 18px #11263535;
 }
-body{background:var(--bg);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+body{background:var(--bg)}
 html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulation}
 .calculator-shell{position:relative;isolation:isolate;padding:0 32px 22px}
 .calculator-shell > .calculator-content{display:contents}
@@ -45,7 +45,7 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .app-topbar{min-height:82px;border-bottom:1px solid #ffffff70}
 .app-brand{font-size:28px;letter-spacing:-1.5px;gap:10px;line-height:1.15}
 .brand-symbol{background:none;width:43px;height:43px;border-radius:0;filter:drop-shadow(0 2px #ffffff75)}
-.brand-symbol .game-icon{width:43px;height:43px}.brand-secondary{display:block;font:700 8px/2.3 Arial,sans-serif;letter-spacing:2.2px;margin:0;color:var(--muted)}
+.brand-symbol .game-icon{width:43px;height:43px}.brand-secondary{display:block;font:700 8px/2.3 "Noto Sans KR Variable",sans-serif;letter-spacing:2.2px;margin:0;color:var(--muted)}
 .beta-badge{font-size:8px;background:color-mix(in srgb,var(--surface) 55%,transparent);align-self:flex-start;margin-top:7px}
 .app-brand .beta-release-label{font-size:10px;letter-spacing:.5px;white-space:nowrap}
 .app-toolbar{position:static;min-height:60px;padding:6px 0;border-bottom:1px solid var(--line);gap:8px 16px;background:var(--bg)}
@@ -57,14 +57,14 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .app-header-actions .save-button,.equipment-ocr-apply{background:linear-gradient(#79b6d2,#528aa8);color:#fff;border-color:#56809a;box-shadow:inset 0 1px #c4e4f4,inset 0 -2px #48758b;text-shadow:0 1px #35667d;border-radius:5px}
 .setup-import.panel{padding:0;border:0;box-shadow:none;background:transparent;margin-top:20px;margin-bottom:10px}
 .setup-import-start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px) minmax(0,1fr);align-items:center;gap:20px;padding:0 0 18px}
-.workshop-eyebrow{margin:0 0 5px;font:700 9px Consolas,monospace;letter-spacing:1.4px;color:var(--accent)}
-.setup-import-intro h1{font-size:27px;font-weight:800;line-height:1.35;letter-spacing:-1px;margin:0;color:var(--text);text-shadow:0 2px #ffffff66}
+.workshop-eyebrow{margin:0 0 5px;font:700 9px "Noto Sans KR Variable",sans-serif;letter-spacing:1.4px;color:var(--accent)}
+.setup-import-intro h1{font-size:27px;font-weight:800;line-height:1.35;letter-spacing:-1px;margin:0;color:var(--text);text-shadow:0 2px #ffffff66;word-break:keep-all}
 .setup-import-intro h1 span{font-size:18px;color:#e9a741;vertical-align:top;display:inline-block;margin-left:5px}
 .setup-import-dropzone{grid-column:2;min-width:0;min-height:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border:0;border-radius:5px;background:transparent}
 .setup-import-dropzone.is-dragging{outline:3px dashed var(--focus);outline-offset:6px;background:var(--accent-soft)}
 .setup-import-button{display:flex;align-items:center;justify-content:center;width:min(420px,100%);gap:12px;padding:18px 28px;min-height:68px;font-size:16px;border:1px solid #b98836;background:linear-gradient(var(--gold-top),var(--gold-bottom));color:var(--gold-ink);border-radius:5px;box-shadow:inset 0 1px #fff6d0,inset 0 -3px #e5a03d,0 3px #8b79342b;text-shadow:0 1px #ffeab1}
 .setup-import-button:hover{background:linear-gradient(#ffe49c,#fac266)}
-.setup-import-button .game-icon{width:24px;height:24px}.setup-import-dropzone kbd{border-color:#b9843477;font:10px Consolas,monospace;margin-left:5px;color:var(--gold-ink)}
+.setup-import-button .game-icon{width:24px;height:24px}.setup-import-dropzone kbd{border-color:#b9843477;font:10px "Noto Sans KR Variable",sans-serif;margin-left:5px;color:var(--gold-ink)}
 .setup-import-dropzone small{font-size:10px;line-height:1.5;color:var(--muted)}
 .setup-import-dropzone .setup-image-storage-note{font-size:12px;line-height:1.5;color:var(--text);max-width:48ch}
 @media(max-width:1100px){.setup-import-start{grid-template-columns:minmax(0,1fr);gap:16px}.setup-import-dropzone{grid-column:1;justify-self:center;width:min(560px,100%)}}
@@ -84,10 +84,10 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .panel-heading h2{font-size:14px}.panel-description{font-size:12px}
 .game-window-heading{display:flex;align-items:center;gap:8px;background:linear-gradient(var(--chrome-top),var(--chrome-bottom));margin:-14px -14px 16px;padding:5px 7px;min-height:31px;border-bottom:1px solid var(--window-edge);border-radius:3px 3px 0 0;color:#365163}
 .game-window-heading>div:first-child{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.game-window-label{font:800 10px Arial,sans-serif;letter-spacing:.5px;color:#354f61}
+.game-window-label{font:800 10px "Noto Sans KR Variable",sans-serif;letter-spacing:.5px;color:#354f61}
 .game-window-heading h2,.game-window-heading>span:not(.game-window-label){font-size:10px;font-weight:400;color:#587183;letter-spacing:0}
 .game-window-heading>span:last-child{font-size:10px}.game-window-heading .job-chip{font-size:9px;padding:3px 6px;border-radius:3px;background:#e4edf2;color:#526f82}
-.game-window-heading:after{content:"▦";display:grid;place-items:center;width:15px;height:15px;background:#7db8d2;border:1px solid #5e859d;border-radius:2px;color:#fff;box-shadow:inset 0 0 0 1px #d6f0fa;font:14px/1 Arial,sans-serif;flex:none}
+.game-window-heading:after{content:"▦";display:grid;place-items:center;width:15px;height:15px;background:#7db8d2;border:1px solid #5e859d;border-radius:2px;color:#fff;box-shadow:inset 0 0 0 1px #d6f0fa;font:14px/1 "Noto Sans KR Variable",sans-serif;flex:none}
 .weapon-presets{display:grid;grid-template-columns:185px minmax(0,1fr);gap:16px;align-items:start;padding:14px 18px;margin-bottom:20px}
 .weapon-presets>.panel-heading{display:grid;gap:8px;margin:0}.weapon-presets>.panel-heading h2{font-size:11px;color:var(--muted)}
 .weapon-presets>.panel-heading button{font-size:10px;min-height:44px;padding:6px 10px}
@@ -124,7 +124,7 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .equipment-ocr-heading h3{font-size:11px}.equipment-ocr-select-button{font-size:11px;padding:8px 12px;white-space:nowrap}
 .equipment-field-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px 14px}.field label{font-size:12px;color:var(--muted)}
 .field input,.field select{border-radius:4px;border-color:var(--line);background:var(--paper);padding:8px 10px;font-size:14px;box-shadow:inset 0 2px 2px #3c536509}
-.equipment-field-grid input{font-family:Consolas,"Malgun Gothic",monospace;font-weight:700;text-align:right}
+.equipment-field-grid input{font-family:"Noto Sans KR Variable",sans-serif;font-weight:700;text-align:right}
 .equipment-field-grid .is-percent-option input{background:color-mix(in srgb,#bb9ddc 10%,var(--paper));border-color:color-mix(in srgb,#ad94c4 50%,var(--line))}
 .equipment-field-grid .is-requirement-option input{background:var(--surface-raised)}
 .field-error{font-size:11px}.equipment-wear-warning{border-radius:4px;font-size:12px}
@@ -134,13 +134,13 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .preset-damage-results{padding:12px 14px;margin:0 0 15px;border:1px solid var(--line);border-radius:5px;background:linear-gradient(135deg,var(--accent-soft),var(--surface));box-shadow:inset 0 0 0 2px #ffffff20;gap:8px}
 .preset-damage-results .preset-primary-result{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .preset-damage-results .preset-primary-result>span{font-size:12px;color:var(--accent)}
-.preset-damage-results .preset-primary-result output{font:800 clamp(28px,2.8vw,38px)/1.3 Consolas,monospace;letter-spacing:-1px;color:var(--accent);overflow-wrap:anywhere}
+.preset-damage-results .preset-primary-result output{font:800 clamp(28px,2.8vw,38px)/1.3 "Noto Sans KR Variable",sans-serif;letter-spacing:-1px;color:var(--accent);overflow-wrap:anywhere}
 .preset-damage-results>div:last-child{border-top:1px solid var(--line);padding-top:8px;align-items:center}
-.preset-damage-results>div:last-child span{font-size:12px}.preset-damage-results>div:last-child output{font:700 18px Consolas,monospace;color:var(--muted)}
+.preset-damage-results>div:last-child span{font-size:12px}.preset-damage-results>div:last-child output{font:700 18px "Noto Sans KR Variable",sans-serif;color:var(--muted)}
 .preset-stat-sheet dl{gap:3px}.preset-stat-sheet dl>div{display:grid;grid-template-columns:100px minmax(0,1fr);gap:3px;align-items:stretch;min-height:30px}
 .preset-stat-sheet dt{display:flex;align-items:center;padding:5px 7px;background:var(--stat-label);border:1px solid #4d789080;border-radius:2px;box-shadow:inset 0 0 0 1px #ffffff30;color:#fff;font-size:11px;text-shadow:0 1px #33546b55}
 .preset-stat-sheet dd{display:flex;gap:3px 5px;align-items:center;flex-wrap:wrap;padding:4px 7px;background:var(--stat-paper);border:1px solid var(--line);border-radius:2px;box-shadow:inset 0 0 0 1px #ffffff15;min-width:0}
-.preset-stat-sheet dd strong{font:700 14px Consolas,monospace}.preset-stat-sheet dd small{font-size:9px;line-height:1.5}
+.preset-stat-sheet dd strong{font:700 14px "Noto Sans KR Variable",sans-serif}.preset-stat-sheet dd small{font-size:9px;line-height:1.5}
 .preset-base-stats>div:not(:last-child) dt{background:var(--stat-main);color:#2d3d1b;text-shadow:none}
 [data-theme="dark"] .preset-base-stats>div:not(:last-child) dt{color:#f0f6e5}
 .preset-stat-context{margin:10px 0;font-size:10px;gap:4px 10px}.preset-stat-sheet .preset-combat-stats{padding-top:0;border:0;gap:3px}
@@ -157,20 +157,20 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .comparison-baseline,.candidate-card{flex-basis:320px;padding:15px;border-radius:5px;border-color:var(--line);background:var(--paper)}
 .comparison-baseline{background:linear-gradient(var(--paper),var(--surface-raised));position:static;align-self:stretch;box-shadow:none;display:flex;flex-direction:column}
 .comparison-card-label{font-size:10px}.comparison-item-heading{min-height:62px}.comparison-item-heading h3{font-size:14px}.comparison-item-heading p{font-size:10px}
-.candidate-metric{padding:11px 0 13px;min-height:100px}.candidate-metric-label{font-size:10px}.candidate-metric.is-main .candidate-metric-value{font:700 29px/1.3 Consolas,monospace;letter-spacing:-1px}
+.candidate-metric{padding:11px 0 13px;min-height:100px}.candidate-metric-label{font-size:10px}.candidate-metric.is-main .candidate-metric-value{font:700 29px/1.3 "Noto Sans KR Variable",sans-serif;letter-spacing:-1px}
 .comparison-key-metrics{display:flex;flex-direction:column;gap:0}
-.comparison-key-metrics .candidate-metric.is-main .candidate-metric-value{font:700 30px/1.3 Consolas,monospace}
+.comparison-key-metrics .candidate-metric.is-main .candidate-metric-value{font:700 30px/1.3 "Noto Sans KR Variable",sans-serif}
 .comparison-key-metrics .candidate-metric:not(.is-main){display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;min-height:44px;padding:9px 0}
-.comparison-key-metrics .candidate-metric:not(.is-main) .candidate-metric-value{font:700 18px Consolas,monospace;margin:0}
+.comparison-key-metrics .candidate-metric:not(.is-main) .candidate-metric-value{font:700 18px "Noto Sans KR Variable",sans-serif;margin:0}
 .comparison-key-metrics .candidate-metric:not(.is-main) .candidate-change{grid-column:1/-1;margin-top:0}
-.candidate-change{font-size:10px}.candidate-change>strong{font:700 12px Consolas,monospace;border-radius:3px}
+.candidate-change{font-size:10px}.candidate-change>strong{font:700 12px "Noto Sans KR Variable",sans-serif;border-radius:3px}
 .candidate-change.is-up{color:var(--success)}.candidate-change.is-up>strong{background:color-mix(in srgb,var(--success) 11%,var(--surface))}
-.candidate-icon-button{border-radius:3px}.comparison-base-stats{font-size:10px}.comparison-base-stats span{font-size:10px}.comparison-base-stats b{font-family:Consolas,monospace}
+.candidate-icon-button{border-radius:3px}.comparison-base-stats{font-size:10px}.comparison-base-stats span{font-size:10px}.comparison-base-stats b{font-family:"Noto Sans KR Variable",sans-serif}
 .comparison-baseline-footer{margin:auto -15px -15px;padding:13px 15px;border-top:1px solid var(--line);background:var(--surface-raised);font-size:10px}
-.comparison-base-stats{margin-bottom:24px}.candidate-price{font-size:11px}.candidate-price-input input{border-radius:4px;background:var(--surface);font-family:Consolas,monospace}
-.candidate-price>span:first-child:before{content:"M";display:inline-grid;place-items:center;margin-right:6px;width:17px;height:17px;border-radius:50%;background:#efd483;border:1px solid #c8a84b;color:#8c6b25;font:bold 9px Georgia,serif}
+.comparison-base-stats{margin-bottom:24px}.candidate-price{font-size:11px}.candidate-price-input input{border-radius:4px;background:var(--surface);font-family:"Noto Sans KR Variable",sans-serif}
+.candidate-price>span:first-child:before{content:"M";display:inline-grid;place-items:center;margin-right:6px;width:17px;height:17px;border-radius:50%;background:#efd483;border:1px solid #c8a84b;color:#8c6b25;font:bold 9px "Noto Sans KR Variable",sans-serif}
 .candidate-efficiency{min-height:55px;margin:0 -15px -15px;padding:10px 15px;background:color-mix(in srgb,var(--success) 9%,var(--surface));border-color:color-mix(in srgb,var(--success) 22%,var(--line))}
-.candidate-efficiency>span{font-size:10px}.candidate-efficiency output{font:700 20px Consolas,monospace;color:var(--success)}.candidate-efficiency.is-down output{color:var(--danger)}
+.candidate-efficiency>span{font-size:10px}.candidate-efficiency output{font:700 20px "Noto Sans KR Variable",sans-serif;color:var(--success)}.candidate-efficiency.is-down output{color:var(--danger)}
 .candidate-source-preview{border-radius:4px;background:var(--surface-raised);padding:8px}.candidate-source-preview .candidate-photo{height:160px;border-radius:3px}
 .candidate-stat-comparison{font-size:11px}.candidate-stat-comparison caption{font-size:11px}.candidate-stat-comparison th,.candidate-stat-comparison td{padding:7px 3px}
 .hunting-skill-comparison{margin:10px 0 14px;min-width:0}
@@ -332,9 +332,10 @@ html{scroll-padding-top:16px}button,input,select,summary{touch-action:manipulati
 .simulator-field>label{font-size:13px;font-weight:600}.simulator-field>label small{margin-left:5px;font-size:10px;color:var(--muted)}
 .simulator-stepper{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:4px}
 .simulator-stepper button,.simulator-stepper input{min-height:44px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--text)}
-.simulator-stepper button{font-size:20px;cursor:pointer}.simulator-stepper input{width:100%;min-width:0;padding:6px;text-align:center;font:600 14px Consolas,monospace;appearance:textfield}
+.simulator-stepper button{font-size:20px;cursor:pointer}.simulator-stepper input{width:100%;min-width:0;padding:6px;text-align:center;font:600 14px "Noto Sans KR Variable",sans-serif;appearance:textfield}
 .simulator-stepper input::-webkit-inner-spin-button{appearance:none}.simulator-stepper input[aria-invalid=true]{border-color:var(--danger)}
-.simulator-field>output{text-align:right;font:700 15px Consolas,monospace;color:var(--text)}
+.simulator-field>output{text-align:right;font:700 15px "Noto Sans KR Variable",sans-serif;color:var(--text)}
+.preset-damage-results output,.preset-stat-sheet dd strong,.candidate-metric-value,.candidate-change>strong,.comparison-base-stats b,.candidate-price-input input,.candidate-efficiency output,.simulator-stepper input,.simulator-field>output{font-variant-numeric:tabular-nums}
 .stat-simulator .is-up{color:var(--success)}.stat-simulator .is-down{color:var(--danger)}
 .simulator-field-error{grid-column:1/-1;margin:0;color:var(--danger);font-size:12px}.simulator-notice{padding:12px;border:1px solid var(--line);background:var(--surface-raised);font-size:13px;line-height:1.6}
 .simulator-total-table{width:100%;margin-top:20px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;table-layout:fixed}
