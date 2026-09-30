@@ -64,20 +64,25 @@ function firstSlot(job: JobId): EquipmentSlot {
 }
 
 const loadErrorMessage = (message: string) => message === "unsupported-job"
-  ? "이번 베타는 캡틴만 지원합니다. 기존 다른 직업의 저장값은 보존되며 캡틴 세팅은 별도로 저장합니다."
+  ? "저장된 세팅의 직업이 캡틴이 아닙니다. 기존 데이터는 보존했습니다."
+  : message === "unsupported-aran-job" ? "저장된 세팅의 직업이 아란이 아닙니다. 기존 데이터는 보존했습니다."
+  : message === "unsupported-marksman-job" ? "저장된 세팅의 직업이 신궁이 아닙니다. 기존 데이터는 보존했습니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
-export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false, developmentDefault = null }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean; developmentDefault?: string | null }) {
-  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta, developmentDefault);
+const PUBLIC_JOB_ROUTES = { corsair: "/", aran: "/aran", marksman: "/marksman" } as const;
+
+export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false, marksmanBeta = false, developmentDefault = null }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean; marksmanBeta?: boolean; developmentDefault?: string | null }) {
+  const initialJob: JobId = marksmanBeta ? "marksman" : aranBeta ? "aran" : "corsair";
+  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta, developmentDefault, marksmanBeta);
   const [input, setInput] = useState<CalculatorInput>(
-    () => createDefaultInput(aranBeta ? "aran" : "corsair"),
+    () => createDefaultInput(initialJob),
   );
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlot>(
-    () => firstSlot(aranBeta ? "aran" : "corsair"),
+    () => firstSlot(initialJob),
   );
   const [inputMode, setInputMode] = useState<InputMode>("bulk");
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(captureWeaponPreset(createDefaultInput(aranBeta ? "aran" : "corsair"))));
+  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(captureWeaponPreset(createDefaultInput(initialJob))));
   const [pendingCandidates, setPendingCandidates] = useState(false);
   const [pendingImport, setPendingImport] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -270,9 +275,14 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   };
 
   const handleJobChange = (job: JobId) => {
-    if (captainBeta && job !== "corsair") return;
-    if (aranBeta && job !== "aran") return;
     if (job === input.character.job) return;
+    if (captainBeta || aranBeta || marksmanBeta) {
+      if (job === "night_lord") return;
+      // Full-page navigation initializes the destination's own job and storage.
+      // The existing beforeunload guard is the single prompt for pending work.
+      window.location.assign(PUBLIC_JOB_ROUTES[job]);
+      return;
+    }
     if (
       (hasEquipmentValues(input) || hasUnsavedChanges || pendingCandidates || pendingImport)
       && !window.confirm("직업을 바꾸면 장비 값·무기 프리셋 3개·추가한 부위가 초기화됩니다. 계속할까요?")
@@ -393,6 +403,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       <AppHeader
         captainBeta={captainBeta}
         aranBeta={aranBeta}
+        marksmanBeta={marksmanBeta}
         onSave={handleSave}
         onLoad={handleLoad}
         onReset={handleReset}
@@ -408,7 +419,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       <SetupImportPanel key={`${input.character.job}:${activeWeaponPreset(input)}:${setupRevision}`}
         input={input} disabled={initialLoading} savedAt={savedAt} onApplyAndSave={handleOcrBatchSave} onPendingChange={setPendingImport}>
         <div className="setup-import-identity">
-          <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
+          <CharacterIdentityFields captainBeta={captainBeta} aranBeta={aranBeta} marksmanBeta={marksmanBeta} character={input.character} issues={result.issues} onChange={handleCharacterChange} onJobChange={handleJobChange} />
         </div>
       </SetupImportPanel>
       <div className="character-settings-content" id="character-settings">
