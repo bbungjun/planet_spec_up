@@ -55,7 +55,7 @@ function ImagePreview({file, original = file}: {file: File; original?: File}) {
   }, [file, original]);
   return url ? <div><a className="ocr-batch-image-link" href={url} target="_blank" rel="noreferrer" aria-label={`${original.name} ${originalUrl ? "인식 영역" : "원본"} 크게 보기 (새 탭)`}>
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img className="ocr-batch-preview" src={url} alt={`${original.name} ${originalUrl ? "인식 영역" : "원본"}`} loading="lazy" />
+    <img className="ocr-batch-preview" src={url} alt={`${original.name} ${originalUrl ? "인식 영역" : "원본"}`} width={600} height={400} loading="lazy" />
   </a>{originalUrl && <p className="ocr-crop-caption"><a href={originalUrl} target="_blank" rel="noreferrer">전체 원본 보기</a></p>}</div> : null;
 }
 
@@ -278,7 +278,7 @@ export function EquipmentOcrBatchPanel({files, job, choices, onApply, onClose, c
 
               <div className="equipment-ocr-proposal-grid">{fields.map(([key, label]) => <div className="field" key={key}>
                 <label htmlFor={`${id}-batch-${index}-${key}`}>{index + 1}번 인식 {label}</label>
-                <input id={`${id}-batch-${index}-${key}`} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
+                <input id={`${id}-batch-${index}-${key}`} name={`ocr-batch-${index}-${key}`} autoComplete="off" inputMode={key.endsWith("Percent") ? "decimal" : "numeric"} type="number" min={0} max={key === "ignoreDefensePercent" ? 100 : key.endsWith("Percent") ? 999 : 9999} step={key.endsWith("Percent") ? "any" : 1}
                   value={row.replacement![key] ?? ""} placeholder={row.review && row.replacement![key] === undefined ? "미인식 · 기존 값 유지" : undefined} disabled={row.state === "applied"} onChange={event => {
                     const value = event.currentTarget.value, review = overrideReviewRequirement(row.review, job, key, value);
                     edit(index, { replacement: {...row.replacement!, [key]: value}, overrides: { ...row.overrides, [key]: value },

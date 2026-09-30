@@ -82,6 +82,9 @@ export function BulkEditor({
                         <div className="field">
                           <input
                             id={id}
+                            name={path}
+                            autoComplete="off"
+                            inputMode={step === 1 ? "numeric" : "decimal"}
                             aria-label={label}
                             type="number"
                             min={0}

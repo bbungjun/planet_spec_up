@@ -433,7 +433,7 @@ export function EquipmentOcrPanel({
         <figure className="equipment-ocr-preview">
           {purpose === "candidate" && <figcaption>장비 사진</figcaption>}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewUrl} alt="선택한 장비 스크린샷 미리보기" />
+          <img src={previewUrl} alt="선택한 장비 스크린샷 미리보기" width={600} height={400} />
         </figure>
       )}
 
@@ -508,6 +508,9 @@ export function EquipmentOcrPanel({
                 <label htmlFor={`${panelId}-${field}`}>{purpose === "candidate" ? label.replace(/^인식 /, "") : label}</label>
                 <input
                   id={`${panelId}-${field}`}
+                  name={`ocr-${panelId}-${field}`}
+                  autoComplete="off"
+                  inputMode={step === 1 ? "numeric" : "decimal"}
                   aria-label={label}
                   type="number"
                   min={0}

@@ -151,6 +151,9 @@ export function EquipmentEditor({
               <label htmlFor={id}><span className="candidate-sr-only">{slotLabel} </span>{suffix(rule.mainStat, rule.subStat)}</label>
               <input
                 id={id}
+                name={path}
+                autoComplete="off"
+                inputMode={step === 1 ? "numeric" : "decimal"}
                 type="number"
                 min={0}
                 max={max}

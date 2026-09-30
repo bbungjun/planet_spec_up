@@ -30,7 +30,7 @@ export function CashEquipmentPanel({ input, issues, onChange }: Props) {
         </label>
         <div className="field cash-equipment-count">
           <label htmlFor="cash-aurora-ring-count">오로라 반지 개수</label>
-          <input id="cash-aurora-ring-count" type="number" min={0} max={4} step={1}
+          <input id="cash-aurora-ring-count" name="cashEquipment.auroraRingCount" autoComplete="off" inputMode="numeric" type="number" min={0} max={4} step={1}
             value={selection.auroraRingCount} disabled={!selection.auroraRing}
             data-field-path="cashEquipment.auroraRingCount"
             aria-invalid={error ? true : undefined} aria-describedby={error ? "cash-aurora-ring-error" : undefined}

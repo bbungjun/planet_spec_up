@@ -13,16 +13,22 @@ type Props = {
   disabled: boolean;
   savedAt: string | null;
   onApplyAndSave: ApplyOcrBatch;
+  onPendingChange?: (pending: boolean) => void;
   children: ReactNode;
 };
 
-export function SetupImportPanel({ input, disabled, onApplyAndSave, children }: Props) {
+export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingChange, children }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const successMessage = useRef<HTMLDivElement>(null);
   const [files, setFiles] = useState<File[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(0);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    onPendingChange?.(files !== null);
+    return () => onPendingChange?.(false);
+  }, [files, onPendingChange]);
 
   useEffect(() => {
     if (savedCount) successMessage.current?.focus();

@@ -299,6 +299,35 @@ html{scroll-padding-top:calc(var(--app-toolbar-height,60px) + 16px)}button,input
 @media(max-width:370px){.calculator-shell{padding-inline:10px}.brand-secondary{font-size:6px}.theme-toggle button{font-size:9px;padding-inline:6px}.theme-toggle svg{width:14px;height:14px}.app-brand{font-size:23px}.app-nav{gap:4px}.app-nav a{font-size:9px}.equipment-list{gap:4px;padding:6px}.equipment-slot{min-height:61px}.equipment-slot-name{font-size:8px}.equipment-slot .game-icon{width:27px;height:27px}.game-window-heading>div:first-child{gap:5px}.game-window-label{font-size:8px}.field label{font-size:11px}.candidate-metric.is-main .candidate-metric-value{font-size:26px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.maple-world *,button,input,select{transition:none!important}}
 
+/* Readable controls and stable screenshot frames across both themes. */
+.skip-link{position:absolute;left:16px;top:8px;z-index:100;transform:translateY(-150%);padding:12px 16px;border-radius:5px;background:var(--surface);color:var(--text);font-size:14px;box-shadow:var(--panel-shadow)}
+.skip-link:focus{transform:translateY(0)}
+.candidate-delete-feedback{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--surface-raised)}
+.candidate-delete-feedback p{margin:0;font-size:13px}
+.candidate-delete-feedback button{max-width:100%;overflow-wrap:anywhere;font-size:12px}
+.app-nav a,.app-header-actions p,.app-header-actions .secondary-button,.theme-toggle button{font-size:12px}
+.setup-import-dropzone small,.setup-import-identity .field label,.setup-import-identity .level-achievement,.field label,.field small,.panel-description,.comparison-footnote{font-size:12px;line-height:1.6}
+.equipment-slot-name{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.weapon-preset-select strong{font-size:13px}.weapon-preset-select small,.weapon-preset-details summary,.weapon-preset-card dl{font-size:12px;line-height:1.5}
+.weapon-preset-select{height:auto}.weapon-preset-details summary{overflow-wrap:anywhere}
+.candidate-card-status{font-size:12px;line-height:1.6}.candidate-card-status span{-webkit-line-clamp:3}
+.candidate-price,.candidate-stat-comparison,.candidate-stat-comparison td:last-child,.comparison-base-stats,.comparison-base-stats span{font-size:12px}
+.ocr-region-selector{overscroll-behavior:contain}
+.ocr-crop-stage{height:min(55dvh,520px);display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.ocr-crop-surface{flex:none}
+.candidate-photo{display:block;width:100%;height:300px;object-fit:contain}
+.candidate-image-dialog .candidate-photo{width:100%;height:min(65dvh,800px);max-height:none;object-fit:contain}
+.equipment-ocr-preview img{height:158px}
+.candidate-review-layout>.equipment-ocr-preview img{height:530px}
+.ocr-batch-preview{width:100%;height:220px}
+@media(max-width:700px){
+  .app-nav a{font-size:12px}.app-nav{gap:4px 12px}
+  .equipment-list{grid-template-columns:repeat(4,minmax(0,1fr))}.equipment-slot{min-height:80px}
+  .weapon-presets>.panel-heading button,.equipment-add-form input,.equipment-add-form button,.equipment-ocr-heading h3,.equipment-ocr-select-button,.comparison-toolbar select{font-size:12px}
+  .comparison-toolbar select{max-width:140px}
+  .candidate-review-layout>.equipment-ocr-preview img{height:280px}
+}
+
 .stat-simulator{width:100%;max-width:1370px;margin:24px auto;scroll-margin-top:calc(var(--app-toolbar-height,60px) + 16px)}
 .simulator-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
 .simulator-heading h2{margin:0 0 7px;font-size:20px}.simulator-heading p,.simulator-note,.simulator-formula{font-size:12px;line-height:1.6;color:var(--muted)}

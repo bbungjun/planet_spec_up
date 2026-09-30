@@ -44,7 +44,7 @@ export const StatSimulator = memo(function StatSimulator({ input }: { input: Cal
             <label htmlFor={id}>{name}</label>
             <div className="simulator-stepper">
               <button type="button" aria-label={`${name} 1 감소`} onClick={() => step(field, -1)}>−</button>
-              <input id={id} type="number" aria-label={`추가 ${name}`} min={-limit} max={limit} step={integer ? 1 : "any"}
+              <input id={id} name={id} autoComplete="off" inputMode={integer ? "numeric" : "decimal"} type="number" aria-label={`추가 ${name}`} min={-limit} max={limit} step={integer ? 1 : "any"}
                 value={deltas[field]} onChange={event => change(field, event.currentTarget.value)} aria-invalid={!!error}
                 aria-describedby={error ? `${id}-error` : undefined} />
               <button type="button" aria-label={`${name} 1 증가`} onClick={() => step(field, 1)}>+</button>

@@ -62,6 +62,9 @@ function NumericField({
       <label htmlFor={id}>{label}</label>
       <input
         id={id}
+        name={path}
+        autoComplete="off"
+        inputMode={step === 1 ? "numeric" : "decimal"}
         type="number"
         min={min}
         max={max}

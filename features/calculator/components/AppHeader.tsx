@@ -7,6 +7,7 @@ type AppHeaderProps = {
   captainBeta?: boolean;
   inputMode: InputMode;
   savedAt: string | null;
+  hasUnsavedChanges?: boolean;
   storageError: string | null;
   onToggleMode: () => void;
   onSave: () => void;
@@ -18,6 +19,7 @@ export function AppHeader({
   captainBeta = false,
   inputMode,
   savedAt,
+  hasUnsavedChanges = false,
   storageError,
   onToggleMode,
   onSave,
@@ -74,7 +76,7 @@ export function AppHeader({
         <div className="app-header-actions">
           {storageError === null ? (
             <p role="status" aria-label="저장 상태">
-              {savedAt === null ? (
+              {hasUnsavedChanges ? "저장하지 않은 변경 있음" : savedAt === null ? (
                 "저장된 세팅 없음"
               ) : (
                 <>저장됨 <time dateTime={savedAt}>{new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(savedAt))}</time></>

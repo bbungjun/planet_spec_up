@@ -34,7 +34,7 @@ function CandidatePhoto({ file, originalFile = file, alt = "비교 후보 원본
     return () => { URL.revokeObjectURL(url); if (originalUrl !== url) URL.revokeObjectURL(originalUrl); };
   }, [file, originalFile, showOriginalLink]);
   // eslint-disable-next-line @next/next/no-img-element
-  return <><img ref={image} alt={alt} className="candidate-photo"/>
+  return <><img ref={image} alt={alt} width={600} height={400} className="candidate-photo"/>
     {showOriginalLink && <a ref={link} className="candidate-original-link" target="_blank" rel="noopener noreferrer">전체 원본 열기 ↗</a>}</>;
 }
 
@@ -115,7 +115,7 @@ function CandidateCard({ input, candidate, index, onChange, onRemove, onDetails,
   const current = compareCandidate(input, candidate);
   const priceInvalid = !!candidate.price.trim() && parseCandidatePrice(candidate.price) === null;
   const efficiency = candidatePriceEfficiency(current, candidate.price);
-  return <article className="candidate-card" aria-label={`${candidate.name} 비교 결과`} data-candidate-id={candidate.id}>
+  return <article className="candidate-card" aria-label={`${candidate.name} 비교 결과`} data-candidate-id={candidate.id} tabIndex={-1}>
     <div className="comparison-card-top"><span className="comparison-card-label">후보 {String(index + 1).padStart(2, "0")}</span><div className="comparison-card-actions"><button type="button" className="candidate-icon-button" onClick={onDetails} aria-label={`${candidate.name} 상세 보기`} title="원본·옵션"><More/></button><button type="button" className="candidate-icon-button" onClick={onRemove} aria-label={`${candidate.name} 삭제`}><Close/></button></div></div>
     <div className="comparison-item-heading"><h3 title={candidate.name}>{candidate.name}</h3><p>{getEquipmentSlotLabel(input, candidate.slot)} 교체 후</p></div>
     <div className="comparison-key-metrics" aria-label="선택 프리셋 비교"><Metric label="최대 스탯공" value={current.stat} emphasized/><Metric label="환산 공격력" value={current.converted}/></div>
@@ -125,8 +125,8 @@ function CandidateCard({ input, candidate, index, onChange, onRemove, onDetails,
     {candidate.image && <button type="button" className="candidate-source-preview" aria-label={`${candidate.name} 원본 이미지 확대`} onClick={() => setImageOpen(true)}>
       <span>원본 이미지 <small>확대 ↗</small></span><CandidatePhoto file={candidate.previewImage ?? candidate.image} alt={`${candidate.name} 원본 이미지`}/>
     </button>}
-    <label className="candidate-price"><span>구매 가격</span><span className="candidate-price-input"><input type="number" min="0" step="any" value={candidate.price} placeholder="미입력" aria-label={`${candidate.name} 구매 가격`} aria-invalid={priceInvalid || undefined} onChange={event => onChange({ ...candidate, price: event.target.value })}/><span>억 메소</span></span></label>
-    {priceInvalid && <p className="candidate-price-error" role="alert">0보다 큰 가격을 입력하세요.</p>}
+    <label className="candidate-price"><span>구매 가격</span><span className="candidate-price-input"><input name={`candidate-${candidate.id}-price`} autoComplete="off" inputMode="decimal" type="number" min="0" step="any" value={candidate.price} placeholder="미입력" aria-label={`${candidate.name} 구매 가격`} aria-invalid={priceInvalid || undefined} aria-describedby={priceInvalid ? `candidate-${candidate.id}-price-error` : undefined} onChange={event => onChange({ ...candidate, price: event.target.value })}/><span>억 메소</span></span></label>
+    {priceInvalid && <p id={`candidate-${candidate.id}-price-error`} className="candidate-price-error" role="alert">0보다 큰 가격을 입력하세요.</p>}
     <div className={`candidate-efficiency${efficiency !== null && efficiency < 0 ? " is-down" : ""}`}>
       <span>1억 메소당<small>환산공 상승률</small></span>
       <output aria-label={`${candidate.name} 1억 메소당 환산공 상승률`}>{efficiency === null ? "—" : percent(efficiency)}</output>
@@ -150,13 +150,15 @@ function CandidateDetails({ input, candidate, onChange }: { input: CalculatorInp
       choices={RING_SLOTS.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
       onSelect={slot => onChange({ ...candidate, slot })} />}
     {isPendantSlot(input, candidate.slot) && <PendantSelect label="후보 펜던트 종류" value={candidate.equipment.pendantId} onChange={pendantId => onChange({ ...candidate, name: pendantLabel(pendantId) ?? candidate.name, equipment: { ...candidate.equipment, pendantId } })} />}
-    <div className="candidate-option-grid">{fields.map(({ field, suffix, max, step }) => <label key={field}>{suffix(rule.mainStat, rule.subStat)}<small>현재 {input.equipment[candidate.slot]?.[field]?.trim() || "—"}</small><input type="number" min="0" max={max} step={step} value={candidate.equipment[field] ?? ""} aria-label={`${candidate.name} ${suffix(rule.mainStat, rule.subStat)}`} placeholder={field.startsWith("required") ? "확인 필요" : "0"} onChange={event => onChange({ ...candidate, equipment: { ...candidate.equipment, [field]: event.target.value } as EquipmentInput })}/></label>)}</div>
+    <div className="candidate-option-grid">{fields.map(({ field, suffix, max, step }) => <label key={field}>{suffix(rule.mainStat, rule.subStat)}<small>현재 {input.equipment[candidate.slot]?.[field]?.trim() || "—"}</small><input name={`candidate-${candidate.id}-${field}`} autoComplete="off" inputMode={step === 1 ? "numeric" : "decimal"} type="number" min="0" max={max} step={step} value={candidate.equipment[field] ?? ""} aria-label={`${candidate.name} ${suffix(rule.mainStat, rule.subStat)}`} placeholder={field.startsWith("required") ? "확인 필요" : "0"} onChange={event => onChange({ ...candidate, equipment: { ...candidate.equipment, [field]: event.target.value } as EquipmentInput })}/></label>)}</div>
     <details className="candidate-other-presets"><summary>다른 프리셋에서 비교</summary>{compareCandidatePresets(input, candidate).filter(value => value.preset !== current.preset).map(value => <section key={value.preset}><h4>{WEAPON_PRESETS.find(preset => preset.id === value.preset)!.label}</h4><div className="candidate-detail-metrics"><Metric label="최대 스탯공" value={value.stat}/><Metric label="환산 공격력" value={value.converted}/></div><ComparisonNotice value={value}/></section>)}</details>
   </>;
 }
 
-export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, onEditBaseStats }: { input: CalculatorInput; initialSlot: EquipmentSlot; onPresetSelect?: (id: WeaponPresetId) => void; onEditBaseStats: () => void }) {
+export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, onEditBaseStats, onPendingChange }: { input: CalculatorInput; initialSlot: EquipmentSlot; onPresetSelect?: (id: WeaponPresetId) => void; onEditBaseStats: () => void; onPendingChange?: (pending: boolean) => void }) {
   const [candidates, setCandidates] = useState<PurchaseCandidate[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [restoredId, setRestoredId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [inputMethod, setInputMethod] = useState<"photo" | "manual">("photo");
   const [manualEquipment, setManualEquipment] = useState<EquipmentInput>(() => candidateEquipment({}));
@@ -165,13 +167,26 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
   const [name, setName] = useState(""), [price, setPrice] = useState("");
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
+  const deleteFeedback = useRef<HTMLDivElement>(null);
   const nextNumber = useRef(1);
   const slots = comparableSlots(input);
   const detailCandidate = candidates.find(candidate => candidate.id === detailsId);
+  const visibleCandidates = candidates.filter(candidate => !removedIds.includes(candidate.id));
+  useEffect(() => {
+    onPendingChange?.(candidates.length > 0 || importOpen);
+    return () => onPendingChange?.(false);
+  }, [candidates.length, importOpen, onPendingChange]);
   useEffect(() => {
     if (!lastAddedId) return;
-    board.current?.querySelector<HTMLElement>(`[data-candidate-id="${lastAddedId}"]`)?.scrollIntoView?.({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    board.current?.querySelector<HTMLElement>(`[data-candidate-id="${lastAddedId}"]`)?.scrollIntoView?.({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest", inline: "nearest" });
   }, [lastAddedId]);
+  useEffect(() => {
+    if (removedIds.length) deleteFeedback.current?.querySelector<HTMLButtonElement>(`[data-undo-id="${removedIds.at(-1)}"]`)?.focus();
+  }, [removedIds]);
+  useEffect(() => {
+    if (restoredId) board.current?.querySelector<HTMLElement>(`[data-candidate-id="${restoredId}"]`)?.focus();
+  }, [restoredId]);
   const changeCandidate = (next: PurchaseCandidate) => setCandidates(current => current.map(item => item.id === next.id ? next : item));
   const openImport = () => { setDraftSlot(slots.includes(initialSlot) ? initialSlot : "weapon"); setName(`후보 ${nextNumber.current}`); setPrice(""); setInputMethod("photo"); setManualEquipment(candidateEquipment({})); setImportOpen(true); };
   const addCandidate = (candidate: Omit<PurchaseCandidate, "id">) => {
@@ -182,15 +197,22 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
   };
   return <section className="panel candidate-comparison" id="candidate-comparison" aria-label="구매 후보 비교" data-candidate-comparison>
     <div className="game-window-heading"><span className="game-window-label" aria-hidden="true">ITEM COMPARISON</span><span>구매 후보 비교</span></div>
-    <div className="comparison-toolbar"><div><h2>장비 비교 <span>{candidates.length}</span></h2>
+    <div className="comparison-toolbar"><div><h2>장비 비교 <span>{visibleCandidates.length}</span></h2>
       {input.character.job === "corsair" && <p className="comparison-condition" aria-live="polite">{activeWeaponPreset(input) === "hunting" ? "사냥 · 호밍 미적용" : "보스 표식 대상 · 호밍 +20%p"}</p>}</div>
       <div className="comparison-toolbar-actions"><select aria-label="비교 전투 프리셋" value={activeWeaponPreset(input)} disabled={!onPresetSelect} onChange={event => onPresetSelect?.(event.target.value as WeaponPresetId)}>{WEAPON_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.label}</option>)}</select><button type="button" className="comparison-add-button" onClick={openImport} aria-label="비교 후보 추가"><Plus/></button></div>
     </div>
     <div className="comparison-board" ref={board} role="group" aria-label="장비 비교 카드 목록" tabIndex={0}>
       <BaselineCard input={input} onRegisterStats={onEditBaseStats}/>
-      {candidates.map((candidate, index) => <CandidateCard key={candidate.id} input={input} candidate={candidate} index={index} onChange={changeCandidate} onRemove={() => setCandidates(current => current.filter(item => item.id !== candidate.id))} onDetails={() => setDetailsId(candidate.id)} onRegisterStats={onEditBaseStats}/>)}
+      {visibleCandidates.map((candidate, index) => <CandidateCard key={candidate.id} input={input} candidate={candidate} index={index} onChange={changeCandidate} onRemove={() => { setRestoredId(null); setRemovedIds(current => [...current, candidate.id]); }} onDetails={() => setDetailsId(candidate.id)} onRegisterStats={onEditBaseStats}/>)}
       <button type="button" className="comparison-add-card" onClick={openImport} aria-label="비교 카드 추가"><span className="comparison-add-symbol"><Plus/></span><strong>비교 대상 추가</strong></button>
     </div>
+    {removedIds.length > 0 && <div className="candidate-delete-feedback" ref={deleteFeedback}>
+      <p role="status">후보 {removedIds.length}개 삭제됨</p>
+      {candidates.filter(candidate => removedIds.includes(candidate.id)).map(candidate => <button key={candidate.id} type="button" className="secondary-button" data-undo-id={candidate.id} aria-label={`${candidate.name} 삭제 취소`} onClick={() => {
+        setRemovedIds(current => current.filter(id => id !== candidate.id)); setRestoredId(candidate.id);
+      }}>{candidate.name} 삭제 취소</button>)}
+      <button type="button" className="secondary-button" onClick={() => { setCandidates(current => current.filter(candidate => !removedIds.includes(candidate.id))); setRemovedIds([]); board.current?.focus(); }}>삭제 알림 닫기</button>
+    </div>}
     <p className="comparison-footnote">구매 후보·사진·가격은 임시 비교용이며, 새로고침하거나 페이지를 닫으면 사라집니다.</p>
     {importOpen && <CandidateDialog title="비교할 장비 추가" onClose={() => setImportOpen(false)}>
       <div className="candidate-input-method" role="group" aria-label="후보 입력 방식">
@@ -208,7 +230,7 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
           <label>비교 부위<select aria-label="직접 입력 비교 부위" value={slots.includes(draftSlot) ? draftSlot : ""} required onChange={event => setDraftSlot(event.target.value as EquipmentSlot)}>
             <option value="" disabled>부위 선택</option>{slots.map(slot => <option key={slot} value={slot}>{getEquipmentSlotLabel(input, slot)}</option>)}
           </select></label>
-          <label>가격 (억 메소)<input aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label>
+          <label>가격 (억 메소)<input name="candidate-draft-price" autoComplete="off" inputMode="decimal" aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label>
         </div>
         {RING_SLOTS.includes(draftSlot) && <RingComparisonTargets job={input.character.job} selected={draftSlot}
           choices={RING_SLOTS.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
@@ -217,14 +239,14 @@ export function CandidateComparisonPanel({ input, initialSlot, onPresetSelect, o
           onChange={pendantId => setManualEquipment(current => ({ ...current, pendantId }))} />}
         <div className="candidate-option-grid">{EQUIPMENT_FIELD_DEFINITIONS.filter(field => field.field !== "damagePercent").map(({ field, suffix, max, step }) => {
           const rule = JOB_RULES[input.character.job], label = suffix(rule.mainStat, rule.subStat);
-          return <label key={field}>{label}<input type="number" min="0" max={max} step={step} value={manualEquipment[field] ?? ""}
+          return <label key={field}>{label}<input name={`candidate-draft-${field}`} autoComplete="off" inputMode={step === 1 ? "numeric" : "decimal"} type="number" min="0" max={max} step={step} value={manualEquipment[field] ?? ""}
             aria-label={`새 후보 ${label}`} placeholder={field.startsWith("required") ? "미입력" : "0"}
             onChange={event => setManualEquipment(current => ({ ...current, [field]: event.target.value }))}/></label>;
         })}</div>
         <div className="candidate-manual-actions"><button type="submit" className="equipment-ocr-apply">후보로 비교</button></div>
       </form> : <EquipmentOcrPanel key={`${draftSlot}:${activeWeaponPreset(input)}`} target={{ job: input.character.job, slot: draftSlot }} slotLabel="구매 후보" purpose="candidate"
         candidateSlots={slots.map(slot => ({ slot, label: getEquipmentSlotLabel(input, slot), equipment: input.equipment[slot] }))}
-        uploadFields={<div className="candidate-import-fields candidate-import-price"><label>가격 (억 메소)<input aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label></div>}
+        uploadFields={<div className="candidate-import-fields candidate-import-price"><label>가격 (억 메소)<input name="candidate-draft-price" autoComplete="off" inputMode="decimal" aria-label="새 후보 구매 가격" type="number" min="0" step="any" value={price} placeholder="예: 0.3" onChange={event => setPrice(event.target.value)}/></label></div>}
         onApply={(target, replacement, source) => {
         if (target.job !== input.character.job || !slots.includes(target.slot)) return;
         const candidateName = pendantLabel(source?.pendantId) || source?.name || name;

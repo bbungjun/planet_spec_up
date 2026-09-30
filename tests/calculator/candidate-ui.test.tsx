@@ -76,6 +76,10 @@ it("OCR review creates temporary before/after comparisons and preserves original
  expect(within(card).getByLabelText("후보 A 1억 메소당 환산공 상승률")).toHaveTextContent("—");
  await add("후보 B");expect(screen.getAllByRole("article")).toHaveLength(2);
  await user.click(screen.getByRole("button",{name:"후보 A 삭제"}));expect(screen.queryByRole("article",{name:"후보 A 비교 결과"})).not.toBeInTheDocument();
+ await user.click(screen.getByRole("button",{name:"후보 A 삭제 취소"}));
+ const restored=within(screen.getByRole("article",{name:"후보 A 비교 결과"}));
+ expect(restored.getByRole("img",{name:"후보 A 원본 이미지"})).toBeInTheDocument();
+ expect(restored.getByLabelText("후보 A 구매 가격")).toHaveValue(0);
 });
 it("routes pasted candidate images from the dialog close-button focus without starting original registration",async()=>{
  seed();render(<CalculatorApp/>);await waitFor(()=>expect(within(panel()).getByRole("button",{name:"비교 카드 추가"})).toBeEnabled());

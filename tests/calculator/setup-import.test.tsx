@@ -111,6 +111,7 @@ it("accepts dropped files and rejects conflicting destinations without partially
 });
 
 it("ignores pending recognition after changing the job", async () => {
+  vi.spyOn(window, "confirm").mockReturnValue(true);
   let finish: (text: string) => void = () => {};
   recognize.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
   const user = userEvent.setup();

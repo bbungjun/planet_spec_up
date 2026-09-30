@@ -422,6 +422,7 @@ describe("calculator app", () => {
   });
 
   it("exposes every character setting and keeps level editable from 1 to 220", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     render(<CalculatorApp />);
     await waitFor(() => expect(screen.getByLabelText("레벨")).toBeEnabled());
