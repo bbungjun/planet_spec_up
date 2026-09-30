@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 const GUIDES = {
   registration: {
     title: "장비 등록 방법",
+    buttonLabel: "장비 등록 하는법",
     image: "/guides/equipment-registration-v2.png",
     width: 1095,
     height: 1437,
@@ -12,6 +13,7 @@ const GUIDES = {
   },
   comparison: {
     title: "장비 비교 방법",
+    buttonLabel: "장비 비교 하는법",
     image: "/guides/equipment-comparison-v1.png",
     width: 1024,
     height: 1536,
@@ -102,10 +104,10 @@ export function EquipmentHowToUse({ kind = "registration" }: { kind?: GuideKind 
   const id = useId();
 
   return <>
-    <button type="button" className="secondary-button equipment-guide-trigger" aria-haspopup="dialog"
-      aria-label={kind === "comparison" ? "How to use · 장비 비교" : undefined}
+    <button type="button" className="equipment-guide-trigger" aria-haspopup="dialog"
       aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(true)}>
-      <span aria-hidden="true">?</span> How to use
+      <span className="equipment-guide-number" aria-hidden="true">{kind === "registration" ? "1" : "2"}</span>
+      <span className="equipment-guide-label">{GUIDES[kind].buttonLabel}</span>
     </button>
     {open && <EquipmentGuideDialog id={id} kind={kind} onClose={() => setOpen(false)} />}
   </>;

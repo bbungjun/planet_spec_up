@@ -76,7 +76,6 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
       <div className="setup-import-intro">
 
         <h1 id="setup-import-heading">나의 장비 작업실 <span aria-hidden="true">✦</span></h1>
-        <EquipmentHowToUse />
       </div>
       <div className={`setup-import-dropzone${dragging ? " is-dragging" : ""}`}
         onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }}
@@ -93,6 +92,10 @@ export function SetupImportPanel({ input, disabled, onApplyAndSave, onPendingCha
           }} />
         <small>설명창 전체·마지막 옵션까지 가림 없이 · 여러 장 끌어놓기</small>
         <small className="setup-image-storage-note">사진은 새로고침·종료 시 사라집니다. 저장한 옵션·설정만 이 브라우저에 남습니다.</small>
+      </div>
+      <div className="equipment-guide-buttons" role="group" aria-label="계산기 사용 방법">
+        <EquipmentHowToUse kind="registration" />
+        <EquipmentHowToUse kind="comparison" />
       </div>
     </div>
     <div className="workshop-character-bar">
