@@ -29,14 +29,12 @@ export function WeaponPresetsPanel({ input, onSelect, onSave, savedAt, storageEr
               <strong>{preset.label}</strong><span>{preset.hint}</span>
               <small>{!hasWeaponInput ? "무기 미등록" : active === preset.id ? "편집 중" : ready ? "무기 등록됨" : "입력 확인"}</small>
             </button>
-            <details className="weapon-preset-details"><summary>{preset.label} 수치</summary><dl>
+            <div className="weapon-preset-metrics"><dl>
               <div><dt>최대 스탯공</dt><dd>{ready ? result.statAttack.toLocaleString("ko-KR") : "—"}</dd></div>
-              <div><dt>대상별 환산공</dt><dd>{ready ? result.convertedAttack.toLocaleString("ko-KR") : "—"}</dd></div>
-              {input.character.job === "corsair" && <div><dt>어드밴스드 호밍</dt><dd>{!ready ? "—" : preset.id === "hunting" ? "미적용" : "표식 대상 +20%p"}</dd></div>}
-              <div><dt>몬스터 방어율</dt><dd>{preview.character.monsterDefense || "0"}%</dd></div>
+              <div><dt>환산 공격력</dt><dd>{ready ? result.convertedAttack.toLocaleString("ko-KR") : "—"}</dd></div>
             </dl>
             {ready && result.issues.some(issue => isWearBlocked(issue)) && <p className="equipment-wear-warning">착용 불가 · 가정값</p>}
-            </details>
+            </div>
           </div>;
         })}
       </div>
