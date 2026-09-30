@@ -169,6 +169,11 @@ it("registers one to three independent weapons and restores them through the UI"
   await user.type(screen.getByLabelText("무기 보스공격력%"), "60");
   expect(within(sidebar).getByRole("status", {name: "저장 상태"})).toHaveTextContent("저장하지 않은 변경 있음");
   await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
+  const savedDialog = screen.getByRole("dialog", {name: "저장되었습니다"});
+  expect(within(savedDialog).getByRole("button", {name: "확인"})).toHaveFocus();
+  await user.click(within(savedDialog).getByRole("button", {name: "확인"}));
+  expect(screen.queryByRole("dialog", {name: "저장되었습니다"})).not.toBeInTheDocument();
+  expect(screen.getByRole("button", {name: "프리셋 저장"})).toHaveFocus();
   const oneWeapon = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
   expect(oneWeapon.ok).toBe(true);
   if (!oneWeapon.ok) throw new Error("save failed");
@@ -181,6 +186,7 @@ it("registers one to three independent weapons and restores them through the UI"
   await user.type(screen.getByLabelText("무기 공격력", {exact: true}), "110");
   await user.type(screen.getByLabelText("무기 방어율 무시%"), "60");
   await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
+  await user.click(within(screen.getByRole("dialog", {name: "저장되었습니다"})).getByRole("button", {name: "확인"}));
   const twoWeapons = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
   expect(twoWeapons.ok).toBe(true);
   if (!twoWeapons.ok) throw new Error("save failed");
@@ -192,6 +198,7 @@ it("registers one to three independent weapons and restores them through the UI"
   await user.type(screen.getByLabelText("일괄 입력 무기 공격력", {exact: true}), "120");
   await user.type(screen.getByLabelText("일괄 입력 무기 총데미지%"), "21");
   await user.click(screen.getByRole("button", {name: "프리셋 저장"}));
+  expect(screen.getByRole("dialog", {name: "저장되었습니다"})).toBeVisible();
   expect(localStorage.length).toBe(1);
   const saved = deserializeSetup(localStorage.getItem(STORAGE_KEY)!);
   expect(saved).toMatchObject({ok: true, value: {input: {weaponPresets: {active: "hunting", entries: {

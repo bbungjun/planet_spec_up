@@ -42,6 +42,7 @@ import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
 import { CashEquipmentPanel, type CashEquipmentChangeHandler } from "./components/CashEquipmentPanel";
 import { createDefaultCashEquipment } from "./domain/cash-equipment";
 import { WeaponPresetsPanel } from "./components/WeaponPresetsPanel";
+import { SaveConfirmationDialog } from "./components/SaveConfirmationDialog";
 import { SetupImportPanel } from "./components/SetupImportPanel";
 import { activeWeaponPreset, captureWeaponPreset, switchWeaponPreset } from "./domain/weapon-presets";
 import type { WeaponPresetId } from "./domain/types";
@@ -78,6 +79,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
   const [pendingCandidates, setPendingCandidates] = useState(false);
   const [pendingImport, setPendingImport] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [saveConfirmationOpen, setSaveConfirmationOpen] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [setupRevision, setSetupRevision] = useState(0);
   const pendingFocusPath = useRef<string | null>(null);
@@ -290,35 +292,37 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
     }
   };
 
-  const handleSave = () => {
+  const handleSave = (): boolean => {
     const aranError = input.character.job === "aran" ? result.issues.find(issue => issue.severity === "error" && (issue.code === "ARAN_REFERENCE_REQUIRED" || issue.path.startsWith("character.aran"))) : undefined;
-    if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return; }
+    if (aranError) { setStorageError(aranError.message); handleNavigate(aranError.path); return false; }
     const criticalError = result.issues.find(issue => issue.code === "CRITICAL_RATE_EXCEEDED" || (issue.severity === "error" && issue.path.endsWith(".criticalRate")));
     if (criticalError) {
       setStorageError(criticalError.message);
       handleNavigate(criticalError.path);
-      return;
+      return false;
     }
     const cashError = result.issues.find(issue => issue.severity === "error" && issue.path.startsWith("cashEquipment."));
     if (cashError) {
       setStorageError("캐시 장비 입력값을 확인한 뒤 다시 저장해주세요.");
       handleNavigate(cashError.path);
-      return;
+      return false;
     }
     const baseStatError = result.issues.find(issue => issue.severity === "error"
       && (issue.path === "character.pureMain" || issue.path === "character.pureSub"));
     if (baseStatError) {
       setStorageError("순수 스탯을 확인한 뒤 다시 저장해주세요.");
       handleNavigate(baseStatError.path);
-      return;
+      return false;
     }
     try {
       const next = captureWeaponPreset(input);
       setSavedAt(save(next));
       setSavedSnapshot(JSON.stringify(next));
       setStorageError(null);
+      return true;
     } catch {
       setStorageError("세팅을 저장할 수 없습니다.");
+      return false;
     }
   };
 
@@ -394,7 +398,9 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       />
       <div className="calculator-page-layout">
       <aside className="calculator-sidebar" aria-label="무기 프리셋 및 저장">
-        <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={handleSave}
+        <WeaponPresetsPanel input={input} onSelect={handlePresetSelect} onSave={() => {
+          if (handleSave()) setSaveConfirmationOpen(true);
+        }}
           savedAt={savedAt} hasUnsavedChanges={hasUnsavedChanges} storageError={storageError} />
       </aside>
       <div className="calculator-page-main">
@@ -463,6 +469,7 @@ export function CalculatorApp({ captainBeta = false, development = false, aranBe
       </div>
       </div>
       </fieldset>
+      {saveConfirmationOpen && <SaveConfirmationDialog onClose={() => setSaveConfirmationOpen(false)} />}
     </main>
   );
 }

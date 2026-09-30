@@ -74,7 +74,8 @@ it("focuses the missing base field and does not persist a half-entered pair", as
   render(<CalculatorApp />); await ready(); setBase("1000", "");
   await userEvent.click(screen.getByRole("button", { name: /오류 순수 부스탯:/ }));
   expect(screen.getByLabelText("순수 STR")).toHaveFocus();
-  await userEvent.click(screen.getByRole("button", { name: "저장" }));
+  await userEvent.click(screen.getByRole("button", { name: "프리셋 저장" }));
+  expect(screen.queryByRole("dialog", { name: "저장되었습니다" })).not.toBeInTheDocument();
   expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
 });
 
@@ -90,12 +91,14 @@ it("retains typed values and prior storage after a failed save", async () => {
   seed(); const original = localStorage.getItem(STORAGE_KEY);
   render(<CalculatorApp />); await ready(); setBase();
   const failure = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw Error("quota"); });
-  await userEvent.click(screen.getByRole("button", { name: "저장" }));
+  await userEvent.click(screen.getByRole("button", { name: "프리셋 저장" }));
+  expect(screen.queryByRole("dialog", { name: "저장되었습니다" })).not.toBeInTheDocument();
   expect(localStorage.getItem(STORAGE_KEY)).toBe(original);
   expect(screen.getByLabelText("순수 DEX")).toHaveValue(1000);
   expect(screen.getByLabelText("순수 STR")).toHaveValue(22);
   failure.mockRestore();
-  await userEvent.click(screen.getByRole("button", { name: "저장" }));
+  await userEvent.click(screen.getByRole("button", { name: "프리셋 저장" }));
+  expect(screen.getByRole("dialog", { name: "저장되었습니다" })).toBeVisible();
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).input.character.pureMain).toBe("1000");
 });
 
