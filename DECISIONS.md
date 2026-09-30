@@ -3417,3 +3417,14 @@
 - 소스 근거·한계: domain/marksman.ts·defaults.ts·calculate.ts·normalize.ts·slots.ts, CalculatorApp.tsx 및 공격력/캐릭터/스탯창/시뮬레이터 컴포넌트를 대조한다. 후보 비교·옵션 효율·시뮬레이터의 기존 shared snapshot 경로를 재사용하며 복제 계산은 만들지 않았다. 신궁 게임 실측·화살/소울 애로우 조건·대표 스킬270 용도·전체 환산공 QA는 후행 범위다.
 - 미실행QA: 이번 사용자 예외에 따라 테스트·새 테스트 작성·Playwright/CUA·브라우저·lint·typecheck·build·게임 실측·QA 에이전트·서버 실행은 수행하지 않는다. 소스 읽기와 Git diff/공백/스테이징 확인만 허용된 작업으로 수행하며 이를 QA 합격이라고 표현하지 않는다. 과거 캡틴·아란/연구 합성 결과는 이번 변경의 통과 결과로 재사용하지 않는다.
 - Git·후속: 부모의 요구사항별 구현 소스 대조를 완료했다. 소스 대조는 QA 통과가 아니며 이번13파일만 `feat/marksman-support`에 커밋·일반푸시하고 원격SHA를 확인한다. 이 기록 시점에는 커밋·푸시 진행 전이며 완료 결과는 후속 기록으로 추가한다. dev-main/main 병합·푸시, 개발/Production 반영은 수행하지 않으며 D-146·D-ENV-001의 별도 서버 반영 정책을 유지한다.
+
+## D-MARKSMAN-IMPLEMENT-002 — 신궁 구현 소스 대조·기능 브랜치 푸시 완료
+
+- 기록 시각: 2026-10-01 04:44:51 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태·요청: D-MARKSMAN-IMPLEMENT-001의 구현 완료 기록. 새 계산 정책·QA 실행·개발/운영 서버 반영 요청은 없다.
+- 이유: 사용자 이유 미명시. 에이전트 기록 목적은 구현 소스 반영과 미실행 QA·Git 결과를 구분해 보관하는 것이다.
+- 소스 결과: 구현 담당Sol6.1 xhigh와 오케스트레이션 담당Astra가 요구사항별 소스를 대조했다. 신궁 전용 분기·기존3.6식·엑스퍼트 비장비공1회·샤프 기본/패시브 분리·화살UI/normalize/저장 보류/오류 이동·구형 원문 보존·shared snapshot·개발 전용 접근 및 정책 기록을 확인했다. 이 확인은 실행 테스트·게임 QA 합격이 아니다.
+- Git 결과: 소스·정책·조사 후속·결정 기록의13파일을 `d61b6f9489bb5e112790d3ef737b24f9615b5c73` (`feat: add master marksman stats and arrow attack input`)로 커밋하고 `origin/feat/marksman-support`에 일반푸시했다. `git ls-remote --heads`의 실제 원격SHA와 로컬HEAD가 일치하고 해당 커밋 직후 worktree가 clean임을 확인했다. diff/스테이징 공백 검사에서 오류가 없었다.
+- 보존·미실행: 원본 앱 루트의 파일·서버·병행 안내UI/결정 기록은 변경하지 않았으며 dev-main/main 병합·푸시와 개발/Production 반영을 수행하지 않았다. 테스트·새 테스트 작성·Playwright/CUA·브라우저·lint·typecheck·build·게임 실측·QA 에이전트·서버 실행은 전부 유예했다.
+- 후속: 이 완료 기록도 같은 기능 브랜치의 문서 커밋으로 추가·푸시하고 최종 원격SHA 일치·clean tree 결과를 응답에 남긴다. 신궁 실측·화살/소울 애로우·대표 스킬/크리·전체 환산공 검증은 사용자 지시대로 후행 범위다.
