@@ -3483,3 +3483,15 @@
 - 근거·산출물: 해당 서비스 실제 도메인 설정 UI, Node DNS 조회 및 CentralNic RDAP의 상태·네임서버 필드. 개인정보가 없는 DNS 저장 화면은 Git 제외 output/domain-setup-20261001/hostingkr-dns.jpg에 보관했다. AGENTS.md에 해당 도메인 연결 승인 범위를 추가했다.
 - Git·검증: 이번 AGENTS 정책과 이 기록만 dev-main에 선택 커밋·푸시한다. 기존 DECISIONS.md 변경은 보존하며 앱 코드 변경이 없어 테스트·빌드는 실행하지 않는다. D-143·D-146·D-ENV-001을 유지한다.
 - 인증 후 확인: 사용자 완료 보고 후 호스팅케이알 화면을 새로고침했고 등록정보 미인증 표시와 인증하기 버튼이 사라진 정상 상태를 확인했다.
+
+## D-DOMAIN-CHECK-001 — 신규 도메인 접속 실패 단계 재확인
+
+- 기록 시각: 2026-10-01 05:11:40 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 접속 불가 재점검 요청 완료 — 새 사용자 결정 없음. 실제 연결·HTTPS는 여전히 미확인이다.
+- 결정·요청: 사용자가 플래닛스펙업.xyz로 아직 접속되지 않는다고 알려 현재 상태와 원인을 재점검한다. 이유는 사용자 이유 미명시.
+- 검증: 호스팅케이알 원본121.254.170.11은 NS4개·A216.198.79.1·www CNAME을 정상 응답한다. Google·Cloudflare의 UDP DNS 및 HTTPS DNS 모두NXDOMAIN(Status3)을 응답하고, 부정 응답의 권한 영역은xyz다. 로컬 브라우저 캐시만의 문제로 단정하지 않으며 현재 실패 지점은 앱 도달 전 공개 DNS 조회 단계다.
+- 등록소·시각: CentralNic RDAP의 등록일2026-09-30T19:59:27Z는 KST2026-10-01 04:59:27이며,05:11 확인 시 약12분 경과했다. RDAP에는 지정 네임서버4개와 add period·이전금지 상태만 있고 hold는 없다. 도메인 신규 등록 정보의 공개 DNS 반영 지연으로 판단하되 정확한 반영 완료 시각은 확정하지 않는다.
+- 서비스 확인: 호스팅케이알 상태 정상·등록정보 미인증 표시 해소를 재확인했고 Vercel 두 신규 주소는 Invalid Configuration이다. 기존 https://planet-spec-up.vercel.app 은HTTP200 및 서비스 제목을 반환한다. 신규 주소의HTTPS 요청은ENOTFOUND로 실패한다.
+- 근거·안내: https://dns.google/resolve 및 https://cloudflare-dns.com/dns-query의 공개 응답, CentralNic RDAP와 양 서비스 실제 UI. 호스팅케이알 https://help.hosting.kr/hc/ko/articles/900001311506의 네임서버 변경 반영 약24시간 안내는 일반 안내이며 이 도메인의 확정 ETA로 적용하지 않는다.
+- 결과·보존: DNS·네임서버·배포 설정을 추가 변경하지 않았다. 기존 주소 사용 가능 상태를 안내하며 전파·HTTPS 정상화 완료를 과장하지 않는다. D-DOMAIN-CONNECT-001·D-146·D-ENV-001을 유지하고 이번 기록만 dev-main에 선택 커밋·푸시한다. 기존 문서·UI 작업을 보존하며 앱 테스트·빌드는 실행하지 않는다.
