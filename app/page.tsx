@@ -1,5 +1,6 @@
 import { CalculatorApp } from "@/features/calculator/CalculatorApp";
+import { readDevelopmentDefault } from "@/features/calculator/developmentDefault.server";
 
-export default function Page() {
-  return <CalculatorApp captainBeta />;
+export default async function Page() {
+  return <CalculatorApp captainBeta developmentDefault={await readDevelopmentDefault()} />;
 }

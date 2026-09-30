@@ -66,8 +66,8 @@ const loadErrorMessage = (message: string) => message === "unsupported-job"
   ? "이번 베타는 캡틴만 지원합니다. 기존 다른 직업의 저장값은 보존되며 캡틴 세팅은 별도로 저장합니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
-export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean }) {
-  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta);
+export function CalculatorApp({ captainBeta = false, development = false, aranBeta = false, developmentDefault = null }: { captainBeta?: boolean; development?: boolean; aranBeta?: boolean; developmentDefault?: string | null }) {
+  const { load, save, clear } = useSavedSetup(captainBeta, development, aranBeta, developmentDefault);
   const [input, setInput] = useState<CalculatorInput>(
     () => createDefaultInput(aranBeta ? "aran" : "corsair"),
   );

@@ -2,6 +2,8 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -33,7 +35,7 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ command, mode }) => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";
@@ -42,8 +44,14 @@ export default defineConfig(async () => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
+  // The local RSC worker cannot read host files from its /bundle filesystem.
+  // Inject this optional fixture only while serving a local development build.
+  const localDefault = command === "serve" && mode === "development" && !process.env.VERCEL
+    ? await readFile(join(process.cwd(), "output", "development-default-setup.json"), "utf8").catch(() => null)
+    : null;
 
   return {
+    define: { "process.env.PLANET_LOCAL_DEFAULT_SETUP": JSON.stringify(localDefault) },
     optimizeDeps: {
       exclude: ["@paddleocr/paddleocr-js"],
       include: ["js-yaml", "clipper-lib", "@techstark/opencv-js", "onnxruntime-web"],
