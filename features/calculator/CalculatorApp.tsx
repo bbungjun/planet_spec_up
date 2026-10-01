@@ -39,6 +39,7 @@ import { EquipmentNavigator } from "./components/EquipmentNavigator";
 import { EquipmentInputTabs } from "./components/EquipmentInputTabs";
 import { CandidateComparisonPanel } from "./components/CandidateComparisonPanel";
 import { StatSimulator } from "./components/StatSimulator";
+import { ChaosWeaponEfficiencyPanel } from "./components/ChaosWeaponEfficiencyPanel";
 import { CalculationIssues } from "./components/CalculationIssues";
 import { AttackSetupPanel } from "./components/AttackSetupPanel";
 import { GuildSkillsPanel } from "./components/GuildSkillsPanel";
@@ -427,6 +428,7 @@ export function CalculatorApp({ mode = "sandbox", developmentDefault = null }: {
             onStackableBuffChange={handleStackableBuffChange} />
       </div>
       </div>
+      {activeWeaponPreset(input) === "chaos" && <ChaosWeaponEfficiencyPanel key={`chaos-efficiency:${input.character.job}:${setupRevision}`} />}
       <StatSimulator key={`simulation:${input.character.job}:${setupRevision}`} input={input} />
       <CandidateComparisonPanel key={`candidates:${input.character.job}:${setupRevision}`} input={input} initialSlot={selectedSlot} onPresetSelect={handlePresetSelect}
         onPendingChange={setPendingCandidates}
