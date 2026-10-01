@@ -60,6 +60,43 @@ it("checks a pixel-selected single candidate and falls through to an alternative
   const cb=callbacks(),recognizer=createPaddleTooltipRecognizer();await recognizer.recognize(source(),cb);
   expect(cb.onPrepared.mock.calls[0][0].name).toBe("good.png");await recognizer.terminate();
 });
+it("does not reread a selected crop's source frame as a second tooltip when OCR differs at the border",async()=>{
+  const selected={x:.102,y:.102,width:.296,height:.596};
+  prepare.mockImplementation(async(_file:File,opts:{region?:OcrBounds;onCandidates?:(result:unknown)=>void})=>{
+    if(!opts.region){opts.onCandidates?.({regions:[good,bad],selected,selectedFrame:good});return new File(["crop"],"selected.png",{type:"image/png"});}
+    return new File(["crop"],opts.region.x===good.x?"source-frame.png":"bad.png",{type:"image/png"});
+  });
+  predict.mockImplementation(async(image:File)=>[{items:image.name.includes("bad")?[item("EQUIPMENT INVENTORY",0)]
+    :items(image.name.includes("second-tooltip-view")?2/3:1).map(i=>({...i,text:image.name.includes("source-frame")?i.text.replace("테스트 장비","테스트 장8"):i.text}))}]);
+  const cb=callbacks(),recognizer=createPaddleTooltipRecognizer();await recognizer.recognize(source(),cb);
+  expect(cb.onPrepared.mock.calls[0][0].name).toBe("selected.png");
+  expect(predict.mock.calls.map(call=>call[0].name)).toEqual(["mask-selected.png","mask-bad.png","mask-second-tooltip-view.png"]);
+  expect(mapReviewedStats(cb.onReview.mock.calls[0][0] as OcrReview,"corsair").mainFlat).toBe("13");
+  await recognizer.terminate();
+});
+it("can still recover from the source frame when the inset crop loses required structure",async()=>{
+  const selected={x:.102,y:.102,width:.296,height:.596};
+  prepare.mockImplementation(async(_file:File,opts:{region?:OcrBounds;onCandidates?:(result:unknown)=>void})=>{
+    if(!opts.region){opts.onCandidates?.({regions:[good],selected,selectedFrame:good});return new File(["inset"],"inset.png",{type:"image/png"});}
+    return new File(["frame"],"frame.png",{type:"image/png"});
+  });
+  predict.mockImplementation(async(image:File)=>[{items:image.name.includes("inset")?[item("제목만",10)]
+    :items(image.name.includes("second-tooltip-view")?2/3:1)}]);
+  const cb=callbacks(),recognizer=createPaddleTooltipRecognizer();await recognizer.recognize(source(),cb);
+  expect(cb.onPrepared.mock.calls[0][0].name).toBe("frame.png");
+  expect(mapReviewedStats(cb.onReview.mock.calls[0][0] as OcrReview,"corsair").mainFlat).toBe("13");
+  await recognizer.terminate();
+});
+it("still requires a selection when a selected frame and a separate frame are both complete",async()=>{
+  const selected={x:.102,y:.102,width:.296,height:.596};
+  prepare.mockImplementation(async(_file:File,opts:{region?:OcrBounds;onCandidates?:(result:unknown)=>void})=>{
+    if(!opts.region){opts.onCandidates?.({regions:[good,bad],selected,selectedFrame:good});return new File(["crop"],"selected.png",{type:"image/png"});}
+    return new File(["other gear"],"other.png",{type:"image/png"});
+  });
+  predict.mockResolvedValue([{items:items()}]);
+  const cb=callbacks();await expect(createPaddleTooltipRecognizer().recognize(source(),cb)).rejects.toMatchObject({code:"MULTIPLE_TOOLTIPS"});
+  expect(cb.onPrepared).not.toHaveBeenCalled();expect(cb.onReview).not.toHaveBeenCalled();
+});
 it("returns not-found when color and all candidate crops still lack a complete body",async()=>{
   predict.mockResolvedValue([{items:[item("불완전한 창",10)]}]);
   const cb=callbacks();await expect(createPaddleTooltipRecognizer().recognize(source(),cb)).rejects.toMatchObject({code:"TOOLTIP_NOT_FOUND"});

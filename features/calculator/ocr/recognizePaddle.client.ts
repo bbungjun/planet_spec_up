@@ -146,9 +146,15 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
       if (!options.region && candidates?.regions.length) {
         const current = await withAbort(ensure(version), signal);
         const matches: Array<{ file: File; warnings: string[]; region: OcrBounds; assessment: TooltipCandidateAssessment; first: { items: Item[]; width: number; height: number } }> = [];
-        const regions = [...(candidates.selected ? [candidates.selected] : []), ...candidates.regions].slice(0, 4);
+        // 선택한 crop과 그 원본 프레임은 같은 물리적인 창이다. 테두리 유무에 따른
+        // 판독 차이를 별도 장비로 비교하지 않으며, 다른 프레임은 계속 검사한다.
+        const selectedFrame = candidates.selectedFrame;
+        const selected = candidates.selected;
+        const regions = [...(selected ? [selected] : []), ...candidates.regions.slice(0, 4)];
         for (const [index, region] of regions.entries()) {
           active();
+          if (selectedFrame && selected && sameCandidateRegion(region, selectedFrame)
+            && matches.some(match => sameCandidateRegion(match.region, selected))) continue;
           if (matches.some(match => sameCandidateRegion(match.region, region))) continue;
           let candidateWarnings: string[] = [];
           const candidate = candidates.selected === region && prepared ? prepared

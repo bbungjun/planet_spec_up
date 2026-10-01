@@ -20,7 +20,10 @@ function intersection(a: TooltipRect, b: TooltipRect): number {
 function compositeFrame(candidate: TooltipRect, all: TooltipRect[]): boolean {
   const children = all.filter(other => other !== candidate && other.width >= candidate.width * .4 && other.width < candidate.width * .8 && other.height > candidate.height * .6
     && intersection(candidate, other) / (other.width * other.height) > .9);
-  return children.some((first, i) => children.slice(i + 1).some(second => intersection(first, second) / Math.min(first.width * first.height, second.width * second.height) < .15));
+  // 반투명 창 안의 인벤토리 세로선도 작은 프레임을 만든다. 서로 겹치거나
+  // 경계가 맞닿은 조각만으로 온전한 외곽을 제거하지 않고, 실제 가로 틈을 요구한다.
+  return children.some((first, i) => children.slice(i + 1).some(second =>
+    Math.max(first.x, second.x) - Math.min(first.x + first.width, second.x + second.width) >= Math.max(3, candidate.width * .005)));
 }
 
 /**
@@ -114,7 +117,9 @@ function detectFlexibleFrames({ width, height, data }: Pixels, neutral: boolean)
     if (x < 0 || y < 0 || x >= width || y >= height) return 0;
     const r = channel(x, y, 0), g = channel(x, y, 1), b = channel(x, y, 2);
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    if (neutral) return max < 135 && min > 3 ? 1 : 0;
+    // 검은 배경 위 반투명 남색 테두리는 R/G가 0일 수 있다. 완전한 검정만
+    // 제외하고, 경계 대비·닫힌 프레임·본문 검사로 배경과 구분한다.
+    if (neutral) return max <= 135 && max > 3 ? 1 : 0;
     if (max < 75 || max - min < 35) return 0;
     if (r > b * 1.35 && g > b * 1.2 && r / g > .8 && r / g < 1.9) return 1;
     if (b > r * 1.2 && g > r * 1.1) return 2;

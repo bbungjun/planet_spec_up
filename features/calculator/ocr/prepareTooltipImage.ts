@@ -5,8 +5,8 @@
 import { detectTooltipRegions, selectTooltipRegion } from "./detectTooltip";
 import type { OcrBounds } from "./types";
 
-/** 후보는 원본 상대 좌표이고 selected는 실제로 분리한 inset 적용 후 영역이다. OCR 단계에서 둘 다 구조를 검사한다. */
-export type TooltipCandidateRegions = { regions: OcrBounds[]; selected: OcrBounds | null };
+/** selectedFrame은 선택한 원본 프레임, selected는 테두리를 제외해 실제 분리한 영역이다. */
+export type TooltipCandidateRegions = { regions: OcrBounds[]; selected: OcrBounds | null; selectedFrame?: OcrBounds };
 
 /**
  * 이미지 면적을 제한하고, 넓은 캡처에는 자동 탐지, 지정 영역에는 좌표 검증 후 자르기를 수행한다.
@@ -25,6 +25,7 @@ export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarn
     const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
     if (!context) throw new Error("Canvas unavailable");
     let rect;
+    let selectedFrame: OcrBounds | undefined;
     let detectedRegions: OcrBounds[] = [];
     if (region) {
       if (Object.values(region).some(value => !Number.isFinite(value)) || region.width <= 0 || region.height <= 0 || region.x < 0 || region.y < 0 || region.x + region.width > 1.001 || region.y + region.height > 1.001) throw { code: "INVALID_CROP", retryable: false };
@@ -41,13 +42,15 @@ export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarn
         throw { code: candidates.length ? "MULTIPLE_TOOLTIPS" : "TOOLTIP_NOT_FOUND", retryable: false, regions: detectedRegions };
       }
       // 자동 검출 프레임의 테두리만 안쪽으로 줄인다. 사용자 지정 영역에는 같은 inset을 적용하지 않는다.
+      selectedFrame = { x: rect.x / bitmap.width, y: rect.y / bitmap.height,
+        width: rect.width / bitmap.width, height: rect.height / bitmap.height };
       const inset = Math.max(2, Math.round(rect.width * .01));
       rect = { x: rect.x + inset, y: rect.y + inset, width: rect.width - inset * 2, height: rect.height - inset * 2 };
     }
     rect.width = Math.min(rect.width, bitmap.width - rect.x);
     rect.height = Math.min(rect.height, bitmap.height - rect.y);
     if (rect.width < 30 || rect.height < 30) throw { code: "INVALID_CROP", retryable: false };
-    if (!region) onCandidates?.({ regions: detectedRegions, selected: { x: rect.x / bitmap.width, y: rect.y / bitmap.height,
+    if (!region) onCandidates?.({ regions: detectedRegions, selectedFrame, selected: { x: rect.x / bitmap.width, y: rect.y / bitmap.height,
       width: rect.width / bitmap.width, height: rect.height / bitmap.height } });
     if (rect.y + rect.height >= bitmap.height - 5 || rect.x + rect.width >= bitmap.width - 5) onWarnings?.(["설명창이 사진 끝에 닿아 있어요. 마지막 옵션이 잘리지 않았는지 확인해주세요."]);
     canvas.width = rect.width; canvas.height = rect.height;

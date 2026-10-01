@@ -74,6 +74,28 @@ describe("tooltip frame detection", () => {
     expect(Math.abs(found[0].height - 245)).toBeLessThan(8);
   });
 
+  it("finds a translucent navy frame whose red and green channels reach zero", () => {
+    const pixels = screenshot();
+    const rect = { x: 100, y: 100, width: 250, height: 450 };
+    for (let y = rect.y; y < rect.y + rect.height; y++) for (let x = rect.x; x < rect.x + rect.width; x++) {
+      pixels.set(x, y, [0, 0, 40]);
+    }
+    pixels.optionRows(rect);
+    const found = detectTooltipRegions(pixels);
+    expect(found).toHaveLength(1);
+    expect(Math.abs(found[0].x - rect.x)).toBeLessThan(5);
+    expect(Math.abs(found[0].width - rect.width)).toBeLessThan(6);
+  });
+
+  it("preserves an enclosing frame when background grid fragments overlap", () => {
+    const pixels = screenshot();
+    const rect = { x: 100, y: 100, width: 400, height: 450 };
+    pixels.frame(rect);
+    pixels.frame({ x: 100, y: 100, width: 180, height: 450 });
+    pixels.frame({ x: 270, y: 100, width: 230, height: 450 });
+    expect(detectTooltipRegions(pixels)).toEqual([rect]);
+  });
+
   it("keeps separate tooltips separate instead of joining two items' options", () => {
     const pixels = screenshot();
     pixels.frame({ x: 80, y: 35, width: 200, height: 430 });
@@ -123,11 +145,15 @@ describe("browser-local tooltip preparation", () => {
     pixels.frame({ x: 450, y: 180, width: 200, height: 420 });
     pixels.optionRows({ x: 450, y: 180, width: 200, height: 420 });
     const { bitmap, canvas, context } = browser(pixels);
-    const prepared = await prepareTooltip(file());
+    const onCandidates = vi.fn();
+    const prepared = await prepareTooltip(file(), { onCandidates });
     expect(prepared.name).toBe("isolated-tooltip.png");
     expect(canvas).toMatchObject({ width: 196, height: 416 });
     expect(context.drawImage).toHaveBeenLastCalledWith(bitmap, 452, 182, 196, 416, 0, 0, 196, 416);
     expect(bitmap.close).toHaveBeenCalledTimes(1);
+    expect(onCandidates).toHaveBeenCalledWith({ regions: [{ x: .45, y: 180 / 700, width: .2, height: .6 }],
+      selectedFrame: { x: .45, y: 180 / 700, width: .2, height: .6 },
+      selected: { x: .452, y: 182 / 700, width: .196, height: 416 / 700 } });
   });
 
   it("preserves a tight portrait capture without cropping its actual options", async () => {
