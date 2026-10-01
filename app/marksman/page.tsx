@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function MarksmanPage() {
-  return <CalculatorApp marksmanBeta />;
+  return <CalculatorApp mode="marksman" />;
 }

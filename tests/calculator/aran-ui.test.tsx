@@ -7,7 +7,7 @@ import { createDefaultInput } from "@/features/calculator/domain/defaults";
 afterEach(() => { window.localStorage.clear(); vi.restoreAllMocks(); });
 
 it("keeps an empty Aran beta clean until the user changes its own input", async () => {
-  render(<CalculatorApp aranBeta />);
+  render(<CalculatorApp mode="aran" />);
   await waitFor(() => expect(screen.getByRole("button", { name: "저장" })).toBeEnabled());
   const blocked = () => {
     const event = new Event("beforeunload", { cancelable: true });
@@ -23,7 +23,7 @@ it("switches to Aran, auto derives combo critical and saves to an isolated devel
   const captain=serializeSetup(createDefaultInput("corsair"));
   window.localStorage.setItem(CAPTAIN_BETA_STORAGE_KEY,captain);
   vi.spyOn(window,"confirm").mockReturnValue(true);
-  render(<CalculatorApp development />);
+  render(<CalculatorApp mode="development" />);
   const job=screen.getByLabelText("직업"); await waitFor(()=>expect(job).not.toBeDisabled());
   fireEvent.change(job,{target:{value:"aran"}});
   expect(screen.getByLabelText("순수 STR")).toBeInTheDocument();

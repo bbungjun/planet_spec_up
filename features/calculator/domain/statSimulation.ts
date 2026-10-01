@@ -1,5 +1,5 @@
 import { calculateFromSnapshot, createCalculationSnapshot, type CalculationSnapshot } from "./calculate";
-import { isWearBlocked } from "./requirements";
+import { assessBaseline, hasMeasuredPureStats } from "./baselinePolicy";
 import type { CalculatorInput } from "./types";
 
 export const SIMULATION_FIELDS = [
@@ -27,11 +27,8 @@ export function simulateStats(input: CalculatorInput, deltas: SimulationInput) {
   const next: CalculationSnapshot = { ...snapshot };
   const errors: Partial<Record<SimulationField, string>> = {};
   const values = {} as Record<SimulationField, number>;
-  const estimated = !input.character.pureMain?.trim() || !input.character.pureSub?.trim();
-  const blocked = before.issues.some(issue => issue.severity === "error") ? "현재 세팅의 입력값을 먼저 확인해주세요."
-    : before.issues.some(issue => issue.code === "MISSING_WEAPON_ATTACK") ? "현재 무기의 공격력을 먼저 입력해주세요."
-    : before.issues.some(isWearBlocked) ? "현재 장비의 착용 조건을 먼저 확인해주세요."
-    : before.issues.some(issue => issue.code === "LEGACY_DAMAGE_SPLIT") ? "기존 보공·총데미지 합산값을 분리한 뒤 비교해주세요." : null;
+  const estimated = !hasMeasuredPureStats(input);
+  const blocked = assessBaseline("simulation", [before], estimated).blocked[0] ?? null;
   for (const { field, limit, integer } of SIMULATION_FIELDS) {
     const raw = deltas[field].trim(), delta = raw === "" ? 0 : Number(raw);
     values[field] = delta;

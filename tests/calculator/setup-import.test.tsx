@@ -57,7 +57,8 @@ it("reviews common armor and three weapons, then saves and restores them with on
 it("keeps the previous setup and the reviewed batch when browser saving fails, and supports retry", async () => {
   const previous = createDefaultInput("corsair");
   previous.equipment.necklace!.mainFlat = "30";
-  const raw = serializeSetup(previous);
+  const fixedSavedAt = "2026-09-30T10:00:00.000Z";
+  const raw = serializeSetup(previous, fixedSavedAt);
   localStorage.setItem(STORAGE_KEY, raw);
   const user = userEvent.setup();
   render(<CalculatorApp />);
@@ -68,10 +69,14 @@ it("keeps the previous setup and the reviewed batch when browser saving fails, a
   await user.click(saveButton());
   expect(screen.getByRole("alert")).toHaveTextContent("브라우저에 저장하지 못했습니다");
   expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+  expect(document.querySelector("time[datetime]")).toHaveAttribute("datetime", fixedSavedAt);
   await userEvent.click(screen.getByRole("tab", { name: "장비별 입력" }));
   await user.click(screen.getByRole("button", { name: "망토 편집" }));
   expect(screen.getByLabelText("망토 DEX", { exact: true })).toHaveValue(null);
   expect(saveButton()).toBeEnabled();
+  const pendingLeave = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(pendingLeave);
+  expect(pendingLeave.defaultPrevented).toBe(true);
   await user.click(saveButton());
   expect(write).toHaveBeenCalledTimes(2);
   expect(deserializeSetup(localStorage.getItem(STORAGE_KEY)!)).toMatchObject({ ok: true, value: { input: {

@@ -2,18 +2,14 @@ import { ThemeToggle } from "./ThemeToggle";
 import { GameIcon } from "./GameVisuals";
 
 type AppHeaderProps = {
-  captainBeta?: boolean;
-  aranBeta?: boolean;
-  marksmanBeta?: boolean;
+  brand?: string | null;
   onSave: () => void;
   onLoad: () => void;
   onReset: () => void;
 };
 
 export function AppHeader({
-  captainBeta = false,
-  aranBeta = false,
-  marksmanBeta = false,
+  brand = "EQUIPMENT LAB",
   onSave,
   onLoad,
   onReset,
@@ -24,7 +20,7 @@ export function AppHeader({
         <div className="app-topbar">
           <a className="app-brand" href="#page-top" aria-label="플래닛 계산기 처음으로">
             <span className="brand-symbol"><GameIcon name="leaf" /></span>
-            <span>플래닛{!captainBeta && <span className={`brand-secondary${aranBeta || marksmanBeta ? " beta-release-label" : ""}`}>{aranBeta ? "아란 참고 베타" : marksmanBeta ? "신궁 베타" : "EQUIPMENT LAB"}</span>}</span>
+            <span>플래닛{brand !== null && <span className={`brand-secondary${brand !== "EQUIPMENT LAB" ? " beta-release-label" : ""}`}>{brand}</span>}</span>
             <span className="beta-badge">BETA</span>
           </a>
           <ThemeToggle />

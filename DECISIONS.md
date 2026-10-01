@@ -3754,3 +3754,63 @@
 - 개발 동기화·완료 문서: 원본 dev-main을4a084bb에서 배포 bac7792로 fast-forward해 AGENTS 정책·CHANGELOG·package0.0.0·준비 결정 기록을 동기화했다. 이 완료 기록만 dev-main의 별도 문서 커밋에 포함하고 그 parent는 배포 bac7792로 유지한다. main/tag/release branch에는 완료 문서를 추가 푸시하지 않아 운영·태그는 bac7792에 고정된다.
 - 미커밋 보존: 원본DECISIONS96줄 추가/1줄 삭제를 Git 제외 output/release-0.0.0-sync-20261001-061751에 원문722443바이트·patch·SHA-256C677991D289C5D22BE3336514D7213D6C4C25B66D663E632D043FE2650D1ACD9로 백업했다. exact scoped stash aa86fec1f0fe4307fe2300654b24c9de5665cb20으로 보관/복원했고 blob-ID 헤더 외 모든 변경 내용이 초기 패치와 동일함을 확인했다(payload SHA-25631E35ED5CA8AD03EC9F56839D5A268F9DCEB79B95D2F5C7C433EBB354F445463). 검증 후 이번 stash만 제거했으며 기존master 복구stash f8470c13489c7ccd9c26f4ca6c6fc4a91b5d9dda는 유지한다. 해당96/1은 완료 문서 커밋에서도 제외한다.
 - QA·후속 구분: 원격 자동 빌드·HTTP 확인은 승인된 운영 전달 검증이며 게임 실측·계산 QA·사용자 POC 합격을 뜻하지 않는다. 이번 동기화/기록에서 로컬 테스트·새 테스트·타입·lint·build·브라우저·서버 실행·QA 에이전트는 하지 않았고 기존 서버·개인 자료를 보존한다. 완료 문서 dev-main 일반푸시와 최종ref/미커밋 보존 확인 후 신궁 worktree는 clean 상태에서 원래 feat/marksman-support2163563 checkout으로 복귀하며 branch/tag/worktree를 삭제하지 않는다. 추가 완료 기록 루프는 만들지 않는다.
+
+## D-ARCHITECTURE-IMPLEMENT-001 — 네 추천 구조의 새 worktree 구현과 저장 정책 A 확정
+
+- 기록 시각: 2026-10-01 06:32:12 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 확정 요청 반영 완료. 구조 변경은 구현·검증했으며 계산 정책 변경·개발/운영 서버 반영 승인이 아니다.
+- 결정·요청: “1,2,3,4 의 구조에 대해 새로운워킹트리에서 전부 추천안을 기준으로 수정하고 관련내용들을 전부 기록후 PAAR 형식으로 기록해둔 문서를 html 파일로 만들어서 보고 해줘. 오케스트레이션으로만 astra 모델이고 구현은 gpt6.1sol xhigh”. 직전 저장 정책 Q1에는 A(현행 허용/차단·오류 우선순위를 보존하고 구조만 개선)를 명시 선택했다.
+- 이유: 사용자 이유 미명시. 에이전트 판단으로 정책 변경과 구조 변경의 효과를 분리하기 위해 기존 차이를 보존했다. 이를 사용자 이유로 단정하지 않는다.
+- 범위: 기준4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b에서 `C:/Users/PC/.codex/worktrees/architecture-refactor/플래닛` 및 비운영 `refactor/architecture-deepening`으로 작업했다. GPT-6.1 Sol xhigh가 코드·테스트·기술기록·PAAR 산출물을 맡고 Astra는 오케스트레이션만 담당했다. 후속 병렬 Sol 보고서 담당이 PAAR Markdown/HTML 및 렌더 확인을 맡았으며 최종 Git 작업은 구현 담당이 한다.
+- 근거: D-ARCHITECTURE-REVIEW-001·D-ARCHITECTURE-DESIGN-001의 TS-ARCH-001~004와 사용자 A 답변. AGENTS.md에 이번 worktree/모델 분담/현행 정책 유지/검증/비운영 한정 예외를 추가했다. 과거 신궁 QA 유예는 과거 해당 요청에 한정하고 이번 구조 개선의 QA 금지로 확대하지 않았다.
+- 결과: 저장 준비·검증·동일 객체 저장·성공 반환은 `saveBaselineSetup`, 인식값 검토·중복·목적지는 `batchReview`, 직업/저장/이동 정책은 `runtime`, 목적별 계산 허용은 `baselinePolicy`에 모았다. 실제 caller의 반복 검증/boolean/issue 판정을 제거했다. 계산식·공통 snapshot·raw 저장·키·구형 fallback·reset sentinel·활성 무기 권위·취소/늦은 결과·목적별 차이를 보존했다.
+- 산출물: TROUBLESHOOTING.md §7에 네 항목 완료 상태·파일/줄·검증·한계를 추가하고 초기 진단/제안 이력은 보존했다. `docs/architecture-paar-report.md`와 `.html`은 실제 완료 결과를 PAAR로 보고한다. 사용자 결정 원장은 이 DECISIONS.md 한 파일이며 별도 ADR/결정 원장을 만들지 않는다.
+- Git·보존: 이번 worktree의 코드·문서·비운영 커밋·푸시 범위만 승인됐다. 원본 앱의 dev-main·기존 DECISIONS 미커밋96줄 추가/1줄 삭제·원본3000 서버·병행 변경·개인 자료는 수정하지 않는다. dev-main/main 병합·푸시·Production 배포·DNS·유료/외부 OCR 도입은 진행하지 않는다. 관련D-146·D-ENV-001·D-148·D-168.
+
+## D-ARCHITECTURE-RESULT-001 — 구조 개선 실행 검증과 기준 실패 분리
+
+- 기록 시각: 2026-10-01 06:32:12 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 구조 개선 구현·검증·기술기록 완료. 비운영 소스 커밋 후 PAAR 최종 문서/HTML QA와 함께 푸시·원격SHA 확인한다. 전체 suite는 미통과이며 게임 실측/운영 배포는 수행하지 않았다.
+- 수행 내용: 신규 interface 테스트 4파일과 저장/OCR/UI 회귀를 보강했고 기존 assertion을 약하게 변경하지 않았다. 독립 정적 리뷰는 네 module의 실제 depth 증가를 확인했다. 빈 파일명 동일 이미지의 존재 판정 회귀를 `!== undefined`로 수정하고 초기/재시도 회귀를 추가했다. 저장 시각의 자기상수 비교는 실제 localStorage 실패·사진 UI 시각·일반 저장의 실제 렌더 interface 관찰로 교체했다. 일반 저장 실패에서 기존 오류 UI가 저장 시각을 숨기는 동작은 보존했다.
+- 실행 결과: 관련7파일53개 전부 통과. 최종 전체63파일613개는603통과·10실패다. 기준4a084bb1의 clean archive에서 실패6파일73개를 실행해63통과·같은10개 실패를 확인했고 실패집합은 정확히 동일했다. 기준 묶음의 캡틴 UI가 로드 timeout에서 끝난 경우는 단독 실행으로 최종과 같은 옛 `toBeDisabled` :17 assertion까지 재현했다. 신규 실패 테스트는 없으나 전체 테스트 부채가 해결됐다고 표현하지 않는다.
+- 실패 분류: 신궁 최신 +10 비장비공/화살0/크리 패시브와 공개3직업 선택에 앞선 기대값이 남았다. 이 작업에서 신궁 게임 수치나 기존 테스트 기대치를 바꾸어 통과를 만들지 않았다. 증거: `output/architecture/full-suite-final.json`, `baseline-regression.json`, `baseline-captain-alone.json`, `baseline-comparison.json`, `final-targeted.json` 및 같은 이름의 실행 로그. clean archive와 핵심 source/test blob의 기준 일치도 독립 검토했다.
+- 정적·빌드: lint 오류0·경고0, 최종 `npm run build:vercel` 후 `npm run typecheck` 통과, 기존 `npm run build` Vinext도 통과했다. 마지막 실행 로그는 `output/architecture/build-vercel.log`, `typecheck.log`, `lint.log`, `build-vinext.log`다. Vercel 대상 로컬 빌드 통과를 배포된 Production 검증으로 표시하지 않는다.
+- 실제 브라우저: 본인 Next 서버3107와 새 격리 `architecture-final` 세션에서 핵심16개(저장 모달·실패 입력/저장 보존·복원·3직업 이동·키 독립·화살 오류/포커스), 실제 로컬 Paddle 합성 망토 판독 및 사진 저장8개(실패 저장값/시각/검토 보존→재시도 성공)를 확인했다. 이탈 취소는 사진 목록을 보존하고 이탈 수락은 신궁 페이지로 이동하며 기존 캡틴 저장공112를 유지했다. evidence `output/playwright/app-browser-evidence.json`, 캡처 `captain-saved.png`, `synthetic-ocr-review.png`, `synthetic-ocr-saved.png`.
+- 콘솔·시험 한계: 핵심 앱 흐름 콘솔 오류/경고0. 실제 OCR는27개 ERROR채널 메시지를 냈으나 모두 ONNX `[W:] CleanUnusedInitializersAndNodeArgs`의 사용하지 않는 모델 초기값 제거 로그였다. 합성 quota 오류와 canvas 툴팁을 사용했고 외부 OCR 전송·사용자 이미지 사용은 하지 않았다. 실제 게임 사진 전체 정확도·무개입 POC·실측 데미지·성능 개선률은 미검증이다. 기존 폴암 목적지 누락·초기화 화면 우선 처리 등은 범위 밖으로 보존한다.
+- 완료 후속: PAAR 문서는 소스 커밋SHA와 기준SHA를 구분해 기록하고 HTML 실제 렌더/모바일 overflow/앵커를 확인한다. 최종 문서 커밋을 포함해 이번 비운영 브랜치를 푸시하고 원격SHA를 확인한다. 결과가 검증됐다고 원본dev-main/main 또는 공개 서버에 합치지 않는다. 관련D-ARCHITECTURE-IMPLEMENT-001·D-146·D-ENV-001·D-148·D-168.
+
+## D-ARCHITECTURE-DELIVERY-001 — PAAR 최종 산출물과 격리 검증 정리
+
+- 기록 시각: 2026-10-01 06:40:12 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 코드·관련 검증·기술문서·PAAR Markdown/HTML 완료. 비운영 문서 커밋·푸시와 원격SHA 확인을 이어 수행한다.
+- 근거·결과: 소스 커밋은9b05190b4a3eece2d3b215822eb4b8c9e5d598ae, 기준은4a084bb1e9d2582f58548c9c72dad3a8a32e5f7b다. PAAR는 전체 요약과 네 사례 각각 문제→분석→조치→결과, 대안/선택 이유, 변경 전후 그림, 실제 파일/줄·명령·실패 분리·한계를 기록했다. Markdown40,496bytes·HTML81,896bytes이며 독립 전달SHA256과 현재 파일 hash가 일치한다. 후속 문서 커밋은 보고서가 참조하는 앱 소스 커밋을 변경하지 않는다.
+- 문서 검증: `output/architecture-report/report-validation-summary.json` 및 static-check/browser-evidence/offline-check에서10섹션·8SVG·68링크, 본문 누락/깨진 링크/중복id/외부 필수 리소스/실행script0을 확인했다. 실제1440/768/390/320px에서 가로 넘침0,10앵커·키보드 접근·SVG 접근성·file:// offline 렌더를 확인했고 보고서 콘솔 오류/경고0이었다. 대표 최종 화면과 전후 그림·모바일·offline 캡처를 무시 경로에 남겼다.
+- 앱 검증 최종 근거: `output/architecture/verification-summary.json`과 `output/playwright/app-browser-evidence.json`에 최종 명령·exitcode·수·한계를 모았다. 관련53/53, 전체613중603통과·기준과 같은10실패, lint/타입/두 로컬 빌드 통과, 앱16·사진저장8·실제 로컬 Paddle 합성 판독·이탈 취소/수락 결과를 보존한다. 전체 suite 미통과와 게임/운영 미검증은 유지한다.
+- 정리·보존: 본인 Next3107 및 architecture-app/architecture-final 세션, 보고서3251 및 architecture-report 세션을 종료했다. 원본3000 서버와 사용자 브라우저 저장에는 접근하지 않았다. 병행 다른 작업의 원본 브랜치 전진을 이번 branch에 재베이스/통합하지 않았으며 이번 작업 자체는 dev-main/main/Production을 수정하지 않았다. 이후 반영은 별도 요청으로 정한다.
+- 관련 결정: D-ARCHITECTURE-IMPLEMENT-001·D-ARCHITECTURE-RESULT-001·D-146·D-ENV-001. 사용자 결정 원장은 이 파일이며 기술/PAAR 문서는 그 결정의 구현 결과다.
+
+## D-ARCHITECTURE-GIT-001 — 비운영 결과 푸시 확인과 완료 기록
+
+- 기록 시각: 2026-10-01 06:41:11 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 소스·PAAR 결과를 비운영 브랜치에 푸시했고 원격 확인 완료. 이 완료 기록과 Markdown 끝의 빈 줄 정리도 같은 브랜치에 문서 커밋·푸시하고 최종HEAD를 다시 대조한다.
+- 실제 Git 결과: `refactor/architecture-deepening`의 소스9b05190b4a3eece2d3b215822eb4b8c9e5d598ae와 보고서58dda1416d9173e87db667e22919a17dce3881ed를 origin에 푸시했다. `git ls-remote --heads origin refs/heads/refactor/architecture-deepening`의 SHA가 당시 로컬HEAD58dda1416d9173e87db667e22919a17dce3881ed와 일치했고 upstream을 설정했다. force push·dev-main/main 병합·푸시·Production 배포는 하지 않았다.
+- 문서 정리: 최초 문서 공백 검사에서 Markdown EOF의 빈 줄1개가 발견돼 제거했다. 기존CRLF 줄 끝을 유지했으며 본문·HTML·앱소스는 변경하지 않았다. 최종 Markdown40,494bytes·HTML81,896bytes의 현재SHA256은 `output/architecture-report/report-validation-summary.json`에 갱신했다. 정적 검사10섹션·8SVG·68링크·본문/링크/ID/외부리소스 오류0을 다시 확인했다.
+- 완료 근거·한계: D-ARCHITECTURE-RESULT-001·D-ARCHITECTURE-DELIVERY-001의 실제 검증·전체suite기존10실패·합성/로컬 범위와 서버/세션 정리를 유지한다. 이번 작업의 변경은 새 worktree와 비운영브랜치에 한정되며 병행 원본 작업을 통합하지 않는다.
+
+## D-ARCHITECTURE-DEV-001 — 네 구조 개선의 dev-main 통합 승인·소스 대조
+
+- 기록 시각: 2026-10-01 10:33:15 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 개발 반영 요청에 따른 통합 소스·기록 준비 완료. dev-main 커밋·푸시와 같은SHA 원격 Preview 전달 확인을 이어 진행한다. 새 게임 QA/운영 반영 승인이 아니다.
+- 결정·요청: “dev-main까지반영해줘”. TS-ARCH-001~004 완료 소스·테스트·기술기록·PAAR 보고서를 원본 dev-main에 반영한다. 저장 정책 A(현행 허용/차단·오류 순서 보존)를 유지한다. 사용자 이유 미명시.
+- 승인 소스·대상: 완료된 refactor/architecture-deepening9d9363fa40e885e6beec687cc2f9c81434ee7965(앱 소스9b05190b4a3eece2d3b215822eb4b8c9e5d598ae)를 원본 dev-main aff33616cc2cad406716ead6401b8dbaf95e4b27에 no-ff 병합한다. 이 최신 요청은 D-ARCHITECTURE-IMPLEMENT-001의 당시 새 worktree·비운영 브랜치 한정에서 원본/dev-main 변경을 이번 범위에 승인하는 후속이다. 이전 기록과 feature branch/worktree는 유지한다.
+- 역할·범위: Sol6.1 xhigh가 통합·문서·필요 검증을 수행하고 Astra는 오케스트레이션과 원격 Preview 확인을 담당한다. main/Production, v0.0.0 태그·GitHub Release·DNS·외부 OCR·유료 서비스는 변경하지 않는다. 기존 0.0.0 package/lock/CHANGELOG 및 릴리스 정책·DECISIONS 기록을 보존한다.
+- 충돌 처리: 충돌은 AGENTS 정책과 DECISIONS의 append 기록에만 있었다. 릴리스0.0.0의 target 원문과 구조 개선 source 원문을 양쪽 모두 남겼으며 최신 개발 반영 정책을 추가했다. 앱·테스트·설정 충돌이나 별도 기능 수정은 없었다. 원 PAAR의 source9b/기준4a/작성 당시 비운영 상태는 역사로 보존하고 원 HTML 본문을 다시 쓰지 않는다. 개발 후속은 TROUBLESHOOTING §8에 연결한다.
+- 기존 변경 보존: 미커밋 DECISIONS96줄 추가/1줄 삭제만 Git 제외 output/architecture-dev-integration-20261001-103159에 원문732,346bytes·전체patch·변경payload·hash·refs로 백업했다. 원문SHA2561e5b73b40df904a3be257947243960bf908c2ec7f2c567e7b7cfc0f38286db29, 변경payloadSHA25668baf2cd93b8cfb4635681242c5e27b4b56024cebda61bffeb97558373f1cb49이며 scoped stash faf49bc097da0d78789eb8c38a02cc3bf8a883d5에 보관했다. 해당 원래 변경은 통합 커밋에 포함하지 않고 커밋 뒤 정확히 복원·payload 대조·이번 stash만 제거한다. 기존 master 복구stash f8470c13489c7ccd9c26f4ca6c6fc4a91b5d9dda와 원본3000 서버PID5060은 유지한다.
+- 소스·버전 대조: 병합 staged의 app/features/tests와 public/build/scripts/worker 및 앱·테스트·타입·lint·배포 관련 설정은 source9d9363과 차이0이다. package.json와 package-lock은 top/root version0.0.0만 source0.1.0과 다르며 의존성·lock 내용은 동일하다. target package/lock/CHANGELOG의 사전SHA256을 그대로 보존했고 PAAR 두 파일도 source blob과 같다. 근거는 output/architecture-dev-integration-20261001-103159/source-comparison.json이다.
+- 검증 재사용·한계: 기능 코드/설정이 기존 검증 소스와 같으므로 source의 관련53/53통과·전체613중603통과/기준과 같은10실패·lint/타입/두 로컬 빌드·격리 앱16/사진저장8 및 HTML 결과를 재사용한다. 전체 suite가 모두 통과하거나 기준10실패가 해결됐다고 표현하지 않는다. 원본에서 테스트·타입·lint·빌드·브라우저·서버/의존성 재설치를 반복하지 않고 diff/공백/staging/source/blob 대조를 수행한다. 원격 자동 빌드는 승인된 개발 전달 확인이며 게임 실측·계산 QA·사용자 POC 합격이 아니다.
+- 후속: dev-main 일반푸시·로컬/원격SHA 확인과 기존 미커밋96/1 정확 보존을 마친 뒤 Astra가 같은SHA Vercel Preview를 확인한다. 완료 근거만 선택 문서 커밋·푸시하고 미커밋 원본 기록은 계속 제외한다. 관련D-ENV-001·D-146·D-RELEASE-000-001~002·D-ARCHITECTURE-RESULT-001.
