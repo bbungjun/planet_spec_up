@@ -2,6 +2,8 @@
 
 최종 사용자 결정 반영일: 2026-10-01. 이 문서는 프로젝트 목적·확정 정책·개발 제약의 기준이다. 기존 `agent.md`와 충돌하면 이 문서를 따른다. 용어는 [CONTEXT.md](CONTEXT.md)를 사용한다.
 
+2026-10-01 이번 개발 소스 운영 반영 승인(D-OCR-PROD-20261001-001): 사용자는 개발서버/도메인 확인 요청 후 범위 질문에 dev-main 변경을 운영 도메인에도 배포라고 직접 답했다. 승인 앱 소스는 커밋된 dev-main a64bfd75945364cddfe8fc32db84e30832df01b6으로 고정하고, 이 소스와 이번 승인 기록을 main/Production의 기존 플래닛스펙업.xyz에 반영한다. 기존 구조 개선·OCR 후보 탐지 수정·실패 관측을 포함하되 새 자동 확정 실험은 비활성이며 정확도 미달성/전체 검사 미통과 이력을 유지한다. 원본 미커밋 카오스 UI·선행/병행 결정 기록·개인 자료는 제외한다. 원격 Git 빌드·동일 SHA Production 상태·실제 운영 도메인 HTTP/배포 자산을 확인하며 이를 OCR/게임 QA/POC 합격으로 확대하지 않는다. Preview 조회 생략·기존 저장·도메인/DNS·v0.0.0 태그/Release와 package 버전은 보존한다. 이번 승인은 해당 범위이며 이후 배포의 상시 승인으로 재사용하지 않는다.
+
 2026-09-29 아란 작업 예외(D-ARAN-001): 사용자 요청으로 `C:/Users/PC/.codex/worktrees/aran-support/플래닛`의 별도 worktree·`feat/aran-support`에서 단계별 명세와 구현을 진행한다. 명세·코드·검증은 Sol medium이 수행하고 Astra는 오케스트레이션만 담당한다. 원본 앱 루트의 병행 OCR 변경을 건드리지 않는다. 공개 캡틴 베타는 유지하며 아란은 개발 전용 경로의 참고 모델로 시작한다. 이번 승인은 아란 구현 및 비운영 브랜치 커밋·푸시 범위이며 Production 공개 승인으로 확대하지 않는다. 상세 범위는 [아란 명세](docs/aran-spec.md)와 [단계 계획](docs/aran-implementation-plan.md)에 기록한다.
 
 2026-10-01 신궁 작업 예외(D-MARKSMAN-IMPLEMENT-001): 사용자 요청으로 `C:/Users/PC/.codex/worktrees/marksman-support/플래닛`의 신궁 전용 worktree·`feat/marksman-support`에서 구현한다. 구현은 Sol6.1 xhigh, 오케스트레이션은 Astra가 담당한다. 원본 앱 루트·개발서버·병행 변경을 건드리지 않고 기존 개발 전용 `/development`에서 신궁을 선택한다. 이번 승인은 신궁 구현 및 해당 비운영 브랜치 커밋·푸시 범위이며 `dev-main`/`main` 병합·푸시나 공개 경로·Production 배포로 확대하지 않는다. 사용자는 기존 캡틴·아란 계산 방식을 신뢰하며 이번 신궁 QA를 후행하도록 요청했고, 이는 신궁 게임 실측 합격이나 모든 계산 조건 검증 완료를 뜻하지 않는다. 계산 기준과 이번 QA 유예는 §2·§9를 따른다.
