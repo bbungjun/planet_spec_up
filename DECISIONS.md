@@ -3839,3 +3839,11 @@
 - 회귀·개발 검증: 후보/영역/실제 복수 창/원본 프레임 fallback 관련34개와 기존 파서·검토·배치·취소·동시 인식62개, 총96개 고유 테스트가 통과했다. 이전0927 사진19장의 순수 픽셀 선택 결과는 수정 전후 동일하며 자동 선택15/19를 유지한다(기존 미선택4장 보존). 전체 계산기 suite는 이번에 실행하지 않았다. npm run lint와 변경 파일 최종lint, npm run typecheck, npm run build, npm run build:vercel 통과. Vinext의 기존500kB chunk 경고·라우트 정적 분류 안내와 ONNX의 사용하지 않는 모델 초기값 제거 W 로그는 오류 합격 주장과 구분한다.
 - 자료·보존: 재현/결과·입력 hash·검증 로그는 Git제외 output/tooltip-candidate-repro에 보존한다. 제공 사진 폴더도 .gitignore에 추가했다. 선행 DECISIONS106줄 추가/1줄 삭제와 기존 본문 byte를 보존하고 이번 기록만 index에 구성한다. 원본3000 서버PID5060·사용자 저장값·package/lock0.0.0·CHANGELOG·main·v0.0.0 tag/Release는 변경하지 않는다. 격리 브라우저/3119 서버만 종료한다.
 - 후속·범위: 비운영 커밋/일반푸시 후 원격SHA를 대조한다. dev-main/main 반영·Production 배포는 이번 오류 보고에 포함하지 않는다. 관련 D-148·D-150·D-OCR-NEW-UI-001·D-146·D-ENV-001·D-RELEASE-000-001.
+
+## D-OCR-CANDIDATE-20261001-002 — 수정 브랜치 푸시와 보존 확인
+
+- 기록 시각: 2026-10-01 11:07:44 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 수정 소스20f4b1770c8c455f0ac15d303c75f3ece88a2055를 origin/fix/tooltip-candidate-detection에 일반푸시했고 git ls-remote의 SHA 일치를 확인했다. 이 완료 기록도 같은 비운영 브랜치에 문서 커밋·푸시하고 마지막 원격SHA를 확인한다.
+- 결과·한계: D-OCR-CANDIDATE-20261001-001의 실사진19장 후보/호출 오류0·13장16줄 확인 필요, 관련96개 테스트·타입·lint·두 빌드와 이전19장 픽셀 선택 동일 결과를 유지한다. 전체 옵션 정확도·무개입 등록·게임 QA/POC 합격이나 운영 반영 완료를 뜻하지 않는다.
+- 보존·정리: 원본 사진/원문/output은 staged/commit에 없고 제공 사진 폴더는 Git제외다. 선행 DECISIONS106줄 추가/1줄 삭제는 이번 코드 커밋에서도 제외됐으며 이전 원문 byte가 현재 파일의 prefix로 그대로 보존된다. 본인 tooltip-repro 브라우저와3119 Vite 서버만 종료했다. 원본3000 서버PID5060·저장값·dev-main/main·v0.0.0 tag/Release는 변경하지 않았다. 관련 D-146·D-ENV-001·D-148.
