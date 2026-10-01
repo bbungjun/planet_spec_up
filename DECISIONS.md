@@ -3924,3 +3924,11 @@
 - 통합 범위: 승인 소스 fix/tooltip-candidate-detection d9f8ed6fc685ecfe6b886921e9eed83e049f814f의 OCR 후보 탐지 수정·실패 관측/실험·계획/진단/검증 문서5개 커밋을 dev-main b09d28370ba8ce12cff1af8dd0c4c6f08b3c982e에 fast-forward했다. 원본 앱에서 dev-main으로 전환했으며 추가 worktree·앱 복제 없이 앱 소스는 검증한 d9f8ed6과 같다.
 - 검증 재사용·한계: 앞선 관련39개·타입·lint·두 빌드·기본19장 판독·저장/복원 검증을 재사용한다. 전체 suite 미통과·13장16줄 확인·정확도 미달성 상태는 유지하고 새 자동 확정 실험도 비활성이다. 병합을 정확도/게임QA/POC 합격으로 기록하지 않는다.
 - 보존·후속: 선행/병행 DECISIONS131줄 추가/1줄 삭제를 원문 byte와 patch로 Git 제외 output/ocr-dev-main-delivery에 보존했다. 브랜치 전환 직후 SHA256 일치를 확인했다. 이번 요청 기록만 index에 넣고 기존 미커밋 기록·개인 세팅·package/lock·릴리스/태그·main/Production은 보존한다. dev-main만 일반 푸시하고 원격 SHA를 대조한다. 관련 D-146·D-ENV-001·D-OCR-ACCURACY-RESULT-20261001-001·D-OCR-ACCURACY-CHECK-20261001-001.
+
+## D-OCR-DEV-DELIVERY-20261001-001 — OCR 개발 소스 전달 확인
+
+- 기록 시각: 2026-10-01 14:44:33 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: D-ENV-DEVONLY-20261001-001의 승인 소스/정책을 dev-main에 커밋·푸시하고 전달 확인 완료.
+- 결과·근거: 로컬 HEAD와 원격 refs/heads/dev-main이 39e62a715c63e0512d65e1c51ca82c0bf2f2ffb9로 일치했다. d9f8ed6의 승인 OCR 소스는 ancestor이며 기능 코드 차이0을 확인했다. 원격 main은 bac7792cc7468a1a239829ac375944804a724fee 그대로다. Preview 조회·브라우저 접속·플랫폼 빌드 상태 확인은 사용자 요청대로 하지 않았다.
+- 한계·보존: 원격 Git 전달 확인이며 정확도/전체 suite/게임 QA 합격이나 Preview/Production 배포 성공을 뜻하지 않는다. 새 자동 확정은 비활성·13장16줄 확인은 미해결이다. 기존/병행 결정 수정은 미커밋으로 보존하고 이 전달 기록만 추가 커밋·푸시한 뒤 최종 SHA를 대조한다. 관련 D-ENV-DEVONLY-20261001-001·D-146.
