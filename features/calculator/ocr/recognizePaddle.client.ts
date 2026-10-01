@@ -17,6 +17,7 @@ import { identifiedRequirementLabel, locateRequirementVerification } from "./ret
 import { tooltipHeader } from "./tooltipHeader";
 import { assessTooltipCandidate, distinctCompleteCandidates, sameCandidateRegion, type TooltipCandidateAssessment } from "./tooltipCandidate";
 import type { TooltipCandidateRegions } from "./prepareTooltipImage";
+import { recoverEquipmentReview } from "./recoverEquipmentReview";
 
 type Item = { text: string; score: number; poly: number[][] };
 type Engine = { initialize(): Promise<unknown>; predict(input: File): Promise<Array<{ items: Item[] }>>; dispose(): Promise<void> };
@@ -84,7 +85,8 @@ async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
  * 지연 초기화한 한국어 PP-OCRv5/WASM 인식기를 생성하고 같은 인식기의 호출을 직렬화한다.
  * 기본 경로는 기존 줄별 재시도를 사용한다. experimentalRequirementRecovery=true인 개발/시험 호출만 별도의 원본 요구 조건 검증을 사용하며, 실이미지 활성화 기준은 통과하지 못한 상태다.
  */
-export function createPaddleTooltipRecognizer(configuration: { experimentalRequirementRecovery?: boolean } = {}): TooltipRecognizer {
+export function createPaddleTooltipRecognizer(configuration: { experimentalRequirementRecovery?: boolean;
+  experimentalEquipmentRecovery?: "observe" | "apply" } = {}): TooltipRecognizer {
   const experimentalRequirementRecovery = configuration.experimentalRequirementRecovery === true;
   let engine: Engine | undefined;
   let initializing: Promise<Engine> | undefined;
@@ -204,6 +206,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
           provenance: { ...identity, role: "discovery" as const, viewId: `discovery-${pass}`, readingId: `${identity.operationId}-discovery-${pass}-${index}` } })));
       }
       let review = buildOcrReview(readings, warnings);
+      if (configuration.experimentalEquipmentRecovery && experimentalRequirementRecovery) throw new Error("Recovery experiments must be run separately");
       // 기본 UI는 이 분기를 켜지 않는다. 기본 판독과 달리 원본 행 출처·완전성·변환 다양성을 추가 검증한다.
       if (experimentalRequirementRecovery) {
         const preparedSize = await tooltipImageSize(prepared);
@@ -263,21 +266,50 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
         for (const [pass, view] of RECOVERY_VIEWS.entries()) {
           const line = review.lines.find(line => line.id === target.id)!;
           if (!retryRecognitionLabel(line)) break;
+          const observation = { ...identity, lineId: target.id, viewId: `${identity.operationId}-legacy-${target.id}-${view.mode}-${view.scale}`,
+            ...view, bounds: { ...bounds }, status: "unavailable" as "read" | "unavailable" | "failed", readings: [] as OcrReading[], reason: undefined as string | undefined };
           try {
             const image = await requirementView(prepared, bounds, view);
             active();
-            if (!image) continue;
+            if (!image) {
+              observation.reason = "unavailable-source-view";
+              review = { ...review, recoveryObservations: [...(review.recoveryObservations ?? []), observation] };
+              continue;
+            }
             const [result] = await withAbort(current.predict(image), signal);
             active();
             const text = result.items.map(item => item.text).join(" ");
+            observation.status = "read";
+            // Exact raw text, including unparsed attempts, without invented
+            // character coordinates for a generated view.
+            observation.readings = [{ text, pass: pass + 2 }];
+            review = { ...review, recoveryObservations: [...(review.recoveryObservations ?? []), observation] };
             review = mergeRecognitionRetry(review, target.id, text, pass + 2);
           } catch {
             // Keep the successful primary reading if an optional reread fails.
             // Cancellation still rejects the whole operation and drops late results.
             active();
+            observation.status = "failed"; observation.reason = "recognition-failed";
+            review = { ...review, recoveryObservations: [...(review.recoveryObservations ?? []), observation] };
             break retryTargets;
           }
         }
+      }
+      if (configuration.experimentalEquipmentRecovery) {
+        // Keep the ordinary requirement/combat recovery first. This experiment
+        // handles only remaining source rows and cannot regress a recovered one.
+        review = await recoverEquipmentReview(review, { file: prepared, ...identity, signal,
+          apply: configuration.experimentalEquipmentRecovery === "apply",
+          onProgress: value => progress("recognizing", .8 + value * .18) }, async (image, view) => {
+          const dimensions = await tooltipImageSize(image);
+          active();
+          if (!dimensions) throw new Error("Cannot locate recovery reading");
+          const [result] = await withAbort(current.predict(image), signal);
+          active();
+          return paddleReadings(result.items, dimensions.width, dimensions.height, 100).map((reading, index) => ({ ...reading,
+            provenance: { ...identity, role: "verification" as const, rowId: view.lineId, viewId: view.viewId,
+              readingId: `${view.viewId}-${index}` } }));
+        });
       }
       // The white-text mask can erase colored titles entirely. Recover only
       // the header, without feeding background text into the equipment stats.

@@ -220,8 +220,8 @@ export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement
  * 수동 변경이므로 해당 줄의 이전 자동 복구 증명은 제거하고 다른 줄은 보존한다.
  */
 export function resolveReviewLine(review: OcrReview, id: string, text: string | null): OcrReview {
-  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined }
-    : { ...line, text, recovery: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
+  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined, equipmentRecovery: undefined }
+    : { ...line, text, recovery: undefined, equipmentRecovery: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
 }
 
 /**
@@ -232,8 +232,8 @@ export function overrideReviewRequirement(review: OcrReview | null, job: JobId, 
   if (!review || (field !== "requiredLevel" && field !== "requiredSub")) return review;
   const label = field === "requiredLevel" ? "LEV" : JOB_RULES[job].subStat;
   let next = review;
-  for (const line of review.lines) if ((line.recovery || line.readings.some(reading => reading.provenance?.role === "verification"))
-    && (line.recovery?.target.field ?? readTooltipRequirement(line.text)?.label) === label) {
+  for (const line of review.lines) if ((line.recovery || line.equipmentRecovery || line.readings.some(reading => reading.provenance?.role === "verification"))
+    && (line.recovery?.target.field ?? line.equipmentRecovery?.option?.label ?? line.equipmentRecovery?.fieldHint ?? readTooltipRequirement(line.text)?.label) === label) {
     next = resolveReviewLine(next, line.id, value.trim() ? `REQ ${label} : ${value}` : null);
   }
   return next;

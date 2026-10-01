@@ -110,6 +110,29 @@ export type OcrReviewLine = {
   status: "recognized" | "check" | "confirmed" | "ignored";
   reason?: string;
   recovery?: RequirementRecovery;
+  equipmentRecovery?: EquipmentRecoveryDecision;
+};
+
+/** Every real reread remains observable, including text the option parser cannot accept. */
+export type EquipmentRecoveryObservation = {
+  sourceId: string;
+  operationId: string;
+  lineId: string;
+  viewId: string;
+  mode: "gray" | "luma" | "color" | "soft";
+  scale: number;
+  bounds: OcrBounds;
+  status: "read" | "unavailable" | "failed";
+  readings: OcrReading[];
+  reason?: string;
+};
+export type EquipmentRecoveryDecision = {
+  status: "recovered" | "unresolved";
+  reason: string;
+  observations: EquipmentRecoveryObservation[];
+  option?: TooltipOption;
+  fieldHint?: string | null;
+  kind?: "option" | "requirement";
 };
 /**
  * 장비 분류·헤더·줄 검토·이미지 경고를 담는 단일 결과 객체로 화면과 적용 판단을 일치시킨다.
@@ -121,4 +144,5 @@ export type OcrReview = {
   lines: OcrReviewLine[];
   warnings: string[];
   imageConfirmed?: boolean;
+  recoveryObservations?: EquipmentRecoveryObservation[];
 };
