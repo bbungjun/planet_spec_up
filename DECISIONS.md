@@ -3971,3 +3971,14 @@
 - 관측·정정:82b79ce의 Vercel success는 GitHub Deployment6777537735 environment=Preview만 반환했다. 같은 SHA의 Production deployment는 없고 운영 도메인의8개 script 경로/hash가 배포 전과 같았다. main Git SHA 일치나 일반 success만으로 운영 성공을 판단하지 않는다. 두 브랜치의 동일 SHA 전달과 운영 미생성을 구분하며 플랫폼의 생략 원인은 확인되지 않았다.
 - 조치·범위: main에만 고유한 이 전달 기록 커밋을 만들고 일반 푸시해 운영 Git 이벤트를 다시 보낸다. app/features/public/tests/package/빌드 설정은 승인 a64bfd7/82b79ce와 동일하며 새 기능/숫자 보정/모델을 추가하지 않는다. 원본 dev-main checkout·작업 파일/global index와 병행 변경을 보존하도록 임시 Git index로 main 문서 tree를 구성한다. Preview 접속/검증·플랫폼/DNS 설정 변경·사용자 이미지 전송은 하지 않는다.
 - 후속: 해당 main 전용 SHA의 Production environment·완료 status와 운영 도메인의 실제 배포 자산을 대조한 뒤 완료를 기록한다. main·dev-main 소스 동기화는 확인 후 수행하며 기존 태그/Release·정확도 미통과 상태는 유지한다. 관련 D-OCR-PROD-20261001-001·D-146.
+
+## D-OCR-PROD-RESULT-20261001-001 — 운영 도메인 최신 소스 전달 확인 완료
+
+- 기록 시각: 2026-10-01 15:20:11 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: D-OCR-PROD-20261001-001의 승인 앱 소스 운영 전달과 실제 도메인 반영 확인 완료. 새 모델 활성화·정확도/게임QA/POC 합격이 아니다.
+- Git·소스: 실제 main/Production 커밋은 96fa382e89b8f574d1026ebd52c83aeef7444f15다. 승인 dev-main a64bfd7과 app/features/public/tests/package/빌드 설정의 차이0이며 main 변경은 승인/전달 기록뿐이다. main 전용 전달 커밋의 완료를 확인한 뒤 원본 dev-main ref/index도 같은 커밋으로 fast-forward했다. 작업 파일8경로의 SHA256을 전후 대조해 바이트 불변을 확인했고 미커밋 카오스 코드/정책/테스트·선행/병행 기록은 포함하지 않았다.
+- 원격 근거: GitHub Deployment6777576708의 SHA가 해당 main과 같고 environment=Production이다. status19098455353는2026-10-01 15:17:08 KST(06:17:08Z)에success/Deployment has completed를 반환했다. raw production_environment=false는 실제 환경 이름/alias 확인과 구분한다. 앞선82b79ce의 개발용 완료 표시를 운영 성공으로 사용하지 않았다.
+- 도메인·자산: https://xn--tj1bw3gpwlt7cywxr6b.xyz 의 /·/aran·/marksman HTTPS200·각 직업 선택을 확인했다. /development는404·www는308로 기본 도메인에 이동한다. 기존 운영 alias planet-spec-up.vercel.app도200이며 첫 문서가 참조하는 JS8개 경로와 SHA256이 모두 운영 도메인과 일치했다. 이전 버전과 달라진3개 JS 자산과 새 selectedFrame 코드 제공을 확인했다. 개별 배포 hostname은 Vercel Login으로 이동해 그200을 앱 성공으로 세지 않았다.
+- 검증 한계: HTTP/서버 렌더/배포 자산 대조이며 브라우저 상호작용·실제 사용자 사진 재추론·새 게임QA가 아니다. 기존 관련39개·타입·lint·두 빌드 근거를 재사용하고 전체 검사 미통과·엄격한 사진 완전 인식0/19·13장16줄 확인·새 자동 확정 비활성을 유지한다. 운영 반영이 무수정 목표 해결을 뜻하지 않는다.
+- 보존·완료 기록: Preview 접속/검증·DNS/유료 플랜/외부 OCR 전송·사용자 저장값·package0.0.0·v0.0.0 tag279cfca/bac7792·GitHub Release는 변경하지 않았다. 동기화 뒤 이 완료 기록은 dev-main에만 커밋·푸시하고 원격 SHA를 대조하며 main에는 추가 문서 푸시/재배포를 하지 않는다. 근거는 Git 제외 output/ocr-production-20261001에 보존한다. 이후 운영 변경은 D-146의 별도 명시 요청을 따른다. 관련 D-OCR-PROD-GIT-20261001-001·D-ENV-DEVONLY-20261001-001·D-146.
