@@ -3980,3 +3980,12 @@
 - 화면 근거·정리: Git제외 output/chaos-weapon-implementation/collapsed.jpg·expanded.jpg에 실제 화면을 보관한다. 본인3124 Next·시작만 시도한 Vinext 프로세스·검증 탭을 종료하고 viewport를 복원했다. 기존3000 서버의 시작/종료 명령은 실행하지 않았다.
 - Git·병행 보존: 처음 d9f8ed6 기준 feat/chaos-weapon-efficiency를 만들었으나 병행 OCR 개발 전달 작업이 원본 checkout을 dev-main059e343으로 옮긴 것을 확인했다. 두 기준의 앱 소스 차이는 없고 AGENTS/DECISIONS만 다르다. 현재 root branch/global index/dev-main ref를 건드리지 않는 별도 index와 feature ref로 이번7개 코드/정책/테스트 및 관련 CHAOS 기록만 커밋한다. 선행 DECISIONS132줄 추가/1줄 삭제 중 다른 작업 기록은 임의 포함하지 않는다. 이번 파일의 작업 중 변경은 원본에서 유지하고 비운영 feature branch에만 푸시한다. dev-main/main ref·Production·package/lock/CHANGELOG·release0.0.0 변경 없음.
 - 후속: 커밋/푸시 SHA 일치를 확인해 완료를 기록한다. 개발/운영 반영은 별도 명시 요청 범위다. 관련 D-CHAOS-WEAPON-UI-PROPOSAL-20261001-001·D-UI-PRIORITY-001·D-174·D-188·D-146·D-ENV-001.
+
+## D-CHAOS-WEAPON-UI-COMPLETE-20261001-001 — 접이식 카오스 효율표 기능 브랜치 보관 완료
+
+- 기록 시각: 2026-10-01 14:54:52 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: 구현/관련 검증 및 비운영 소스 커밋·푸시 완료. 기능 커밋 41099792169ebd76a70d3518e749132014085178의 원격 feature branch SHA 일치를 확인했다. 이 완료 기록도 같은 feature branch에 문서 커밋·푸시한다.
+- 결과: 카오스 프리셋에서 기본 접힘, 제목/키보드 펼치기, 비교 상태 유지, 보공·방무19조합 및 보스별 순위·잔여/초과 방무를 제공한다. 관련19검사·main/worker 타입·lint·최종 두 빌드·격리 PC/320px 기본/다크 브라우저 확인을 유지한다. 고정 길드 참고표이며 개인 세팅/게임 QA/실제 DPS 검증 완료가 아니다.
+- 보존: 별도 index에서 선택한8파일만 기능 commit에 포함했고 기존 global index와 root branch dev-main059e343은 그대로다. 앞선 CHAOS 조사·제안 기록도 관련 이력으로 함께 보관했고 다른 선행 DECISIONS 변경은 포함하지 않았다. 원본 작업 파일의 이번 변경은 현재 checkout에서 검토 가능하도록 유지한다. dev-main/main ref·Production·기존 저장·package/lock/CHANGELOG·release0.0.0 변경 없음.
+- 정리·후속: 본인 검증 탭/3124 서버 종료·viewport 복원 완료. 원본3000 시작/종료 명령 없음. 실제 개발/운영 전달은 별도 명시 요청 후 진행한다. 관련 D-CHAOS-WEAPON-UI-IMPLEMENT-20261001-001·D-146·D-ENV-001.
