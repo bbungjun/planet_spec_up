@@ -3962,3 +3962,12 @@
 - 현재 전달 근거: GitHub Deployment6770287145의 environment=Production·SHA bac7792 및 Vercel success를 확인했다. production_environment는 기존처럼false여서 이를true라고 기록하지 않는다. 기존 도메인 HTTPS200·Vercel Server·서비스 제목 및 A216.198.79.1을 확인했다. 이전 운영 source와 dev-main이 다른 상태이며 도메인/DNS 연결 자체는 이미 정상이다.
 - 검증·한계: 승인 앱 코드는 검증한 d9f8ed6과 같아 관련39개·타입·lint·두 빌드·실제19장/저장 복원 근거를 재사용한다. 마지막 전체601/634통과·33실패(기준 공통32와 추가 로딩1의 단독 최종 통과)를 전체 합격으로 표현하지 않는다. 후보/호출 오류0이지만13장16줄 확인·엄격한 완전 인식0/19 상태와 새 모델/자동 확정 비활성을 유지한다. 사용자 이미지 재추론·새 게임 QA를 수행한 것으로 기록하지 않는다.
 - 실행·보존: root dev-main checkout/작업 파일을 그대로 두고 HEAD 기반으로 이번 두 문서의 요청 부분만 index에 구성한다. 커밋된 승인 소스를 main에 fast-forward·일반 푸시하고 같은 SHA의 Production 완료·도메인 최신 자산을 확인한다. Preview는 조회하지 않으며 플랫폼/DNS/유료 플랜/외부OCR·개인 저장·package/lock·v0.0.0/Release는 변경하지 않는다. 완료 기록은 dev-main에만 올려 불필요한 문서 Production 재배포를 만들지 않는다. 관련 D-ENV-DEVONLY-20261001-001·D-146·D-ARCHITECTURE-DEV-001·D-OCR-ACCURACY-RESULT-20261001-001·D-OCR-METRICS-20261001-001.
+
+## D-OCR-PROD-GIT-20261001-001 — 실제 운영 배포 미생성 확인과 main 전용 전달
+
+- 기록 시각: 2026-10-01 15:16:20 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: D-OCR-PROD-20261001-001의 승인 앱 소스가 main 원격82b79ce에 반영됐지만 실제 운영 갱신은 미완료다. 새 배포 승인을 요구하지 않고 동일 소스 전달을 이어 수행한다.
+- 관측·정정:82b79ce의 Vercel success는 GitHub Deployment6777537735 environment=Preview만 반환했다. 같은 SHA의 Production deployment는 없고 운영 도메인의8개 script 경로/hash가 배포 전과 같았다. main Git SHA 일치나 일반 success만으로 운영 성공을 판단하지 않는다. 두 브랜치의 동일 SHA 전달과 운영 미생성을 구분하며 플랫폼의 생략 원인은 확인되지 않았다.
+- 조치·범위: main에만 고유한 이 전달 기록 커밋을 만들고 일반 푸시해 운영 Git 이벤트를 다시 보낸다. app/features/public/tests/package/빌드 설정은 승인 a64bfd7/82b79ce와 동일하며 새 기능/숫자 보정/모델을 추가하지 않는다. 원본 dev-main checkout·작업 파일/global index와 병행 변경을 보존하도록 임시 Git index로 main 문서 tree를 구성한다. Preview 접속/검증·플랫폼/DNS 설정 변경·사용자 이미지 전송은 하지 않는다.
+- 후속: 해당 main 전용 SHA의 Production environment·완료 status와 운영 도메인의 실제 배포 자산을 대조한 뒤 완료를 기록한다. main·dev-main 소스 동기화는 확인 후 수행하며 기존 태그/Release·정확도 미통과 상태는 유지한다. 관련 D-OCR-PROD-20261001-001·D-146.
