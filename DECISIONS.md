@@ -3913,3 +3913,14 @@
 - 보충 결과: D-OCR-ACCURACY-RESULT-20261001-001 이후 최신 코드로 Next·Vinext 빌드와 공백 검사를 통과했다. 최초 전체 실행의 추가 실패였던 base-stats-ui 입력 활성화는14:07:45 최종 단독 실행1개 통과/9개 제외였다. 앞선 미통과 기록은 당시 결과로 보존하며 최종 전체 suite를 재실행하지 않아 전체 통과·정상 회귀0으로 확대하지 않는다.
 - 서버 확인: 자체3119/3120 서버와 격리 Playwright 두 세션을 종료했다. 원본3000에 대한 종료 명령은 실행하지 않았다. 종료 확인 시3000 listening/PID5060은 존재하지 않았으며 사라진 시점·원인은 확인하지 않았다. 사용자 서버를 임의 재시작하지 않는다.
 - 범위: 이번 기록만 추가로 index에 넣고 선행/병행 DECISIONS 수정은 미커밋으로 보존한다. 비운영 fix/tooltip-candidate-detection만 커밋·푸시하고 dev-main/main·Production은 변경하지 않는다. 관련 D-OCR-ACCURACY-RESULT-20261001-001·D-146.
+
+## D-ENV-DEVONLY-20261001-001 — 개발 변경 dev-main 반영과 Preview 확인 생략
+
+- 기록 시각: 2026-10-01 14:43:59 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름
+- 상태: 사용자 정책 확정·이번 OCR의 로컬 통합/정책 문서 갱신 완료. 원격 푸시와 SHA 대조를 이어 진행한다.
+- 결정·요청: 사용자가 이번 작업을 dev-main까지 반영하고 배포서버 반영이라는 명시 요청 전에는 dev-main에만 반영하며 Vercel Preview도 볼 필요가 없다고 말했다. 사용자 이유 미명시. 기능별 비운영 작업은 가능하되 개발 반영의 최종 대상은 dev-main으로 기록한다. main/Production의 기존 D-146 명시 승인 조건은 유지한다.
+- 정책 변경: AGENTS.md의 최신 환경 정책·§8·§10을 갱신했다. 기존 D-ENV-001의 Preview 전달 결과/주소 확인은 최신 요청으로 대체해 별도 요청 전까지 조회·접속·검증을 생략한다. Vercel 자동 Preview 생성/운영 브랜치/빌드 설정을 바꾸는 요청으로 확대하지 않는다.
+- 통합 범위: 승인 소스 fix/tooltip-candidate-detection d9f8ed6fc685ecfe6b886921e9eed83e049f814f의 OCR 후보 탐지 수정·실패 관측/실험·계획/진단/검증 문서5개 커밋을 dev-main b09d28370ba8ce12cff1af8dd0c4c6f08b3c982e에 fast-forward했다. 원본 앱에서 dev-main으로 전환했으며 추가 worktree·앱 복제 없이 앱 소스는 검증한 d9f8ed6과 같다.
+- 검증 재사용·한계: 앞선 관련39개·타입·lint·두 빌드·기본19장 판독·저장/복원 검증을 재사용한다. 전체 suite 미통과·13장16줄 확인·정확도 미달성 상태는 유지하고 새 자동 확정 실험도 비활성이다. 병합을 정확도/게임QA/POC 합격으로 기록하지 않는다.
+- 보존·후속: 선행/병행 DECISIONS131줄 추가/1줄 삭제를 원문 byte와 patch로 Git 제외 output/ocr-dev-main-delivery에 보존했다. 브랜치 전환 직후 SHA256 일치를 확인했다. 이번 요청 기록만 index에 넣고 기존 미커밋 기록·개인 세팅·package/lock·릴리스/태그·main/Production은 보존한다. dev-main만 일반 푸시하고 원격 SHA를 대조한다. 관련 D-146·D-ENV-001·D-OCR-ACCURACY-RESULT-20261001-001·D-OCR-ACCURACY-CHECK-20261001-001.
