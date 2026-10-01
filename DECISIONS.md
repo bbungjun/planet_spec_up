@@ -3814,3 +3814,15 @@
 - 소스·버전 대조: 병합 staged의 app/features/tests와 public/build/scripts/worker 및 앱·테스트·타입·lint·배포 관련 설정은 source9d9363과 차이0이다. package.json와 package-lock은 top/root version0.0.0만 source0.1.0과 다르며 의존성·lock 내용은 동일하다. target package/lock/CHANGELOG의 사전SHA256을 그대로 보존했고 PAAR 두 파일도 source blob과 같다. 근거는 output/architecture-dev-integration-20261001-103159/source-comparison.json이다.
 - 검증 재사용·한계: 기능 코드/설정이 기존 검증 소스와 같으므로 source의 관련53/53통과·전체613중603통과/기준과 같은10실패·lint/타입/두 로컬 빌드·격리 앱16/사진저장8 및 HTML 결과를 재사용한다. 전체 suite가 모두 통과하거나 기준10실패가 해결됐다고 표현하지 않는다. 원본에서 테스트·타입·lint·빌드·브라우저·서버/의존성 재설치를 반복하지 않고 diff/공백/staging/source/blob 대조를 수행한다. 원격 자동 빌드는 승인된 개발 전달 확인이며 게임 실측·계산 QA·사용자 POC 합격이 아니다.
 - 후속: dev-main 일반푸시·로컬/원격SHA 확인과 기존 미커밋96/1 정확 보존을 마친 뒤 Astra가 같은SHA Vercel Preview를 확인한다. 완료 근거만 선택 문서 커밋·푸시하고 미커밋 원본 기록은 계속 제외한다. 관련D-ENV-001·D-146·D-RELEASE-000-001~002·D-ARCHITECTURE-RESULT-001.
+
+## D-ARCHITECTURE-DEV-002 — dev-main 통합·Preview 전달 확인 완료
+
+- 기록 시각: 2026-10-01 10:37:14 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: D-ARCHITECTURE-DEV-001의 개발 반영 완료 기록. 코드·보고서 통합 커밋의 원격 Preview 성공을 확인했으며 이 완료 기록만 선택 문서 커밋·푸시한다. Production·게임 QA/POC는 이번 범위가 아니다.
+- 통합·Git: dev-main c215eb970d0c1a49a6feaec8bcbc2b0a8a7244d7를 origin/dev-main에 일반푸시하고 로컬/원격SHA 일치를 확인했다. merge parents는 target aff33616cc2cad406716ead6401b8dbaf95e4b27와 완료 source9d9363fa40e885e6beec687cc2f9c81434ee7965다. 소스/설정 충돌 없이 정책·결정 append 충돌만 양쪽 원문을 보존해 해결했으며 package/lock0.0.0·CHANGELOG의 기존bytehash와 앱/테스트/설정의 source 동일성을 확인했다. 원 PAAR 두 파일은 source blob과 같다.
+- 기존 기록·서버 보존: scoped stash faf49bc097da0d78789eb8c38a02cc3bf8a883d5를 정확히 apply한 뒤96줄 추가/1줄 삭제와 변경payloadSHA25668baf2cd93b8cfb4635681242c5e27b4b56024cebda61bffeb97558373f1cb49의 사전 일치를 확인하고 이번 stash만 제거했다. 기존master 복구stash f8470c13489c7ccd9c26f4ca6c6fc4a91b5d9dda·3000서버PID5060·사용자 저장값은 유지했다. 기존96/1은 통합/완료 문서 커밋에도 포함하지 않으며 staged index는 이번 선택 완료 기록만 담는다. 백업·대조는 output/architecture-dev-integration-20261001-103159의 state.before/source-comparison/integration-verified 및 patch/payload 파일을 따른다.
+- 원격 Preview 근거: Astra가 GitHub Deployment6774039040의 sha/ref가 c215eb970d0c1a49a6feaec8bcbc2b0a8a7244d7에 일치하고 environment=Preview·production_environment=false임을 확인했다. 최신 status는 success·description=Deployment has completed, created_at2026-10-01T01:35:21Z(2026-10-01 10:35:21 KST)다. commit의 Vercel status도 success이며 Vercel deployment 식별자는 CgZrfcrVzVLasrLHeWV2ojvbHKMa다.
+- Preview 주소·접근 한계: https://planet-spec-mpm9yhkhq-youngjun3108-gmailcoms-projects.vercel.app . HTTP GET은 redirect 후200을 반환했으나 최종 vercel.com/login의 Login–Vercel 페이지였다. Vercel 로그인 보호를 뜻하며 비로그인 앱 UI 확인·브라우저 상호작용·게임 계산 QA 합격으로 표시하지 않는다. 로그인 nonce/query·계정/토큰은 기록하지 않는다.
+- 검증 재사용: 기능 코드·설정이 검증 source와 같아 관련53통과·전체603통과/기준10실패·lint/타입/두 로컬 빌드·격리 브라우저/HTML 결과를 재사용했다. 원본에서 테스트·빌드·타입·lint·브라우저·서버를 재실행하거나 의존성을 설치하지 않았다. 전체 suite 미통과·기준10실패와 게임/OCR전체환경/POC 미검증은 유지한다.
+- 승인 경계·후속: main/Production·불변 v0.0.0 태그·GitHub Release는 변경하지 않았다. 마지막 문서SHA의 원격 Preview는 Astra가 전달 확인하고 추가 완료 기록 루프는 만들지 않는다. 새 운영 반영은 별도 명시 요청을 따른다. 관련D-ARCHITECTURE-DEV-001·D-ENV-001·D-146·D-RELEASE-000-001~002.

@@ -346,3 +346,5 @@ npx vitest run tests/calculator/captain-beta-ui.test.tsx --maxWorkers=1 --report
 - 관련53통과·전체603통과/기준10실패·lint/타입/두 빌드·브라우저/HTML 근거를 재사용하며 원본 서버/산출물을 건드리는 불필요한 재실행은 하지 않는다. whole suite 미통과와 게임/POC 미검증은 유지한다.
 - 기존 미커밋 DECISIONS96추가1삭제를 별도 백업·scoped stash로 보존하고 통합 커밋에는 포함하지 않는다. app source 대조·원문/patch/hash·복원 근거는 `output/architecture-dev-integration-20261001-103159/`에 둔다.
 - 통합 커밋·origin/dev-main 푸시·같은SHA Preview 상태를 확인하고 완료 결과는 DECISIONS.md에 추가한다. 이번 후속은 main/Production·v0.0.0 태그/Release 변경을 포함하지 않는다.
+
+완료 후속(D-ARCHITECTURE-DEV-002): merge c215eb970d0c1a49a6feaec8bcbc2b0a8a7244d7를 origin/dev-main에 푸시하고 같은SHA GitHub Deployment6774039040의 Preview success(2026-10-01 10:35:21 KST)를 확인했다. 주소는 https://planet-spec-mpm9yhkhq-youngjun3108-gmailcoms-projects.vercel.app 이며 HTTP 최종 응답은 Vercel 로그인 보호 페이지다. 앱 UI/게임 QA 합격과 구분한다. 기존96/1 원본 변경·릴리스0.0.0·main/tag/feature branch·3000 서버를 유지하며 마지막 완료 문서만 선택 커밋한다.
