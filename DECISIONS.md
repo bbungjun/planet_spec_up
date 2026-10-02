@@ -4016,3 +4016,11 @@
 - 현재 상태 구분: 미커밋 카오스 참고표는 작업트리 추가로 표시하고 HEAD/운영 기능이라고 단정하지 않는다. 새 OCR 복구/자동 확정 실험은 기본 UI에서 비활성임을 실제 팩토리 호출로 확인했다. 공통 계산 함수 사용을 모든 화면의 같은 snapshot 객체 공유나 게임 QA/무수정 정확도 목표 달성으로 표현하지 않는다. Production 상태는 재조회하지 않았다.
 - 산출물 검증: 격리 Playwright 세션과 본인 문서용 localhost3296에서 1440px 렌더·320px 접힘/펼침을 확인했다. 문서 scrollWidth320/viewport320, SVG 2개와 노드 텍스트 박스 넘침0·중복 id0, 브라우저 오류/경고0이다. 작은 화면은 그림/표 내부에서 가로 이동한다. 실제 PNG/PDF 버튼으로 다운로드하고 PNG를 시각 대조했다. 내보내기에서 접힌 details 내용이 보이던 라이브러리 렌더 문제를 명시적 숨김 CSS로 수정하고 재확인했다. 복사 버튼은 실제 사용자 클립보드를 바꾸지 않아 실행 검증하지 않았다. 그림 본문은 inline CSS/SVG이며 내보내기에는 스킬의 고정 CDN/SRI 두 라이브러리가 필요하다.
 - 범위·보존: 앱 코드·모델·계산식·저장 원문·개인 사진·기존 서버·미커밋 AGENTS/DECISIONS/카오스 코드와 테스트를 유지했다. 현재 원본 DECISIONS 바이트를 보관하고 이번 append만 커밋 tree에 구성한다. 검증 자료/생성 도구는 Git 제외 output/playwright/architecture-diagram에 둔다. 앱 테스트·타입·lint·빌드·개인 OCR·Preview/Production 확인·운영 푸시는 실행하지 않는다. 본인 검증 세션/문서 서버만 종료하고 파일 패널 열기 요청의 queued를 실제 표시 완료로 확대하지 않는다. 관련 D-ARCHITECTURE-DEV-001·D-ENV-DEVONLY-20261001-001·D-146·D-148.
+
+## D-ARCHITECTURE-DIAGRAM-20261003-002 — 다이어그램 개발 브랜치 전달 확인
+
+- 기록 시각: 2026-10-03 00:23:42 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음
+- 상태: D-ARCHITECTURE-DIAGRAM-20261003-001의 다이어그램 소스 전달 완료. dev-main 기능/문서 커밋 dce1ed3a0fdff5b760798062630614b310117e23를 일반 푸시하고 원격 같은 SHA를 확인했다. 이 완료 기록도 같은 비운영 브랜치에 선택 문서 커밋·푸시하며 추가 완료 기록 루프는 만들지 않는다.
+- Git 범위: 첫 커밋은 docs/planet-architecture.html과 이번 결정 기록만 포함했다. 선행 DECISIONS 수정과 미커밋 AGENTS·카오스 앱/테스트를 포함하지 않았고 각 작업 파일 바이트 해시와 기존 결정 원문 prefix를 보존했다. 임시 index로 tree를 준비하고 global index는 이번 두 경로의 커밋 blob만 갱신했다. main/Production·태그/Release·배포 설정·사용자 저장·기존 앱 서버 변경 없음, Preview 조회 없음.
+- 결과·한계: 전체 구조도/장비 OCR 상세/소스 대응표와 PNG/PDF 내보내기의 문서 검증은 완료했다. 복사·앱 실행 QA·게임 실측·새 OCR 정확도 시험은 이번 검증 범위가 아니다. 파일 패널 열기는 queued로 반환되어 실제 표시를 확정하지 않는다. 산출물은 docs/planet-architecture.html, 검증 화면·내보내기·전달 근거는 Git 제외 output/playwright/architecture-diagram에 보존한다. 관련 D-ARCHITECTURE-DIAGRAM-20261003-001·D-ENV-DEVONLY-20261001-001·D-146.
