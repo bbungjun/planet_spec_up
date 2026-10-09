@@ -14,7 +14,9 @@ vi.mock("@/features/calculator/ocr/requirementView.client", () => ({ requirement
 vi.mock("@/features/calculator/ocr/enlargeTooltip.client", () => ({
   enlargeTooltip: async () => null,
   contrastTooltip: async (file: File) => file,
-  tooltipImageSize: async (file: File) => file.name === "second-tooltip-view.png" ? { width: 200, height: 400 } : { width: 300, height: 600 },
+  tooltipImageSize: async (file: File) => verificationImages.has(file)
+    ? { width: verificationImages.get(file)!.width, height: verificationImages.get(file)!.height }
+    : file.name === "second-tooltip-view.png" ? { width: 200, height: 400 } : { width: 300, height: 600 },
 }));
 import { createPaddleTooltipRecognizer } from "@/features/calculator/ocr/recognizePaddle.client";
 import { mapReviewedStats, reviewBlocked } from "@/features/calculator/ocr/reviewRecognition";
@@ -72,6 +74,57 @@ it("rejects unsupported images before creating a model worker", async () => {
   await expect(createPaddleTooltipRecognizer({ experimentalRequirementRecovery: true }).recognize(new File(["image"], "a.gif", { type: "image/gif" }), options()))
     .rejects.toMatchObject({ code: "UNSUPPORTED_FILE" });
   expect(create).not.toHaveBeenCalled();
+});
+
+it.each(["observe", "apply", "default"] as const)("runs source-backed label recovery in %s mode without manufacturing numeric values", async mode => {
+  prepareTooltip.mockImplementation(async (value, args) => {
+    args.onSourceFrame?.({ version: 1, kind: "original", inset: 0,
+      sourceSize: { width: 300, height: 600 }, preparedSize: { width: 300, height: 600 },
+      crop: { x: 0, y: 0, width: 300, height: 600 } });
+    return value;
+  });
+  predict.mockImplementation(async (image: File) => {
+    if (verificationImages.has(image)) {
+      const view = verificationImages.get(image)!;
+      return [{ items: verificationItems(image, view.crop.width < .5 ? "DEX:" : "DEX:+6%") }];
+    }
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("테스트 장비",10,scale), item("(일반 아이템)",35,scale),
+      item("장비분류: 망토",200,scale), item("[EX:+6%",250,scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(mode === "default" ? {} : { labelRecovery: mode }), cb = options();
+  await recognizer.recognize(file(), cb);
+  const review: OcrReview = cb.onReview.mock.calls[0][0];
+  const recovered = review.lines.find(l => l.equipmentRecovery)!;
+  expect(recovered.equipmentRecovery?.status).toBe("recovered");
+  expect(recovered.readings.every(r => r.text === "[EX:+6%")).toBe(true);
+  expect(recovered.status).toBe(mode === "observe" ? "check" : "recognized");
+  expect(mapReviewedStats(review,"corsair").mainPercent).toBe(mode === "observe" ? undefined : "6");
+  expect(requirementVerificationView).toHaveBeenCalledTimes(4);
+  expect(requirementView).not.toHaveBeenCalled();
+  expect(create).toHaveBeenCalledTimes(1);
+  await recognizer.terminate();
+});
+
+it("does not publish a late label recovery result after cancellation", async () => {
+  prepareTooltip.mockImplementation(async (value, args) => {
+    args.onSourceFrame?.({ version: 1, kind: "original", inset: 0,
+      sourceSize: { width: 300, height: 600 }, preparedSize: { width: 300, height: 600 },
+      crop: { x: 0, y: 0, width: 300, height: 600 } });return value;
+  });
+  let finish!: (value: unknown) => void;
+  predict.mockImplementation(async (image: File) => {
+    if (verificationImages.has(image)) return new Promise(resolve => { finish = resolve; });
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("장비분류: 망토",200,scale), item("[EX:+6%",250,scale)] }];
+  });
+  const controller = new AbortController(), cb = options(controller.signal);
+  const task = createPaddleTooltipRecognizer().recognize(file(), cb);
+  const rejected = expect(task).rejects.toMatchObject({ name: "AbortError" });
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  controller.abort();await rejected;
+  finish([{ items: [] }]);await Promise.resolve();
+  expect(cb.onReview).not.toHaveBeenCalled();expect(dispose).toHaveBeenCalledTimes(1);
 });
 
 it("disposes during initialization and drops late results on cancellation", async () => {

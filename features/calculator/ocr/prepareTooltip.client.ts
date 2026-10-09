@@ -7,28 +7,36 @@
 
 import { prepareTooltipImage, type TooltipCandidateRegions } from "./prepareTooltipImage";
 import type { OcrBounds } from "./types";
+import type { SourceFrameMetadata } from "./sourceFrame";
 
 /**
  * 파일·영역·잘림 경고를 전처리 구현에 전달하고 처리된 File을 반환한다.
  * 작업자 경로는 완료·실패·취소 시 작업자를 종료한다. 작업자 생성 실패는 조용히 직접 실행하지 않고 오류로 알린다.
  */
-export async function prepareTooltip(file: File, options: { region?: OcrBounds; signal?: AbortSignal; onWarnings?: (warnings: string[]) => void; onCandidates?: (candidates: TooltipCandidateRegions) => void } = {}): Promise<File> {
+export async function prepareTooltip(file: File, options: { region?: OcrBounds; signal?: AbortSignal; onWarnings?: (warnings: string[]) => void;
+  onCandidates?: (candidates: TooltipCandidateRegions) => void; onSourceFrame?: (frame: SourceFrameMetadata) => void } = {}): Promise<File> {
   const { signal, region } = options;
   if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-  if (typeof Worker !== "function" || typeof OffscreenCanvas !== "function") return prepareTooltipImage(file, region, options.onWarnings, options.onCandidates);
+  if (typeof Worker !== "function" || typeof OffscreenCanvas !== "function") return prepareTooltipImage(file, region, options.onWarnings, options.onCandidates, options.onSourceFrame);
   return new Promise<File>((resolve, reject) => {
     let worker: Worker;
     try { worker = new Worker(new URL("./prepareTooltip.worker.ts", import.meta.url), { type: "module" }); }
     catch { reject({ code: "OCR_UNAVAILABLE", retryable: true }); return; }
+    let settled = false;
     const cleanup = () => { signal?.removeEventListener("abort", abort); worker.terminate(); };
-    const abort = () => { cleanup(); reject(new DOMException("Cancelled", "AbortError")); };
+    const finish = () => { if (settled) return false; settled = true; cleanup(); return true; };
+    const abort = () => { if (finish()) reject(new DOMException("Cancelled", "AbortError")); };
     signal?.addEventListener("abort", abort, { once: true });
     worker.onmessage = event => {
-      cleanup();
+      if (!finish()) return;
       if (event.data.candidates) options.onCandidates?.(event.data.candidates);
-      if (event.data.error) reject(event.data.error); else { options.onWarnings?.(event.data.warnings ?? []); resolve(event.data.file); }
+      if (event.data.error) reject(event.data.error); else {
+        options.onWarnings?.(event.data.warnings ?? []);
+        if (event.data.sourceFrame) options.onSourceFrame?.(event.data.sourceFrame);
+        resolve(event.data.file);
+      }
     };
-    worker.onerror = () => { cleanup(); reject({ code: "OCR_UNAVAILABLE", retryable: true }); };
+    worker.onerror = () => { if (finish()) reject({ code: "OCR_UNAVAILABLE", retryable: true }); };
     worker.postMessage({ file, region });
   });
 }

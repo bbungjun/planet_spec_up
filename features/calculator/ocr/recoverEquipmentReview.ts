@@ -8,6 +8,8 @@ import { buildOcrReview, normalizedReviewOption } from "./reviewRecognition";
 import { retryRecognitionBounds, retryRecognitionLabel } from "./retryRecognition";
 import { RECOVERY_VIEWS, requirementView, type RecoveryView } from "./requirementView.client";
 import type { EquipmentRecoveryDecision, EquipmentRecoveryObservation, OcrBounds, OcrReading, OcrReview, OcrReviewLine, TooltipOption } from "./types";
+import { recoverLabelRows } from "./recoverLabels";
+import type { SourceFrame } from "./sourceFrame";
 
 export type EquipmentRecoveryTarget = { lineId: string; bounds: OcrBounds; label: string | null; kind: "option" | "requirement"; complete: boolean; reason?: string };
 const valid = (b: OcrBounds) => Object.values(b).every(Number.isFinite) && b.x >= 0 && b.y >= 0
@@ -126,6 +128,7 @@ export function evaluateEquipmentRecovery(line: OcrReviewLine, target: Equipment
 }
 
 type RecoveryContext = { file: File; sourceId: string; operationId: string; signal: AbortSignal; apply?: boolean;
+  labelSource?: SourceFrame;
   onProgress?: (progress: number) => void; createView?: (file: File, bounds: OcrBounds, view: RecoveryView) => Promise<File | null> };
 type RecoveryReader = (file: File, view: { lineId: string; mode: RecoveryView["mode"]; scale: number; viewId: string }) => Promise<OcrReading[]>;
 const active = (signal: AbortSignal) => { if (signal.aborted) throw new DOMException("Cancelled", "AbortError"); };
@@ -133,6 +136,8 @@ const active = (signal: AbortSignal) => { if (signal.aborted) throw new DOMExcep
 /** Same interface is exercised by the image experiment and integration tests. */
 export async function recoverEquipmentReview(review: OcrReview, context: RecoveryContext, read: RecoveryReader): Promise<OcrReview> {
   active(context.signal);
+  if (context.labelSource) return recoverLabelRows(review, { frame: context.labelSource, signal: context.signal,
+    apply: context.apply, onProgress: context.onProgress }, read);
   const targets = locateEquipmentRecoveryTargets(review), selected = targets.slice(0, 12);
   let result = review;
   for (const [index, target] of selected.entries()) {

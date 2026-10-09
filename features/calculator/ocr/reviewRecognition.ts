@@ -229,10 +229,23 @@ export function resolveReviewLine(review: OcrReview, id: string, text: string | 
  * 검증 출처가 있는 해당 줄만 확인/제외하며 다른 요구 조건과 옵션은 유지한다.
  */
 export function overrideReviewRequirement(review: OcrReview | null, job: JobId, field: keyof StatReplacement, value: string): OcrReview | null {
-  if (!review || (field !== "requiredLevel" && field !== "requiredSub")) return review;
+  if (!review) return review;
+  if (field !== "requiredLevel" && field !== "requiredSub") {
+    // An edited aggregate may include several recovered rows (all-stat also
+    // contributes to two fields). Keep their original text, but invalidate the
+    // automatic proof for every contributing row instead of inventing a split.
+    let changed = false;
+    const lines = review.lines.map(line => {
+      if (!line.equipmentRecovery || mapReviewedStats({ ...review, lines: [line] }, job)[field] === undefined) return line;
+      changed = true;
+      return { ...line, equipmentRecovery: undefined };
+    });
+    return changed ? { ...review, lines } : review;
+  }
   const label = field === "requiredLevel" ? "LEV" : JOB_RULES[job].subStat;
   let next = review;
   for (const line of review.lines) if ((line.recovery || line.equipmentRecovery || line.readings.some(reading => reading.provenance?.role === "verification"))
+    && (line.recovery || line.equipmentRecovery?.kind === "requirement" || readTooltipRequirement(line.text))
     && (line.recovery?.target.field ?? line.equipmentRecovery?.option?.label ?? line.equipmentRecovery?.fieldHint ?? readTooltipRequirement(line.text)?.label) === label) {
     next = resolveReviewLine(next, line.id, value.trim() ? `REQ ${label} : ${value}` : null);
   }

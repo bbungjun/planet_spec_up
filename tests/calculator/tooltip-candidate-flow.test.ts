@@ -8,6 +8,7 @@ vi.mock("@/features/calculator/ocr/enlargeTooltip.client",()=>({enlargeTooltip:a
 import {createPaddleTooltipRecognizer} from "@/features/calculator/ocr/recognizePaddle.client";
 import {mapReviewedStats} from "@/features/calculator/ocr/reviewRecognition";
 import type {OcrBounds,OcrReview} from "@/features/calculator/ocr/types";
+import type { SourceFrameMetadata } from "@/features/calculator/ocr/sourceFrame";
 
 const good:OcrBounds={x:.1,y:.1,width:.3,height:.6},bad:OcrBounds={x:.5,y:.1,width:.3,height:.6};
 const source=()=>new File(["synthetic source"],"source.png",{type:"image/png"});
@@ -51,6 +52,20 @@ it("still rejects two complete separate gear tooltips",async()=>{
   predict.mockImplementation(async()=>[{items:items()}]);
   const cb=callbacks();await expect(createPaddleTooltipRecognizer().recognize(source(),cb)).rejects.toMatchObject({code:"MULTIPLE_TOOLTIPS"});
   expect(cb.onPrepared).not.toHaveBeenCalled();expect(cb.onReview).not.toHaveBeenCalled();
+});
+it("keeps the selected candidate's source coordinates rather than the last tested candidate's",async()=>{
+  prepare.mockImplementation(async(_file:File,opts:{region?:OcrBounds;onSourceFrame?:(frame:SourceFrameMetadata)=>void})=>{
+    if(!opts.region)throw {code:"MULTIPLE_TOOLTIPS",regions:[good,bad],retryable:false};
+    opts.onSourceFrame?.({version:1,kind:"selected",inset:0,sourceSize:{width:1000,height:1000},
+      preparedSize:{width:300,height:600},crop:{x:opts.region.x*1000,y:100,width:300,height:600}});
+    return new File(["crop"],opts.region.x===good.x?"good.png":"bad.png",{type:"image/png"});
+  });
+  const cb=callbacks(),recognizer=createPaddleTooltipRecognizer();await recognizer.recognize(source(),cb);
+  const review=cb.onReview.mock.calls[0][0] as OcrReview;
+  expect(review.diagnostics?.sourceFrame?.crop).toEqual({x:100,y:100,width:300,height:600});
+  expect(review.diagnostics?.issues).toEqual([]);
+  expect(mapReviewedStats(review,"corsair").mainFlat).toBe("13");
+  await recognizer.terminate();
 });
 it("checks a pixel-selected single candidate and falls through to an alternative if the selected area is wrong",async()=>{
   prepare.mockImplementation(async(_file:File,opts:{region?:OcrBounds;onCandidates?:(result:unknown)=>void})=>{

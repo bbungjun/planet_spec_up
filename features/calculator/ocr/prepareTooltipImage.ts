@@ -4,6 +4,7 @@
  */
 import { detectTooltipRegions, selectTooltipRegion } from "./detectTooltip";
 import type { OcrBounds } from "./types";
+import type { SourceFrameMetadata } from "./sourceFrame";
 
 /** selectedFrame은 선택한 원본 프레임, selected는 테두리를 제외해 실제 분리한 영역이다. */
 export type TooltipCandidateRegions = { regions: OcrBounds[]; selected: OcrBounds | null; selectedFrame?: OcrBounds };
@@ -12,19 +13,25 @@ export type TooltipCandidateRegions = { regions: OcrBounds[]; selected: OcrBound
  * 이미지 면적을 제한하고, 넓은 캡처에는 자동 탐지, 지정 영역에는 좌표 검증 후 자르기를 수행한다.
  * 작은 캡처는 그대로 사용한다. 후보가 모호하거나 영역이 너무 작으면 오류를 반환하고, 사진 끝에 닿은 영역은 잘림 경고를 전달한다.
  */
-export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarnings?: (warnings: string[]) => void, onCandidates?: (candidates: TooltipCandidateRegions) => void): Promise<File> {
+export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarnings?: (warnings: string[]) => void, onCandidates?: (candidates: TooltipCandidateRegions) => void,
+  onSourceFrame?: (frame: SourceFrameMetadata) => void): Promise<File> {
   if (typeof createImageBitmap !== "function") return file;
   const bitmap = await createImageBitmap(file);
   try {
     if (bitmap.width * bitmap.height > 24_000_000) throw { code: "IMAGE_DIMENSIONS_TOO_LARGE", retryable: false };
     // 큰 가로 화면만 자동 탐지한다. 작은 설명창 캡처의 픽셀은 불필요하게 다시 자르지 않는다.
     const broad = bitmap.width >= 700 && bitmap.width > bitmap.height * 1.2;
-    if (!region && !broad) return file;
+    if (!region && !broad) {
+      onSourceFrame?.({ version: 1, kind: "original", inset: 0, sourceSize: { width: bitmap.width, height: bitmap.height },
+        preparedSize: { width: bitmap.width, height: bitmap.height }, crop: { x: 0, y: 0, width: bitmap.width, height: bitmap.height } });
+      return file;
+    }
     const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(bitmap.width, bitmap.height) : document.createElement("canvas");
     canvas.width = bitmap.width; canvas.height = bitmap.height;
     const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
     if (!context) throw new Error("Canvas unavailable");
     let rect;
+    let appliedInset = 0;
     let selectedFrame: OcrBounds | undefined;
     let detectedRegions: OcrBounds[] = [];
     if (region) {
@@ -45,6 +52,7 @@ export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarn
       selectedFrame = { x: rect.x / bitmap.width, y: rect.y / bitmap.height,
         width: rect.width / bitmap.width, height: rect.height / bitmap.height };
       const inset = Math.max(2, Math.round(rect.width * .01));
+      appliedInset = inset;
       rect = { x: rect.x + inset, y: rect.y + inset, width: rect.width - inset * 2, height: rect.height - inset * 2 };
     }
     rect.width = Math.min(rect.width, bitmap.width - rect.x);
@@ -58,6 +66,9 @@ export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarn
     const blob = "convertToBlob" in canvas ? await canvas.convertToBlob({ type: "image/png" })
       : await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("Tooltip crop failed");
-    return new File([blob], "isolated-tooltip.png", { type: "image/png" });
+    const prepared = new File([blob], "isolated-tooltip.png", { type: "image/png" });
+    onSourceFrame?.({ version: 1, kind: region ? "selected" : "automatic", inset: appliedInset,
+      sourceSize: { width: bitmap.width, height: bitmap.height }, preparedSize: { width: rect.width, height: rect.height }, crop: { ...rect } });
+    return prepared;
   } finally { bitmap.close(); }
 }

@@ -146,7 +146,8 @@ describe("browser-local tooltip preparation", () => {
     pixels.optionRows({ x: 450, y: 180, width: 200, height: 420 });
     const { bitmap, canvas, context } = browser(pixels);
     const onCandidates = vi.fn();
-    const prepared = await prepareTooltip(file(), { onCandidates });
+    const onSourceFrame = vi.fn();
+    const prepared = await prepareTooltip(file(), { onCandidates, onSourceFrame });
     expect(prepared.name).toBe("isolated-tooltip.png");
     expect(canvas).toMatchObject({ width: 196, height: 416 });
     expect(context.drawImage).toHaveBeenLastCalledWith(bitmap, 452, 182, 196, 416, 0, 0, 196, 416);
@@ -154,12 +155,19 @@ describe("browser-local tooltip preparation", () => {
     expect(onCandidates).toHaveBeenCalledWith({ regions: [{ x: .45, y: 180 / 700, width: .2, height: .6 }],
       selectedFrame: { x: .45, y: 180 / 700, width: .2, height: .6 },
       selected: { x: .452, y: 182 / 700, width: .196, height: 416 / 700 } });
+    expect(onSourceFrame).toHaveBeenCalledWith({ version: 1, kind: "automatic", inset: 2,
+      sourceSize: { width: 1000, height: 700 }, preparedSize: { width: 196, height: 416 },
+      crop: { x: 452, y: 182, width: 196, height: 416 } });
   });
 
   it("preserves a tight portrait capture without cropping its actual options", async () => {
     const { bitmap, context } = browser(screenshot(320, 600));
     const original = file();
-    expect(await prepareTooltip(original)).toBe(original);
+    const onSourceFrame = vi.fn();
+    expect(await prepareTooltip(original, { onSourceFrame })).toBe(original);
+    expect(onSourceFrame).toHaveBeenCalledWith({ version: 1, kind: "original", inset: 0,
+      sourceSize: { width: 320, height: 600 }, preparedSize: { width: 320, height: 600 },
+      crop: { x: 0, y: 0, width: 320, height: 600 } });
     expect(context.getImageData).not.toHaveBeenCalled();
     expect(bitmap.close).toHaveBeenCalledTimes(1);
   });
@@ -187,9 +195,38 @@ describe("browser-local tooltip preparation", () => {
 
   it("uses a user-selected normalized region and rejects selections outside the source", async () => {
     const { bitmap, context } = browser(screenshot());
-    await prepareTooltip(file(), { region: { x: .2, y: .1, width: .3, height: .6 } });
+    const onSourceFrame = vi.fn();
+    await prepareTooltip(file(), { region: { x: .2, y: .1, width: .3, height: .6 }, onSourceFrame });
     expect(context.drawImage).toHaveBeenLastCalledWith(bitmap, 200, 70, 300, 420, 0, 0, 300, 420);
+    expect(onSourceFrame).toHaveBeenCalledWith({ version: 1, kind: "selected", inset: 0,
+      sourceSize: { width: 1000, height: 700 }, preparedSize: { width: 300, height: 420 },
+      crop: { x: 200, y: 70, width: 300, height: 420 } });
     await expect(prepareTooltip(file(), { region: { x: .9, y: .1, width: .3, height: .6 } })).rejects.toMatchObject({ code: "INVALID_CROP" });
+  });
+
+  it("forwards worker source coordinates once and ignores late metadata after cancellation", async () => {
+    type Message = { file: File; sourceFrame: object; candidates?: object; warnings?: string[] };
+    const workers: Array<{ onmessage?: (event: { data: Message }) => void; terminate: ReturnType<typeof vi.fn> }> = [];
+    vi.stubGlobal("OffscreenCanvas", class {});
+    vi.stubGlobal("Worker", class {
+      onmessage?: (event: { data: Message }) => void; terminate = vi.fn();
+      constructor() { workers.push(this); }
+      postMessage() {}
+    });
+    const sourceFrame = { version: 1, kind: "selected", inset: 0,
+      sourceSize: { width: 1000, height: 700 }, preparedSize: { width: 300, height: 420 },
+      crop: { x: 200, y: 70, width: 300, height: 420 } };
+    const original = file(), onSourceFrame = vi.fn();
+    const pending = prepareTooltip(original, { onSourceFrame });
+    workers[0].onmessage?.({ data: { file: original, sourceFrame } });
+    expect(await pending).toBe(original);expect(onSourceFrame).toHaveBeenCalledExactlyOnceWith(sourceFrame);
+    const controller = new AbortController(), onWarnings = vi.fn(), onCandidates = vi.fn();
+    const cancelled = prepareTooltip(original, { signal: controller.signal, onSourceFrame, onWarnings, onCandidates });
+    const failure = expect(cancelled).rejects.toMatchObject({ name: "AbortError" });
+    controller.abort();await failure;
+    workers[1].onmessage?.({ data: { file: original, sourceFrame, warnings: ["late"], candidates: {} } });
+    expect(onSourceFrame).toHaveBeenCalledTimes(1);expect(onWarnings).not.toHaveBeenCalled();expect(onCandidates).not.toHaveBeenCalled();
+    expect(workers[1].terminate).toHaveBeenCalledTimes(1);
   });
 
   it("explains a missing or ambiguous frame instead of reading chat and desktop text", async () => {

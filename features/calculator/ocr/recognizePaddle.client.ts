@@ -13,6 +13,8 @@ import { isSupportedTooltipImage, MAX_TOOLTIP_IMAGE_BYTES, toRecognitionError, t
 import type { OcrBounds, OcrReading, RequirementObservation } from "./types";
 import { RECOVERY_VIEWS, VERIFICATION_VIEWS, requirementVerificationView, requirementView } from "./requirementView.client";
 import { mergeRecognitionRetry, retryRecognitionBounds, retryRecognitionLabel } from "./retryRecognition";
+import { classifyRecognitionIssues } from "./recognitionIssues";
+import { createSourceFrame, type SourceFrameMetadata } from "./sourceFrame";
 import { identifiedRequirementLabel, locateRequirementVerification } from "./retryRequirements";
 import { tooltipHeader } from "./tooltipHeader";
 import { assessTooltipCandidate, distinctCompleteCandidates, sameCandidateRegion, type TooltipCandidateAssessment } from "./tooltipCandidate";
@@ -83,11 +85,13 @@ async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
 
 /**
  * 지연 초기화한 한국어 PP-OCRv5/WASM 인식기를 생성하고 같은 인식기의 호출을 직렬화한다.
- * 기본 경로는 기존 줄별 재시도를 사용한다. experimentalRequirementRecovery=true인 개발/시험 호출만 별도의 원본 요구 조건 검증을 사용하며, 실이미지 활성화 기준은 통과하지 못한 상태다.
+ * 기존 재시도 뒤 숫자·단위가 안정적인 항목명만 원본에서 복구한다. 숫자 대체를 시험했던
+ * experimentalRequirementRecovery/experimentalEquipmentRecovery는 여전히 명시적인 시험 호출에 한정한다.
  */
 export function createPaddleTooltipRecognizer(configuration: { experimentalRequirementRecovery?: boolean;
-  experimentalEquipmentRecovery?: "observe" | "apply" } = {}): TooltipRecognizer {
+  experimentalEquipmentRecovery?: "observe" | "apply"; labelRecovery?: false | "observe" | "apply" } = {}): TooltipRecognizer {
   const experimentalRequirementRecovery = configuration.experimentalRequirementRecovery === true;
+  const labelRecovery = configuration.labelRecovery ?? (experimentalRequirementRecovery || configuration.experimentalEquipmentRecovery ? false : "apply");
   let engine: Engine | undefined;
   let initializing: Promise<Engine> | undefined;
   let generation = 0;
@@ -135,10 +139,12 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
     try {
       progress("loading", 0);
       let prepared: File | undefined;
+      let sourceFrame: SourceFrameMetadata | undefined;
       let warnings: string[] = [];
       let candidates: TooltipCandidateRegions | undefined;
       let cachedFirst: { items: Item[]; width: number; height: number } | undefined;
-      try { prepared = await withAbort(prepareTooltip(file, { signal, region: options.region, onWarnings: value => { warnings = value; }, onCandidates: value => { candidates = value; } }), signal); }
+      try { prepared = await withAbort(prepareTooltip(file, { signal, region: options.region, onWarnings: value => { warnings = value; },
+        onCandidates: value => { candidates = value; }, onSourceFrame: value => { sourceFrame = value; } }), signal); }
       catch (error) {
         const ambiguous = error as { code?: string; regions?: OcrBounds[] };
         if (ambiguous.code !== "MULTIPLE_TOOLTIPS" || !ambiguous.regions?.length || options.region) throw error;
@@ -147,7 +153,8 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
       // 픽셀 탐지에서 하나로 보인 자동 후보도 구조를 검사한다. 직접 지정/작은 캡처는 기존 검토 경로를 유지한다.
       if (!options.region && candidates?.regions.length) {
         const current = await withAbort(ensure(version), signal);
-        const matches: Array<{ file: File; warnings: string[]; region: OcrBounds; assessment: TooltipCandidateAssessment; first: { items: Item[]; width: number; height: number } }> = [];
+        const matches: Array<{ file: File; warnings: string[]; region: OcrBounds; assessment: TooltipCandidateAssessment;
+          sourceFrame?: SourceFrameMetadata; first: { items: Item[]; width: number; height: number } }> = [];
         // 선택한 crop과 그 원본 프레임은 같은 물리적인 창이다. 테두리 유무에 따른
         // 판독 차이를 별도 장비로 비교하지 않으며, 다른 프레임은 계속 검사한다.
         const selectedFrame = candidates.selectedFrame;
@@ -159,8 +166,10 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
             && matches.some(match => sameCandidateRegion(match.region, selected))) continue;
           if (matches.some(match => sameCandidateRegion(match.region, region))) continue;
           let candidateWarnings: string[] = [];
+          let candidateFrame = candidates.selected === region && prepared ? sourceFrame : undefined;
           const candidate = candidates.selected === region && prepared ? prepared
-            : await withAbort(prepareTooltip(file, { signal, region, onWarnings: value => { candidateWarnings = value; } }), signal);
+            : await withAbort(prepareTooltip(file, { signal, region, onWarnings: value => { candidateWarnings = value; },
+              onSourceFrame: value => { candidateFrame = value; } }), signal);
           if (candidates.selected === region) candidateWarnings = warnings;
           const enlarged = await enlargeTooltip(candidate, 3) ?? candidate;
           const view = await contrastTooltip(enlarged), dimensions = await tooltipImageSize(view);
@@ -179,12 +188,13 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
             active();
             assessment = assessTooltipCandidate(paddleReadings(colorResult.items, colorSize.width, colorSize.height, 1), colorSize, "color");
           }
-          if (assessment.status === "complete") matches.push({ file: candidate, warnings: candidateWarnings, region, assessment,
+          if (assessment.status === "complete") matches.push({ file: candidate, warnings: candidateWarnings, region, assessment, sourceFrame: candidateFrame,
             first: { items: result.items, ...dimensions } });
         }
         const distinct = distinctCompleteCandidates(matches);
         if (distinct.length !== 1) throw { code: distinct.length ? "MULTIPLE_TOOLTIPS" : "TOOLTIP_NOT_FOUND", retryable: false };
         prepared = distinct[0].file; warnings = distinct[0].warnings;
+        sourceFrame = distinct[0].sourceFrame;
         if (!options.enhance) cachedFirst = distinct[0].first;
       }
       if (!prepared) throw { code: "TOOLTIP_NOT_FOUND", retryable: false };
@@ -207,6 +217,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
       }
       let review = buildOcrReview(readings, warnings);
       if (configuration.experimentalEquipmentRecovery && experimentalRequirementRecovery) throw new Error("Recovery experiments must be run separately");
+      if (labelRecovery && (experimentalRequirementRecovery || configuration.experimentalEquipmentRecovery)) throw new Error("Recovery experiments must be run separately");
       // 기본 UI는 이 분기를 켜지 않는다. 기본 판독과 달리 원본 행 출처·완전성·변환 다양성을 추가 검증한다.
       if (experimentalRequirementRecovery) {
         const preparedSize = await tooltipImageSize(prepared);
@@ -311,6 +322,20 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
               readingId: `${view.viewId}-${index}` } }));
         });
       }
+      if (labelRecovery && sourceFrame) {
+        const frame = createSourceFrame(file, prepared, sourceFrame, identity);
+        if (frame) review = await recoverEquipmentReview(review, { file: prepared, ...identity, signal, labelSource: frame,
+          apply: labelRecovery === "apply",
+          onProgress: value => progress("recognizing", .8 + value * .18) }, async (image, view) => {
+          const dimensions = await tooltipImageSize(image);active();
+          if (!dimensions) throw new Error("Cannot locate label recovery reading");
+          const [result] = await withAbort(current.predict(image), signal);active();
+          return result.items.filter(item=>item.text.trim()).map((item,index)=>{
+            const reading=paddleReadings([item],dimensions.width,dimensions.height,200)[0] ?? {text:item.text,pass:200};
+            return {...reading,provenance:{...identity,role:"verification" as const,rowId:view.lineId,viewId:view.viewId,readingId:`${view.viewId}-${index}`}};
+          });
+        });
+      }
       // The white-text mask can erase colored titles entirely. Recover only
       // the header, without feeding background text into the equipment stats.
       if (!tooltipHeader(reviewText(review))) {
@@ -336,6 +361,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
           }
         }
       }
+      review = { ...review, diagnostics: { sourceFrame, issues: classifyRecognitionIssues(review, sourceFrame) } };
       active(); options.onReview?.(review);
       progress("recognizing", 1);
       return reviewText(review);

@@ -3,6 +3,8 @@
  * 확인된 값과 미인식 키, 기본 판독과 실험 검증 출처를 구분해 경계 간 추정값 전파를 막는다.
  */
 import type { EquipmentInput, EquipmentSlot, JobId } from "../domain/types";
+import type { SourceFrameMetadata } from "./sourceFrame";
+import type { RecognitionIssue } from "./recognitionIssues";
 
 export const OCR_STAT_NAMES = ["STR", "DEX", "INT", "LUK"] as const;
 export type OcrStatName = (typeof OCR_STAT_NAMES)[number];
@@ -133,6 +135,10 @@ export type EquipmentRecoveryDecision = {
   option?: TooltipOption;
   fieldHint?: string | null;
   kind?: "option" | "requirement";
+  /** Other-row fragments remain in observations; these IDs identify the row evidence actually used. */
+  selectedReadingIds?: string[];
+  /** Pixel evidence reads only a label; numbers and units remain in raw observations. */
+  labelPixels?: import("./labelPixels").PixelLabelEvidence;
 };
 /**
  * 장비 분류·헤더·줄 검토·이미지 경고를 담는 단일 결과 객체로 화면과 적용 판단을 일치시킨다.
@@ -145,4 +151,6 @@ export type OcrReview = {
   warnings: string[];
   imageConfirmed?: boolean;
   recoveryObservations?: EquipmentRecoveryObservation[];
+  /** Diagnostic metadata only; original/prepared File references are not retained or saved here. */
+  diagnostics?: { sourceFrame?: SourceFrameMetadata; issues: RecognitionIssue[] };
 };
