@@ -1,6 +1,6 @@
 # 로컬 숫자 OCR 학습 실험
 
-제품 모델과 분리한 한국어 PP-OCRv5 미세조정 도구다. 이미지·라벨·예측·체크포인트는 `output/ocr-numeric-training/`에만 보관한다. 숫자 사전 제한, 문자 치환, 정답 주입을 하지 않는다. 본학습/독립 시험과 구분한 파일럿이며 현재 결과와 미완료 항목은 [학습 계획](../../docs/ocr-accuracy-improvement-plan.md#숫자-학습-실행-결과--2026-10-11)을 따른다.
+제품 모델과 분리한 한국어 PP-OCRv5 미세조정 도구다. 이미지·라벨·예측·체크포인트는 `output/ocr-numeric-training/`에만 보관한다. 숫자 사전 제한, 문자 치환, 정답 주입을 하지 않는다. 파일럿·외형 증강 비교·새 숫자 영역 시험의 결과와 미완료 항목은 [학습 계획](../../docs/ocr-accuracy-improvement-plan.md#숫자-학습-실행-결과--2026-10-11)을 따른다. 새 시험은 BN1 69/70으로 99% 목표에 미달했으며 제품 적용은 보류다.
 
 ## 검증한 환경
 
@@ -19,7 +19,7 @@
 
 같은 원본/그룹의 train·validation·test 교차를 거절한다. `diagnostic`은 이미 노출된 회귀 재생 자료이며 독립 시험이나 모델 선택용으로 간주하지 않는다. 기존 디렉터리를 덮어쓰지 않고, 검증이 끝나기 전에 crop을 쓰지 않는다. 생성된 `manifest.json`에는 전체 정답이 있지만 학습기는 train만 담은 `training.json`, 추론은 ID·이미지 경로·hash만 담은 `inputs.json`을 읽는다. 기존 실험에도 동일 train38개의 전용 목록을 추가했고 원래 manifest/crop은 바꾸지 않았다.
 
-파일럿에서 `validation`이라는 split 이름을 사용해도 파일럿 학습기는 train만 읽고 마지막 epoch를 고정해 저장한다. 매 epoch 검증·조기 종료·검증 기반 최적 체크포인트 선택은 이 도구의 현재 구현에 없다. 작은 자료에서 정상 학습/변환을 확인하는 기능이며 계획의 본학습 컨트롤러를 구현했다고 주장하지 않는다.
+`pilot.py`는 `validation`이라는 split 이름을 사용해도 train만 읽고 마지막 epoch를 고정해 저장한다. 별도 `paired-train.py`는 분리된 `training.json`·`validation.json`을 읽고 매 epoch 검증·조기 종료·체크포인트 선택을 수행한다. test/diagnostic 정답은 학습기에 전달하지 않는다.
 
 ## 실행 예시
 
@@ -66,7 +66,7 @@ python -m unittest discover -s scripts/ocr-numeric-training -p 'test_*.py'
 npx eslint scripts/ocr-numeric-training/browser.js scripts/ocr-numeric-training/serve.mjs
 ```
 
-합성 자료 비교, 별도 새 최종시험, 자동 영역 추출을 포함한 장비 전체 검증, 제품의 SDK Worker/취소/적용은 남아 있다. 숫자 영역 전용 실험 Worker와 반복 시간·프로세스 메모리 측정은 아래 후속 절을 따른다. 연구 모델을 `public/ocr/`로 자동 복사하거나 제품 모델로 교체하지 않는다.
+외형 증강 비교와 새 숫자 영역 시험은 아래 후속 절을 따른다. 자동 영역 추출을 포함한 장비 전체 검증, 제품의 SDK Worker/취소/적용은 남아 있다. 연구 모델을 `public/ocr/`로 자동 복사하거나 제품 모델로 교체하지 않는다.
 
 ## 실제 Worker와 프로세스 비용 후속
 
@@ -88,4 +88,26 @@ python scripts/ocr-numeric-training/runtime-summary.py --output output/ocr-numer
 
 `prepare-auto-replay.py --baseline <ocr-numeric-regions 결과> --study <검수 study> --output <새 경로>`는 과거 `original-color/number-tight` 이미지 중 분리 가능한 것만 추론 입력으로 내보내고 실패 목록은 별도 분모로 보존한다. 수동 crop 수정이나 정답별 전처리 선택은 하지 않는다. 같은 `serve.mjs`와 기본 브라우저 판독으로 A1/BN1을 실행한 뒤 `score-auto-replay.py --run <경로>`로 채점한다. 기존 행 위치를 고정한 재생이므로 새 전체 사진 탐지나 장비 저장의 성공률로 표시하지 않는다.
 
-이 후속의 Worker/비용 검사는 완료했지만 제품의 전체 SDK Worker/취소/적용·장비 전체·새 독립시험·실제+합성 비교는 여전히 남아 있다.
+이 후속의 Worker/비용 검사는 완료했지만 제품의 전체 SDK Worker/취소/적용·장비 전체 검증은 남아 있다.
+
+## 실사와 외형 증강의 동일 노출 비교
+
+`synthesize-crops.py --data <기존 data> --output <새 output 경로>`는 train 숫자 영역만 사용해 배율·명도·약한 blur·padding을 바꾼 3,040개를 생성한다. 기본 seed는 20261011이다. 원본 영역을 잘라내거나 획을 지우지 않고 정답을 유지한다. 새 숫자 조합/글꼴을 렌더링하는 도구가 아니며, 원본에 없는 3·6·9의 글자 모양을 보충하지 않는다. preview를 실제로 검토한 뒤 학습한다.
+
+`paired-train.py`는 두 비교군 모두 매 epoch 각 실사 원본을 두 번 노출한다. `--arm real-replay`는 동일 실사를 반복하고, `--arm real-plus-augmentation`은 두 번째 노출만 같은 원본의 파생 이미지로 바꾼다. 동일 seed로 원본/정답 순서를 맞추고 BN running statistics를 고정한다. 검증 완전일치 증가·틀린 숫자 증가 없음·정상 회귀 0을 만족하는 가장 이른 최상 epoch를 선택한다. 동점 5회면 종료하며 최대 20 epoch다.
+
+```bash
+"$TRAIN_PY" scripts/ocr-numeric-training/paired-train.py \
+  --upstream "$UPSTREAM" --data "$RUN/additional-aran-20261011/data" \
+  --synthetic output/ocr-numeric-training/new-pair/augmentation --weights "$WEIGHTS" \
+  --output output/ocr-numeric-training/new-pair/control --arm real-replay
+# 다른 새 출력 폴더에서 --arm real-plus-augmentation으로 비교군을 실행한다.
+```
+
+실제 두 실행은 각각 6 epoch/30 update에 종료되고 epoch 1을 선택했다. 둘 다 검증 38/38이지만 증강군은 학습 37/38·기존 진단 9/10으로 악화되어 채택하지 않았다. 기존 BN1 후보를 유지했으며 새 시험으로 다른 seed/epoch를 고르지 않았다. `audit-paired.py --run <비교 경로> --study <기존 study>`는 파생 출처·원본/정답 노출 순서·선택 기록·GPU/브라우저 출력을 대조한다. 고정한 글꼴로 새로운 숫자 조합을 만드는 합성 실험과 구분한다.
+
+## 새 원본의 봉인 시험
+
+새 사진은 원본·모델 hash를 먼저 고정한 `pretest-lock.json`, 추론 전 2회 검토한 `review.json`, 입력/정답 hash와 평가 규칙을 고정한 `test-manifest-lock.json`으로 구분한다. 두 검토는 같은 에이전트가 수행했다. `prepare.py`로 test만 준비하면 학습/검증 목록은 비어 있고 추론 입력에는 정답이 없다. A1·B0·BN1을 각 한 번 같은 입력으로 비교한 뒤 같은 BN1 GPU 출력을 변환 대조에만 사용했다.
+
+`audit-final.py --run <새 시험 경로> --prior <기존 study> --conversion <고정 후보 변환 경로> --weights <고정 후보 학습 가중치>`는 봉인 파일·원본/crop/model hash·이전 출처 중복·단일 완결 receipt·추론 순서·GPU/브라우저 일치를 검사한다. 결과는 새로운 `final-audit.json`에만 쓰며 기존 파일을 덮어쓰지 않는다. 시험은 70개 숫자 영역/14장/1회 촬영/보수적 장비 그룹 13개다. 숫자 5개 동시 일치를 장비 전체 성공으로 표현하지 않는다. 결과를 보고 crop·정답·전처리를 수정하거나 모델을 다시 고르지 않는다. 후속 학습에 사용한다면 개발 자료로 재분류하고 별도 새 시험을 확보해야 한다.

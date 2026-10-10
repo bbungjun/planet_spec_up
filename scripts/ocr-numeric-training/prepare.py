@@ -69,6 +69,9 @@ def prepare(review_path, output):
     (output/'training.json').write_text(json.dumps({
         'sourceManifestSha256':sha(output/'manifest.json'),
         'rows':[r for r in records if r['split']=='train']},ensure_ascii=False,indent=2),encoding='utf-8')
+    (output/'validation.json').write_text(json.dumps({
+        'sourceManifestSha256':sha(output/'manifest.json'),
+        'rows':[r for r in records if r['split']=='validation']},ensure_ascii=False,indent=2),encoding='utf-8')
     # Inference inputs intentionally contain neither labels nor splits.
     (output/'inputs.json').write_text(json.dumps({'rows':[
         {k:r[k] for k in ('id','image','cropSha256')} for r in records]},indent=2),encoding='utf-8')

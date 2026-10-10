@@ -48,5 +48,22 @@ class DatasetIntegrityTest(unittest.TestCase):
         self.assertEqual([r['id'] for r in training['rows']],['one'])
         self.assertEqual(training['sourceManifestSha256'],sha(self.output/'manifest.json'))
 
+    def test_validation_labels_are_separate_from_training(self):
+        second=self.root/'second.png';Image.new('RGB',(40,20),'black').save(second)
+        self.run_prepare([self.row,{**self.row,'id':'validation-only','source':second.relative_to(self.app).as_posix(),
+                                   'sourceGroupId':'second-session','split':'validation','label':'80'}])
+        training=json.loads((self.output/'training.json').read_text(encoding='utf-8'))
+        validation=json.loads((self.output/'validation.json').read_text(encoding='utf-8'))
+        self.assertEqual([r['id'] for r in training['rows']],['one'])
+        self.assertEqual([r['id'] for r in validation['rows']],['validation-only'])
+
+    def test_final_test_labels_never_enter_learning_lists(self):
+        self.run_prepare([{**self.row,'split':'test'}])
+        for name in ('training.json','validation.json'):
+            self.assertEqual(json.loads((self.output/name).read_text(encoding='utf-8'))['rows'],[])
+        inputs=json.loads((self.output/'inputs.json').read_text(encoding='utf-8'))
+        self.assertNotIn('label',inputs['rows'][0])
+        self.assertEqual(json.loads((self.output/'manifest.json').read_text(encoding='utf-8'))['independentTestCount'],1)
+
 
 if __name__=='__main__':unittest.main()
