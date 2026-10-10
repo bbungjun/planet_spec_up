@@ -119,3 +119,7 @@ python scripts/ocr-numeric-training/runtime-summary.py --output output/ocr-numer
 `auto-browser.ts`는 제품의 기본 `recognizeBatch`와 실제 SDK Worker로 전체 사진을 직렬 판독한다. `auto-targets.ts`는 기존 숫자 실험의 유일한 요구 행 선택 규칙을 LEV/STR/DEX/INT/LUK에 동일 적용한다. 원본 좌표 환산 padding 2, 기존 `numericRegion`, 원색/nearest 3배를 유지한다. 설명창 탐지·항목 식별·콜론 분리 실패도 모든 사진×5개 분모에 남긴다. 수동 좌표·정답·이전 숫자 예측은 브라우저 입력에 없고 숫자 모델의 출력도 제품 검토값에 쓰지 않는다.
 
 `score-automatic.py --run <자동 시험 경로> --study <봉인 study>`는 출처·소스 snapshot·원본/crop/model hash·전체 분모·완결 출력을 검사하고 추출 실패와 인식 실패를 따로 집계한다. 같은 사진의 후속 파이프라인 평가이며 새로운 독립 자료가 늘어난 것이 아니다. `product.blocked`는 기존 제품의 검토 상태 관측이며 전체 옵션 정답 일치나 실제 저장 성공의 대용 지표가 아니다.
+
+## 기존 train 요구치 확장
+
+`train-coverage-20261011` 실험은 기존19장의 사용하지 않은 DEX/INT/LUK57개를 더해 train95개로 확장했다. 기존validation38/diagnostic10과 이전crop86개의hash를 유지했고 새시험14장을 사용하지 않았다. 같은 도구로 실사/외형증강을 비교해 둘 다95/95·38/38·10/10을 얻었지만 기존BN1도 같아 새모델을 채택하지 않았다. 원본/촬영그룹 수는 늘지 않았고 숫자3·6은 여전히 없다. 자세한 선택epoch·갱신횟수·미완료 범위는 학습계획 마지막 절을 따른다. 기존BN1과 새두모델의GPU/브라우저143개는 일치했으나 학습전B0의비숫자2개는 달라 완전동등성실패를 보존했다.

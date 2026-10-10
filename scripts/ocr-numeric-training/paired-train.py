@@ -1,6 +1,7 @@
 """Matched real-replay vs train-derived augmentation, with validation-only selection.
 
-Each epoch exposes every real source twice in both arms (76 samples, 5 updates).
+Each epoch exposes every real source twice in both arms. The original 38-source
+study therefore used 76 samples and 5 updates per epoch with batch size 16.
 The mixed arm replaces the second occurrence by one derivative of that source.
 Diagnostic/test labels are not loaded by this process.
 """
