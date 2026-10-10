@@ -111,3 +111,11 @@ python scripts/ocr-numeric-training/runtime-summary.py --output output/ocr-numer
 새 사진은 원본·모델 hash를 먼저 고정한 `pretest-lock.json`, 추론 전 2회 검토한 `review.json`, 입력/정답 hash와 평가 규칙을 고정한 `test-manifest-lock.json`으로 구분한다. 두 검토는 같은 에이전트가 수행했다. `prepare.py`로 test만 준비하면 학습/검증 목록은 비어 있고 추론 입력에는 정답이 없다. A1·B0·BN1을 각 한 번 같은 입력으로 비교한 뒤 같은 BN1 GPU 출력을 변환 대조에만 사용했다.
 
 `audit-final.py --run <새 시험 경로> --prior <기존 study> --conversion <고정 후보 변환 경로> --weights <고정 후보 학습 가중치>`는 봉인 파일·원본/crop/model hash·이전 출처 중복·단일 완결 receipt·추론 순서·GPU/브라우저 일치를 검사한다. 결과는 새로운 `final-audit.json`에만 쓰며 기존 파일을 덮어쓰지 않는다. 시험은 70개 숫자 영역/14장/1회 촬영/보수적 장비 그룹 13개다. 숫자 5개 동시 일치를 장비 전체 성공으로 표현하지 않는다. 결과를 보고 crop·정답·전처리를 수정하거나 모델을 다시 고르지 않는다. 후속 학습에 사용한다면 개발 자료로 재분류하고 별도 새 시험을 확보해야 한다.
+
+## 전체 사진부터 자동 숫자 추출
+
+`serve-auto.mjs --study=<봉인 study> --output=<새 output 경로> --port=3152`는 같은 원본과 고정 A1/BN1을 준비하고 실행 전 소스 snapshot·hash·평가 규칙을 저장한다. `/auto.html`에서 고정 시험을 한 번 실행한다. 중단된 실행도 기존 디렉터리를 재사용하지 않는다.
+
+`auto-browser.ts`는 제품의 기본 `recognizeBatch`와 실제 SDK Worker로 전체 사진을 직렬 판독한다. `auto-targets.ts`는 기존 숫자 실험의 유일한 요구 행 선택 규칙을 LEV/STR/DEX/INT/LUK에 동일 적용한다. 원본 좌표 환산 padding 2, 기존 `numericRegion`, 원색/nearest 3배를 유지한다. 설명창 탐지·항목 식별·콜론 분리 실패도 모든 사진×5개 분모에 남긴다. 수동 좌표·정답·이전 숫자 예측은 브라우저 입력에 없고 숫자 모델의 출력도 제품 검토값에 쓰지 않는다.
+
+`score-automatic.py --run <자동 시험 경로> --study <봉인 study>`는 출처·소스 snapshot·원본/crop/model hash·전체 분모·완결 출력을 검사하고 추출 실패와 인식 실패를 따로 집계한다. 같은 사진의 후속 파이프라인 평가이며 새로운 독립 자료가 늘어난 것이 아니다. `product.blocked`는 기존 제품의 검토 상태 관측이며 전체 옵션 정답 일치나 실제 저장 성공의 대용 지표가 아니다.
