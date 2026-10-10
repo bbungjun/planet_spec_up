@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="플래닛 OCR 숫자 학습을 왜, 어떻게 진행했고 결과를 어떻게 해석해야 하는지 설명하는 오프라인 학습 노트">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'">
+<link rel="icon" href="data:,">
+<title>OCR 학습, 어떻게 진행했나 · 플래닛 이해 노트</title>
+<style>
+:root{color-scheme:light;--paper:#fff;--bg:#f2f5f1;--ink:#19352d;--muted:#52675e;--green:#146a53;--mint:#e9f4ed;--line:#d6e0d8;--amber:#82500c;--sand:#fff3dc;--red:#9b3c32;--rose:#fff0ec;--blue:#506d87}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;line-height:1.85;word-break:keep-all;overflow-wrap:anywhere}button{font:inherit;cursor:pointer}a{color:var(--green);text-underline-offset:4px}button,a,summary{-webkit-tap-highlight-color:transparent}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #b66a10;outline-offset:4px}.skip{position:absolute;top:-100px;left:20px;z-index:10;background:white;padding:12px}.skip:focus{top:12px}
+.layout{max-width:1320px;margin:auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;padding:36px 32px 80px}.sidebar{position:sticky;top:30px;align-self:start}.brand{font-size:18px;font-weight:800;letter-spacing:-.04em}.brand span{display:block;color:var(--muted);font-size:12px;letter-spacing:.02em;font-weight:500;margin-top:3px}.sidebar nav{margin:30px 0}.sidebar nav a{display:block;text-decoration:none;color:var(--muted);padding:9px 10px;border-left:2px solid transparent;font-size:14px}.sidebar nav a:hover,.sidebar nav a[aria-current="location"]{background:var(--mint);color:var(--green);border-color:var(--green)}.sidebar nav b{font-weight:500;font-size:11px;margin-right:10px;color:#657d70}.print{border:1px solid var(--line);background:#fff;border-radius:7px;padding:9px 14px;font-size:13px}.side-note{font-size:12px;line-height:1.7;color:var(--muted);margin-top:20px}
+main{min-width:0}header{background:#163d32;color:#f5fff8;border-radius:18px;padding:44px 46px;position:relative;overflow:hidden}header:after{content:"";position:absolute;right:-75px;top:-85px;width:260px;height:260px;border:1px solid #ffffff22;border-radius:50%;pointer-events:none}.eyebrow{font-size:12px;letter-spacing:.08em;color:#bcdfc8;font-weight:700;margin:0}.hero h1{font-size:clamp(29px,4vw,45px);line-height:1.35;letter-spacing:-.055em;margin:17px 0}.hero p{max-width:42em;color:#dfede4}.status{display:inline-flex;gap:10px;align-items:center;background:#ffffff10;border:1px solid #ffffff35;padding:6px 12px;border-radius:100px;font-size:12px;margin-top:10px}.status:before{content:"";width:7px;height:7px;border-radius:50%;background:#ebc781}.hero-date{font-size:12px;margin-top:20px!important;color:#b7d2c3!important}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:34px 38px;margin-top:24px;min-width:0}.section-no{font-size:12px;font-weight:800;color:var(--green);letter-spacing:.04em;margin-bottom:7px}h2{font-size:25px;line-height:1.45;letter-spacing:-.04em;margin:0 0 18px}h3{font-size:18px;line-height:1.5;margin:26px 0 12px;letter-spacing:-.025em}p{margin:12px 0}.lead{font-size:17px}.muted,.caption{color:var(--muted)}.caption{font-size:13px;line-height:1.8}.small{font-size:13px}.tag{display:inline-block;border:1px solid var(--line);border-radius:5px;padding:1px 7px;color:var(--muted);font-size:11px;vertical-align:middle}.note{background:var(--mint);border-left:3px solid var(--green);padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0}.note p{margin:0}.note.warn{background:var(--sand);border-color:#c58a2a;color:#67451a}.note.danger{background:var(--rose);border-color:var(--red);color:#713c33}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.box{border:1px solid var(--line);border-radius:10px;padding:20px;background:#fbfcfa}.box h3{margin:0 0 8px}.box p:last-child{margin-bottom:0}.kicker{color:var(--green);font-size:12px;font-weight:700}.large{font-variant-numeric:tabular-nums;font-size:38px;letter-spacing:-.04em;font-weight:750;line-height:1.35;margin:8px 0}.large small{font-size:16px;font-weight:500;color:var(--muted);letter-spacing:0}.tight{margin:0}.plain-list{padding-left:20px}.plain-list li{margin:6px 0}
+.pipeline{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:20px 0 10px}.pipeline button{border:1px solid var(--line);background:#f8faf7;color:var(--ink);border-radius:8px;padding:13px 5px;line-height:1.7;font-size:13px;min-height:94px}.pipeline button span{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}.pipeline button[aria-pressed="true"]{background:var(--green);color:white;border-color:var(--green)}.pipeline button[aria-pressed="true"] span{color:#d2efdd}.pipeline .trained{box-shadow:inset 0 0 0 2px #77a98b}.flow-note{min-height:110px;background:#f1f7f1;border-radius:8px;padding:17px 20px;font-size:14px}.flow-note h3{margin:0 0 6px;font-size:16px}
+.learning{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:10px;margin:20px 0}.learning .step{padding:17px;background:#f6f8f3;border:1px solid var(--line);border-radius:9px;text-align:center}.learning .step b{font-size:14px;display:block}.learning .step small{display:block;font-size:12px;color:var(--muted);line-height:1.65;margin-top:6px}.arrow{align-self:center;color:#738d7c}.sample-number{background:#1a2c3d;color:#fff;font-size:34px;line-height:1.3;padding:8px;border-radius:5px;margin:10px 0;font-variant-numeric:tabular-nums}.sample-text{font-size:28px;padding:8px 0;line-height:1.4}.sample-text em{color:var(--red);font-style:normal}.return-loop{border:1px dashed #98b8a2;border-top:0;border-radius:0 0 12px 12px;padding:8px 15px;text-align:center;color:var(--green);font-size:13px;margin:-10px 25px 0}.role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.role{padding:20px;border:1px solid var(--line);border-top:3px solid var(--green);border-radius:8px}.role:nth-child(2){border-top-color:#567a9b}.role:nth-child(3){border-top-color:#b57f27}.role h3{margin:0 0 6px}.role .analogy{font-size:13px;color:var(--muted)}
+.table-wrap{max-width:100%;overflow:auto;margin:16px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.75}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eff5ed;color:#284c3d;font-weight:700}tr:last-child td{border-bottom:0}td.num,th.num{white-space:nowrap;font-variant-numeric:tabular-nums}tbody tr.highlight{background:#f0f8ef}caption{text-align:left;padding:12px 14px;background:#fff;font-weight:700;font-size:14px}.timeline{margin:20px 0}.event{display:grid;grid-template-columns:31px 1fr;gap:14px;position:relative;padding-bottom:24px}.event:last-child{padding-bottom:0}.event:before{content:"";position:absolute;left:14px;top:28px;bottom:0;border-left:1px solid var(--line)}.event:last-child:before{display:none}.event .dot{width:29px;height:29px;background:#edf4e9;border:1px solid #b6cab4;border-radius:50%;text-align:center;line-height:27px;font-size:12px;color:var(--green);font-weight:800}.event h3{margin:0 0 6px;font-size:16px}.event p{font-size:14px;margin:0 0 8px}.event .outcome{font-size:13px;color:var(--green);font-weight:700}.event .outcome.bad{color:var(--red)}
+.choices{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.choices button{padding:9px 14px;border:1px solid #bfcfc2;border-radius:7px;background:#fff;font-size:13px;color:var(--ink);min-height:42px}.choices button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}.result-panel{border:1px solid var(--line);border-radius:10px;padding:22px}.result-panel h3{margin:0 0 5px}.result-panel .context{font-size:13px;color:var(--muted);margin:0 0 18px}.bar-row{display:grid;grid-template-columns:100px 1fr 88px;align-items:center;gap:10px;margin:18px 0;font-size:14px}.track{height:17px;background:#edf1ed;border-radius:4px;overflow:hidden}.fill{height:100%;background:var(--green);transition:width .3s ease}.fill.base{background:var(--blue)}.bar-value{text-align:right;font-variant-numeric:tabular-nums;font-weight:750}.result-badge{display:inline-block;background:var(--sand);color:var(--amber);padding:3px 9px;border-radius:4px;font-size:12px;margin-top:4px}.observations{padding-left:20px;font-size:14px;line-height:1.9;margin:16px 0 0}.result-panel .meaning{border-top:1px solid var(--line);padding-top:14px;font-size:14px}.print-results{display:none}
+.execution{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:20px 0}.execution div{padding:17px 12px;background:#f4f7f2;border:1px solid var(--line);border-radius:8px;font-size:13px}.execution b{display:block;margin-bottom:6px;font-size:14px}.execution small{display:block;color:var(--muted);line-height:1.7}.checklist{list-style:none;padding:0;margin:20px 0}.checklist li{padding:12px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:70px 1fr;gap:12px;font-size:14px}.pill{align-self:start;text-align:center;border-radius:4px;padding:2px 5px;font-size:11px;background:var(--mint);color:var(--green);font-weight:700}.pill.hold{background:var(--sand);color:var(--amber)}.pill.fail{background:var(--rose);color:var(--red)}details{margin:14px 0;border:1px solid var(--line);border-radius:8px;padding:0 17px;background:#fcfdfa}summary{padding:13px 0;font-weight:700;font-size:14px;cursor:pointer}details[open]{padding-bottom:12px}details p,details li{font-size:14px}.terms{display:grid;grid-template-columns:115px 1fr;gap:10px 20px;font-size:14px}.terms dt{font-weight:700}.terms dd{margin:0;color:var(--muted)}code{font-family:Consolas,"Malgun Gothic",monospace;background:#edf1eb;border-radius:4px;padding:2px 5px;font-size:.86em;word-break:break-all}.source-list{font-size:13px;padding-left:20px}.source-list li{margin:8px 0}.footer{padding:24px 4px 0;font-size:12px;color:var(--muted)}.read-status{font-size:12px;color:var(--muted);padding-top:10px}
+@media(max-width:1050px){.layout{grid-template-columns:180px minmax(0,1fr);gap:22px;padding:24px 20px 60px}section{padding:28px}header{padding:34px}.pipeline{grid-template-columns:repeat(3,minmax(0,1fr))}.role-grid{gap:8px}.role{padding:15px}}
+@media(max-width:740px){.layout{display:block;padding:16px 14px 40px}.sidebar{position:static}.brand{font-size:16px}.brand span{display:inline;margin-left:8px}.sidebar nav{display:flex;overflow:auto;gap:6px;margin:16px 0;padding-bottom:4px}.sidebar nav a{white-space:nowrap;border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:#fff;font-size:12px}.sidebar nav b{display:none}.sidebar .side-note,.sidebar .print{display:none}header{padding:27px 24px;border-radius:12px}.hero h1{font-size:31px}section{padding:25px 22px;border-radius:10px}h2{font-size:22px}.two,.role-grid{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(3,minmax(0,1fr))}.pipeline button{min-height:86px;font-size:12px}.flow-note{min-height:0}.learning{grid-template-columns:1fr;gap:7px}.learning .arrow{transform:rotate(90deg);text-align:center}.learning .step{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 12px;text-align:left}.learning .step b{grid-column:1}.learning .step small{grid-column:1}.sample-number,.sample-text{grid-column:2;grid-row:1 / 3;margin:0;text-align:center}.return-loop{margin:5px 0 0;border-top:1px dashed #98b8a2;border-radius:8px}.execution{grid-template-columns:repeat(2,minmax(0,1fr))}.bar-row{grid-template-columns:76px 1fr 70px;font-size:12px;gap:7px}.result-panel{padding:17px}.terms{grid-template-columns:85px 1fr;gap:12px}th,td{padding:10px;font-size:12px}.large{font-size:34px}.lead{font-size:16px}.checklist li{grid-template-columns:60px 1fr;gap:9px}.choices button{flex:1;padding:9px 7px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.fill{transition:none}}
+@media print{body{background:#fff;font-size:11pt}.layout{display:block;max-width:none;padding:0}.sidebar,.skip,.choices,.interactive-only{display:none}header{background:#fff;color:#163d32;border:1px solid var(--line);padding:22px}header p,.eyebrow,.hero-date{color:#274637!important}.status{color:#274637;border-color:var(--line)}header:after{display:none}.hero h1{font-size:27pt}section{padding:18px 0;margin:20px 0;border:0;border-top:1px solid var(--line);border-radius:0}h2,h3,summary{break-after:avoid}.box,.note,.event,.role,.result-panel,tr{break-inside:avoid}.pipeline button{color:#19352d!important;background:#f1f5ee!important;border-color:var(--line)!important}.pipeline button span{color:#52675e!important}.pipeline{display:grid!important}.result-panel{display:none}.print-results{display:block}a{color:#163d32;text-decoration:underline}.table-wrap{overflow:visible}.footer{font-size:9pt}.two{gap:12px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 바로가기</a>
+<div class="layout">
+<aside class="sidebar">
+  <div class="brand">플래닛 이해 노트<span>OCR 학습 기록 · 2026.10.11</span></div>
+  <nav aria-label="문서 목차">
+    <a href="#scope"><b>01</b>어디를 학습했나</a><a href="#learning"><b>02</b>학습은 어떻게 하나</a><a href="#data"><b>03</b>사진을 어떻게 나눴나</a><a href="#experiments"><b>04</b>무엇을 비교했나</a><a href="#results"><b>05</b>결과를 어떻게 읽나</a><a href="#browser"><b>06</b>브라우저에서도 되나</a><a href="#next"><b>07</b>왜 아직 적용하지 않나</a><a href="#reference"><b>08</b>용어와 근거</a>
+  </nav>
+  <button class="print" id="print-document" type="button">인쇄 / PDF로 저장</button>
+  <p class="side-note">이 HTML 하나로 읽을 수 있습니다.<br>외부 이미지·폰트·라이브러리를 불러오지 않습니다.</p>
+</aside>
+<main id="main">
+<header class="hero">
+  <p class="eyebrow">사진에서 숫자까지, 실제 작업을 따라가기</p>
+  <h1>OCR 학습,<br>어떻게 진행했나</h1>
+  <p>이미 글자를 읽을 줄 아는 모델에 게임 속 숫자 사진을 추가로 가르쳤습니다. <strong>숫자 인식은 좋아졌지만, 사진 한 장을 오류 없이 등록하는 목표에는 아직 못 미쳤습니다.</strong></p>
+  <div class="status">연구 모델 개선 확인 · 제품 적용 보류 · 추가 사진 대기</div>
+  <p class="hero-date">기록 기준: 2026년 10월 11일, 정밀도 대조까지 완료한 시점</p>
+</header>
+
+<section id="scope">
+  <div class="section-no">01 · 전체 흐름에서 이번 학습의 위치</div>
+  <h2>‘찾기’와 ‘읽기’는 다른 일입니다</h2>
+  <p class="lead">스크린샷을 넣으면 곧바로 숫자가 나오는 것처럼 보여도, 안에서는 여러 단계를 거칩니다. 이번에는 그중 <strong>잘라 놓은 숫자 이미지를 읽는 모델</strong>을 학습했습니다.</p>
+  <div class="pipeline interactive-only" aria-label="OCR 처리 단계 설명 선택">
+    <button type="button" data-stage="photo" aria-pressed="false"><span>1</span>사진 입력</button>
+    <button type="button" data-stage="detect" aria-pressed="false"><span>2</span>설명창 찾기</button>
+    <button type="button" data-stage="crop" aria-pressed="false"><span>3</span>숫자 영역 자르기</button>
+    <button type="button" data-stage="read" class="trained" aria-pressed="true"><span>4 · 이번 학습</span>숫자 읽기</button>
+    <button type="button" data-stage="review" aria-pressed="false"><span>5</span>항목 해석·검토</button>
+    <button type="button" data-stage="save" aria-pressed="false"><span>6</span>적용·저장</button>
+  </div>
+  <div class="flow-note" aria-live="polite"><h3 id="stage-title">숫자 읽기 — 잘라 놓은 이미지가 어떤 문자열인지 예측</h3><p id="stage-description" class="tight">기존 한국어 Paddle 인식 모델을 미세조정했습니다. 숫자 모양을 보고 문자열을 내는 부분의 가중치를 바꿨으며, 숫자만 허용하는 사전이나 강제 문자 치환은 사용하지 않았습니다.</p></div>
+  <p class="caption interactive-only">위 단계를 누르면 각 역할을 볼 수 있습니다.</p>
+  <div class="two">
+    <div class="box"><div class="kicker">먼저 확인한 질문</div><h3>영역이 온전하면 더 잘 읽을까?</h3><p>원본에서 숫자 전체가 들어 있는 영역을 검수해 자르고, 기존 모델과 학습 모델에 <strong>같은 이미지</strong>를 넣었습니다.</p></div>
+    <div class="box"><div class="kicker">그다음 확인한 질문</div><h3>전체 사진에서도 효과가 이어질까?</h3><p>좌표를 알려주지 않고 설명창과 숫자 영역을 자동으로 찾게 했습니다. 앞 단계에서 못 찾은 값도 실패로 셌습니다.</p></div>
+  </div>
+  <div class="note"><p>이번 대상은 <strong>요구 레벨과 STR·DEX·INT·LUK의 정수 값</strong>입니다. 장비 분류·옵션명·%·저장까지 모두 해결한 모델을 만든 것은 아닙니다.</p></div>
+</section>
+
+<section id="learning">
+  <div class="section-no">02 · ‘모델을 학습한다’는 뜻</div>
+  <h2>정답과 비교하며 내부 숫자를 조금씩 조정했습니다</h2>
+  <p>출발점은 공식 <strong>한국어 PP-OCRv5 mobile 인식 모델</strong>입니다. 처음부터 글자를 가르치는 대신, 이미 배운 모델을 게임 숫자에 적응시키는 <strong>미세조정</strong>을 했습니다.</p>
+  <div class="learning" aria-label="지도학습의 원리: 이미지와 정답, 예측과 오차, 가중치 조정">
+    <div class="step"><b>① 이미지 + 정답</b><div class="sample-number">80</div><small>정답 문자열을 사람이 읽듯 원본과 대조해 붙입니다.</small></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step"><b>② 예측과 오차 비교</b><div class="sample-text">8<em>O</em> ≠ 80</div><small>빨간 O는 영문자입니다. 정답과의 오차를 계산합니다.</small></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step"><b>③ 가중치 갱신</b><div class="sample-text">조금씩 조정</div><small>오차를 줄이는 방향으로 모델 내부의 계수를 바꿉니다.</small></div>
+  </div>
+  <div class="return-loop">다음 이미지·다음 묶음으로 반복 ↶</div>
+  <p class="caption">위 숫자와 예측은 원리 설명용 예시입니다. 특정 사진의 실제 학습 로그를 재현한 그림은 아닙니다.</p>
+  <p>모델이 틀렸을 때 결과 문자열을 억지로 고쳐 저장한 것이 아닙니다. <strong>학습할 때만 정답으로 오차를 계산</strong>하고, 실제 판독에는 이미지와 모델만 전달했습니다. 정답표는 판독이 끝난 뒤 별도 채점기가 사용했습니다.</p>
+  <details><summary>실제로 사용한 학습 설정</summary>
+    <ul class="plain-list"><li>GPU: 로컬 RTX 3070 Ti 8GB, WSL의 전용 Python/Paddle 환경.</li><li>학습 batch 16, 학습률 0.00003. 앱의 문자 인식 batch 6과는 다른 값입니다.</li><li>원색 숫자 영역을 nearest 방식으로 3배 확대하고, 모델 입력 높이 48에 맞춰 크기·색상·정규화를 처리했습니다.</li><li>기존 한국어 사전과 일반 CTC 디코딩을 유지했습니다. 숫자만 허용하는 출력 제한이나 O→0 같은 치환을 학습 효과로 섞지 않았습니다.</li><li>기존 구조의 CTC + NRTR 손실을 사용했습니다. 정확도 평가는 오차값이 아니라 <strong>모델이 실제 출력한 문자열</strong>로 했습니다.</li></ul>
+  </details>
+  <details><summary>한 번 학습하고 끝내지 않은 이유</summary><p><strong>학습 자료를 잘 맞히는 것만으로는 부족</strong>하기 때문입니다. 같은 사진을 외우거나, 잘 읽던 숫자를 망가뜨릴 수도 있습니다. 매개변수 저장/복원, 다른 자료의 정확도, 기존 정상 사례의 회귀, 브라우저 변환까지 따로 확인했습니다.</p><p>모델과 Adam 최적화 상태는 읽기 직후 정확히 복원됐지만, 이어서 GPU 계산을 한 뒤에는 아주 작은 수치 차이가 남았습니다. 이를 완벽한 비트 단위 재현이라고 기록하지 않았습니다.</p></details>
+</section>
+
+<section id="data">
+  <div class="section-no">03 · 데이터가 섞이면 점수를 믿기 어렵습니다</div>
+  <h2>공부할 자료와 마지막 시험지를 분리했습니다</h2>
+  <div class="role-grid">
+    <div class="role"><h3>학습</h3><div class="analogy">정답을 보며 푸는 연습문제</div><p>이미지와 정답을 사용해 <strong>가중치를 바꿉니다.</strong></p></div>
+    <div class="role"><h3>검증</h3><div class="analogy">학습 중 보는 모의고사</div><p>직접 학습하지 않고 <strong>언제 멈출지·어느 모델을 고를지</strong> 판단합니다.</p></div>
+    <div class="role"><h3>최종시험</h3><div class="analogy">모델을 고른 뒤 여는 시험지</div><p>모델과 전처리를 고정한 뒤 평가합니다. 점수를 보고 <strong>유리한 후보로 바꾸지 않습니다.</strong></p></div>
+  </div>
+  <div class="table-wrap"><table><caption>이번에 사용한 자료 — ‘사진 수’와 ‘숫자 영역 수’는 다릅니다</caption><thead><tr><th>자료</th><th class="num">숫자 영역</th><th>출처와 용도</th></tr></thead><tbody>
+    <tr><td>기존 캡틴 학습</td><td class="num">38 → 95개</td><td>같은 19장에서 LEV·STR 38개를 먼저 사용하고, DEX·INT·LUK 57개를 추가했습니다.</td></tr>
+    <tr><td>기존 아란 검증</td><td class="num">38개</td><td>19장의 기존 자료입니다. 개발 중 모델 선택용이며 새 독립 최종시험이 아닙니다.</td></tr>
+    <tr><td>기존 진단·반례</td><td class="num">10개</td><td>보너스 값 2개와 기존 별도 사진 4장의 요구치 8개입니다. 이미 알려진 실패를 추적했습니다.</td></tr>
+    <tr class="highlight"><td>새 캐릭터·장비 시험</td><td class="num">70개</td><td>사용자가 제공한 새 사진 14장 × 요구치 5개입니다. 학습·증강에 넣지 않았습니다.</td></tr>
+  </tbody></table></div>
+  <div class="note"><p><strong>143개</strong>는 확장한 학습 95 + 기존 검증 38 + 진단 10입니다. <strong>새 시험 70개와 다른 집합</strong>이며, 새 사진 143장이 아닙니다.</p></div>
+  <p>같은 장비를 연속 촬영하거나 같은 사진을 확대·압축한 것은 독립 사례로 세지 않았습니다. 새 14장도 촬영 세션은 1개이며, 같은 벨트로 보이는 2장을 묶어 장비 그룹을 보수적으로 13개로 기록했습니다.</p>
+  <details><summary>정답과 자료가 바뀌지 않았는지는 어떻게 확인했나?</summary><p>파일과 잘린 이미지에 <strong>hash(내용을 확인하는 지문)</strong>를 붙였습니다. 정답·좌표·출처·분할·모델 지문을 기록한 목록을 고정한 뒤 실행했습니다. 숫자가 잘리지 않았는지 같은 에이전트가 원본과 두 번 대조했으며, 독립된 두 사람이 검수했다고 표현하지 않았습니다.</p><p>새 사진은 정답 작성 전 모델을 고정하고, 추론 전 정답과 영역을 봉인했습니다. 출력 결과를 본 뒤 정답·좌표를 고치거나 실패 사례를 분모에서 빼지 않았습니다.</p></details>
+</section>
+
+<section id="experiments">
+  <div class="section-no">04 · 성공한 시도와 실패한 시도</div>
+  <h2>학습을 더 했다고 항상 좋아지지는 않았습니다</h2>
+  <div class="timeline">
+    <div class="event"><div class="dot">1</div><div><h3>학습 전에 같은 모델인지부터 확인</h3><p>앱에 있는 모델(A1)과 공식 학습 가중치를 학습 없이 변환한 모델(B0)을 같은 브라우저 입력으로 비교했습니다. 변환 차이를 학습 효과로 오해하지 않기 위한 기준선입니다.</p><div class="outcome">같은 입력의 A1/B0 브라우저 출력 일치 확인</div></div></div>
+    <div class="event"><div class="dot">2</div><div><h3>첫 일반 미세조정은 성능이 떨어짐</h3><p>38개로 학습했지만 기존 검증 38개의 정답 수가 26개에서 14개로 줄었습니다. 학습이 정상 실행된 것과 좋은 모델이 나온 것은 별개였습니다.</p><div class="outcome bad">검증 26/38 → 14/38 · 이 후보는 제외</div></div></div>
+    <div class="event"><div class="dot">3</div><div><h3>BatchNorm의 기준 통계를 고정한 실험</h3><p>작은 표본으로 평균·분산 기준까지 바뀌는 영향을 줄이기 위해, 사전학습된 BatchNorm의 누적 통계를 유지했습니다. 나머지 가중치와 학습 가능한 계수는 계속 갱신했습니다.</p><div class="outcome">BN1: 학습 38/38 · 기존 검증 38/38 · 진단 10/10</div><p class="caption">다른 seed 2회도 같은 점수였습니다. 이 결과만으로 첫 실패의 원인이 하나였다고 확정하지는 않았습니다.</p></div></div>
+    <div class="event"><div class="dot">4</div><div><h3>실사만 학습 vs 외형을 변형한 이미지도 학습</h3><p>학습 숫자를 확대·축소하고 명도·약한 흐림·여백을 바꿔 3,040개 파생 이미지를 만들었습니다. 원본/정답을 보여주는 순서를 맞춰 비교했습니다.</p><div class="outcome bad">첫 증강군: 검증 이득 없음 · 학습 37/38 · 진단 9/10 → 채택하지 않음</div></div></div>
+    <div class="event"><div class="dot">5</div><div><h3>학습 영역을 95개로 넓혀 다시 비교</h3><p>기존 학습 사진에서 쓰지 않던 요구치 57개를 더해 숫자 9를 확보했습니다. 두 방식 모두 기존 143개를 맞혔지만, 기존 BN1도 같은 결과라 추가 이득은 확인하지 못했습니다.</p><div class="outcome">새 체크포인트 보존 · 기존 BN1 유지</div></div></div>
+  </div>
+  <div class="note warn"><p><strong>파생 이미지 3,040개 ≠ 새로운 실제 사진 3,040장.</strong> 같은 숫자의 외형을 바꾼 자료입니다. 새로운 글꼴이나 없는 숫자를 완성한 합성 학습은 아닙니다. 현재 확장 학습에는 숫자 <strong>3·6</strong>이 없습니다.</p></div>
+  <details><summary>모델을 고르고 멈춘 기준을 자세히 보기</summary><p>초기 파일럿은 20 epoch의 마지막 모델을 확인했습니다. 뒤의 비교 학습에서는 매 epoch마다 검증하고, 기준보다 정확도가 좋아지면서 틀린 숫자 증가·기존 정상 회귀가 없는 후보를 골랐습니다. 같은 최상 점수라면 가장 이른 epoch를 택하고, 5회 연속 개선이 없으면 멈췄습니다.</p>
+    <div class="table-wrap"><table><thead><tr><th>비교</th><th class="num">실사 반복</th><th class="num">실사 + 외형 증강</th></tr></thead><tbody><tr><td>38개 학습군</td><td>6 epoch 종료<br>epoch 1 선택</td><td>6 epoch 종료<br>epoch 1 선택</td></tr><tr><td>95개 학습군</td><td>7 epoch / 84회 갱신<br>epoch 2 선택</td><td>6 epoch / 72회 갱신<br>epoch 1 선택</td></tr></tbody></table></div>
+    <p>같은 비교 안에서는 원본·정답 노출을 맞췄습니다. 다만 38개와 95개 실험은 epoch당 갱신 횟수도 달라, 두 실험의 차이를 순수한 자료 수 증가 효과로 단정하지 않았습니다.</p>
+  </details>
+</section>
+
+<section id="results">
+  <div class="section-no">05 · 가장 중요한 결과 해석</div>
+  <h2>69/70과 63/70은 무엇이 다른가요?</h2>
+  <p>둘 다 새 사진 14장의 요구치 70개를 대상으로 합니다. <strong>숫자 영역을 미리 검수해 주었는지, 시스템이 직접 찾아야 했는지</strong>가 다릅니다.</p>
+  <div class="choices" aria-label="평가 조건 선택">
+    <button type="button" data-result="manual" aria-pressed="true">검수한 숫자 영역</button><button type="button" data-result="automatic" aria-pressed="false">전체 사진 자동 처리</button><button type="button" data-result="existing" aria-pressed="false">기존 자료 적합도</button>
+  </div>
+  <div class="result-panel" aria-live="polite">
+    <h3 id="result-title">검수한 숫자 영역 · 새 사진의 숫자 인식 시험</h3>
+    <p class="context" id="result-context">숫자가 온전히 들어 있는 영역을 같은 조건으로 잘라 두 모델에 입력했습니다.</p>
+    <div class="bar-row"><span>기존 모델</span><div class="track" aria-hidden="true"><div class="fill base" id="base-fill" style="width:22.8571%"></div></div><span class="bar-value" id="base-value">16 / 70</span></div>
+    <div class="bar-row"><span>학습 BN1</span><div class="track" aria-hidden="true"><div class="fill" id="trained-fill" style="width:98.5714%"></div></div><span class="bar-value" id="trained-value">69 / 70</span></div>
+    <div class="result-badge" id="result-badge">98.57% · 제안 목표 99%에는 미달</div>
+    <ul class="observations" id="result-observations"><li>학습 모델의 틀린 숫자 출력 0개, 빈 출력 1개.</li><li>기존보다 53개 개선, 기존 정상 → 오답 회귀 0개.</li><li>사진별 요구 숫자 5개를 모두 맞힌 것은 13/14장.</li></ul>
+    <p class="meaning" id="result-meaning">온전한 숫자 영역을 읽는 능력은 좋아졌습니다. 자동 영역 탐지와 장비 전체 등록이 성공했다는 뜻은 아닙니다.</p>
+  </div>
+  <div class="print-results table-wrap"><table><thead><tr><th>조건</th><th>기존 모델</th><th>학습 BN1</th><th>해석</th></tr></thead><tbody><tr><td>새 사진의 검수 영역</td><td>16/70</td><td>69/70</td><td>99% 목표 미달, 빈 출력1</td></tr><tr><td>같은 사진 자동 추출</td><td>60/70</td><td>63/70</td><td>추출실패6, 숫자오류1</td></tr><tr><td>기존 출처 자료</td><td>89/143</td><td>143/143</td><td>독립 시험이 아닌 적합도</td></tr></tbody></table></div>
+  <noscript><div class="note warn">버튼 비교에는 JavaScript가 필요합니다. 새 사진의 자동 처리 결과는 기존 60/70 → BN1 63/70이며, 추출 실패 6개와 숫자 오류 1개가 남았습니다. 기존 자료 적합도는 89/143 → 143/143입니다.</div></noscript>
+  <div class="note danger"><p>수동 영역과 자동 영역은 <strong>폭·높이·배경이 다릅니다.</strong> 기존 모델도 수동에서는16/70, 자동에서는60/70을 냈습니다. 두 조건의 잘 나온 값만 골라 합치지 않고, <strong>같은 입력 안에서</strong> 모델을 비교했습니다.</p></div>
+  <h3>숫자 몇 개가 맞는 것과 장비 한 개가 완성되는 것은 다릅니다</h3>
+  <p>요구치 5개가 모두 맞아도 공격력·잠재 옵션·%·분류·미해결 검토까지 남아 있을 수 있습니다. 자동 시험에서 학습 모델이 요구치 5개를 모두 맞힌 사진은 <strong>11/14장</strong>이었지만, 이것을 장비 전체 성공률로 세지 않았습니다.</p>
+  <div class="two"><div class="box"><div class="kicker">기존 제품 검토 경로</div><p class="large">1 · 10 · 3</p><p class="small">14장 중 판독 오류 <strong>1장</strong>, 검토 차단 <strong>10장</strong>, 차단 없음 <strong>3장</strong>.</p></div><div class="box"><div class="kicker">해석의 범위</div><h3>실제 저장 성공을 측정한 수치가 아닙니다</h3><p class="small">차단 없는 3장은 후행 대조에서 분류·매핑 필드가 맞았지만, 실제 적용·저장·독립 사용자 POC까지 검증한 것은 아닙니다.</p></div></div>
+  <p class="caption">연구용 숫자 후보의 출력을 실제 제품 검토값에 주입하지 않았습니다. 후보의 숫자 오류를 실제 오저장 건수로 계산하지 않았습니다.</p>
+</section>
+
+<section id="browser">
+  <div class="section-no">06 · 학습한 모델을 실제 실행 환경으로 옮기기</div>
+  <h2>GPU에서 배운 모델을 브라우저에서도 확인했습니다</h2>
+  <div class="execution" aria-label="학습 모델 변환과 브라우저 실행 순서">
+    <div><b>1. 로컬 GPU 학습</b><small>가중치와 학습 상태를 체크포인트로 저장</small></div><div><b>2. ONNX 변환</b><small>브라우저가 실행할 수 있는 모델 형식으로 내보내기</small></div><div><b>3. 브라우저 실행</b><small>실제 SDK + WASM, 같은 이미지와 사전 사용</small></div><div><b>4. 출력 대조</b><small>원문 문자열·모델·입력 지문을 비교</small></div>
+  </div>
+  <p>이번 브라우저 시험은 WASM으로 실행했습니다. <strong>학습할 때 GPU를 썼다는 말이 사용자 브라우저에서도 GPU 학습을 한다는 뜻은 아닙니다.</strong> 사진과 정답을 외부 OCR 서버로 보내지도 않았습니다.</p>
+  <h3>같은 모델인데 GPU와 브라우저가 다른 글자를 낸 이유</h3>
+  <p>학습 전 모델에서 2개 문자열이 달랐습니다. 실제 입력 텐서를 저장해 비교하니 픽셀·패딩은 같았습니다. CPU에서는 같은 문자를 냈고, GPU의 <strong>TF32 관련 정밀도 설정</strong>을 바꾸자 차이가 없어졌습니다.</p>
+  <div class="note"><p><code>NVIDIA_TF32_OVERRIDE=0</code>으로 고정한 대조에서 <strong>4개 모델 × 143개 입력</strong>의 GPU·브라우저 문자열이 각각 일치했습니다. 정답률은 바뀌지 않았고, 틀린 답은 같은 틀린 답으로 남을 수 있습니다.</p></div>
+  <p>이는 실행 환경의 수치 계산 차이를 좁힌 결과입니다. 모든 확률값이 비트까지 같아진 것은 아니며, 모든 사진·기기에서 항상 같은 결과를 보장하는 것도 아닙니다. 이후에는 정밀도 설정도 기록하고 다른 설정으로 이어 학습하지 못하게 검사합니다.</p>
+  <details><summary>속도·메모리·취소는 어디까지 확인했나?</summary>
+    <p>숫자 영역을 처리하는 실제 별도 Worker에서 배치1/6, 재사용, 초기화/판독 중 취소, 재시작을 확인했습니다. 취소 후 결과 채택은0개였고 재시작 결과는 같았습니다. 제품 전체의 적용·저장 흐름 검증과는 구분합니다.</p>
+    <div class="table-wrap"><table><thead><tr><th>86개 숫자 영역, 같은 PC</th><th class="num">기존 A1</th><th class="num">학습 BN1</th></tr></thead><tbody><tr><td>반복 판독 시간 중앙값</td><td>4.22초</td><td>4.34초</td></tr><tr><td>최대 Private Bytes의 trial 중앙값</td><td>1,096MiB</td><td>1,048MiB</td></tr></tbody></table></div>
+    <p>두 모델을 함께 상주시킨 별도 시험은 약1,474MiB였습니다. 작은 단일 기기 표본이며 속도·메모리 개선이나 모든 기기의 보장으로 표현하지 않았습니다. 4.34초를 전체 장비 사진 한 장의 처리 시간으로 읽으면 안 됩니다.</p>
+  </details>
+</section>
+
+<section id="next">
+  <div class="section-no">07 · 지금 어디까지 왔고, 무엇이 남았나</div>
+  <h2>모델 개선은 확인했지만 적용 기준은 아직 못 넘었습니다</h2>
+  <ul class="checklist">
+    <li><span class="pill">확인</span><span>로컬 학습·저장/복원·변환·브라우저 실행, 기존/학습 모델의 통제 비교.</span></li>
+    <li><span class="pill">확인</span><span>새 사진의 온전한 숫자 영역에서 인식 개선: <strong>16/70 → 69/70</strong>.</span></li>
+    <li><span class="pill fail">미통과</span><span>새 숫자 시험 99% 목표. 자동 처리에는 <strong>추출 실패6개·숫자 오류1개</strong>가 남음.</span></li>
+    <li><span class="pill hold">남은 일</span><span>다양한 촬영·숫자3/6·검증된 글꼴 조합, 새 후보의 미사용 최종시험, 장비 전체·적용/저장 검증.</span></li>
+    <li><span class="pill hold">보류</span><span>실제 제품 모델 교체와 운영 배포. 이번 연구 결과만으로 공개 모델을 바꾸지 않음.</span></li>
+  </ul>
+  <h3>추가 사진은 왜 필요한가요?</h3>
+  <p>기존 검증 자료를 모두 맞히는 모델끼리는 그 점수로 우열을 가리기 어렵습니다. 새 사진을 본 뒤 모델을 다시 조정했다면, 이전 시험은 더 이상 새 후보의 ‘처음 보는 시험지’가 될 수 없습니다. <strong>다른 장비·촬영 조건의 실제 사진</strong>이 필요합니다.</p>
+  <div class="box"><div class="kicker">다음 소규모 실험을 위한 제안</div><p class="large">추가 30장 <small>정도부터</small></p><p>학습15 · 검증5 · 최종시험10장의 예시입니다. 같은 장비·연속 촬영은 한 묶음으로 두므로, 실제 분할은 출처를 확인한 뒤 조정합니다. 30장을 모으면 자동으로 합격한다는 뜻은 아닙니다.</p><ul class="plain-list small"><li>서로 다른 장비와 배경, 배율·밝기 조건을 섞기.</li><li>가능하면 요구치에 <strong>3·6</strong>이 들어간 사진 포함하기. 9는 기존 자료에서 추가 확보했습니다.</li><li>설명창 전체와 마지막 옵션이 보이도록 촬영하기.</li><li>같은 장비를 다시 찍은 경우 그 사실을 함께 알려주기.</li></ul><p class="caption">계획서의 정식 최종시험 수집 제안은 숫자300개·원본 그룹50개 이상입니다. 사진당 유효 요구치5개라면 시험용만 약60장에 해당하며, 촬영 그룹의 다양성도 별도로 필요합니다.</p></div>
+  <p class="read-status">현재 상태: 추가 자료 대기. GPU 학습·평가와 실험용 서버/브라우저는 종료한 상태입니다. 이 문서를 여는 동작은 학습을 시작하지 않습니다.</p>
+</section>
+
+<section id="reference">
+  <div class="section-no">08 · 필요할 때 다시 보는 설명</div>
+  <h2>용어와 확인 근거</h2>
+  <details><summary>헷갈리기 쉬운 용어</summary><dl class="terms">
+    <dt>OCR</dt><dd>이미지 속 글자를 문자열로 읽는 기술입니다. 여기서는 위치 찾기와 글자 읽기를 나누어 봤습니다.</dd>
+    <dt>가중치</dt><dd>입력을 어떤 특징과 문자로 해석할지 결정하는 모델 내부의 수많은 계수입니다.</dd>
+    <dt>미세조정</dt><dd>이미 학습된 모델을 내 데이터로 추가 학습하는 것입니다.</dd>
+    <dt>batch</dt><dd>한 번에 묶어서 처리하는 입력 수입니다. 학습16과 앱 인식6은 서로 다른 설정입니다.</dd>
+    <dt>epoch</dt><dd>정해 둔 학습 자료를 한 차례 순회하는 단위입니다. 순회할 때마다 가중치를 여러 번 갱신합니다.</dd>
+    <dt>BatchNorm</dt><dd>신경망 중간값을 정규화하는 구성요소입니다. 이번 후보는 누적 평균·분산 통계를 고정하고 학습했습니다.</dd>
+    <dt>CTC</dt><dd>이미지의 여러 위치에서 나온 문자 후보를 중복·공백 규칙에 따라 문자열로 읽는 방식입니다. 이번에는 숫자만 허용하는 제약을 추가하지 않았습니다.</dd>
+    <dt>회귀</dt><dd>이전에는 맞히던 입력을 새 모델이 틀리는 현상입니다. 재학습 뒤 따로 확인했습니다.</dd>
+    <dt>체크포인트</dt><dd>모델 가중치와 학습 상태를 저장한 시점입니다. 나중에 평가하거나 학습을 이어 갈 때 사용합니다.</dd>
+    <dt>ONNX</dt><dd>학습한 모델을 다른 실행 환경으로 옮기는 데 사용한 형식입니다.</dd>
+    <dt>Worker</dt><dd>브라우저 안에서 작업을 따로 수행하는 실행 공간입니다. 사용자의 서버에 사진을 보내는 것과 다릅니다.</dd>
+    <dt>출력 일치</dt><dd>두 환경이 같은 문자열을 냈다는 뜻입니다. 두 환경 모두 같은 오답을 낼 수 있으므로 정확도와 별개입니다.</dd>
+  </dl></details>
+  <details><summary>실험 이름을 기술 문서와 연결하기</summary><ul class="plain-list"><li><strong>A1</strong>: 기존 앱 인식 모델에 숫자 영역을 입력한 기준.</li><li><strong>B0</strong>: 공식 학습 가중치를 추가 학습 없이 변환한 기준.</li><li><strong>B1</strong>: 첫 일반 BatchNorm 학습. 성능 퇴행으로 제외.</li><li><strong>BN1</strong>: BatchNorm 누적 통계를 고정한 실사38개 학습 후보. 새 시험에 사용한 모델.</li><li><strong>C0 / C1</strong>: 각 비교 실험 안의 실사 반복 / 실사+외형 증강 모델. 서로 다른 실험의 같은 ID는 같은 가중치를 뜻하지 않습니다.</li></ul></details>
+  <h3>이 설명의 출처</h3>
+  <ul class="source-list"><li><a href="ocr-accuracy-improvement-plan.md">학습 계획과 전체 실행 결과</a> — 단계별 기록·실패·평가 범위.</li><li><a href="../scripts/ocr-numeric-training/README.md">학습·검증 도구 설명</a> — 사용한 코드와 재현 방법.</li><li><a href="../DECISIONS.md">사용자 결정과 작업 기록</a> — 학습 실행, GPU 중단/재개, 자료 제공, 적용 보류.</li><li><a href="https://docs.nvidia.com/cuda/archive/12.6.1/cublas/index.html" target="_blank" rel="noopener noreferrer">NVIDIA cuBLAS 문서</a> — TF32 제어 설정의 공식 설명. 인터넷 연결이 필요한 참고 링크.</li></ul>
+  <p class="caption">수치는 저장된 새 시험 채점, 자동 추출 채점, 확장 학습 비교, 정밀도 대조 결과와 확인했습니다. 개인 스크린샷·OCR 원문·정답 목록·가중치는 이 HTML에 포함하지 않았습니다. 프로젝트 문서 링크는 원래 저장소의 <code>docs/</code> 위치에서 열 때 연결됩니다.</p>
+</section>
+<footer class="footer">플래닛 OCR 학습 이해 노트 · 2026.10.11<br>측정한 범위 안에서 읽기: 숫자 영역 인식 → 자동 처리 → 장비 전체 등록은 서로 다른 검증 단계입니다.</footer>
+</main></div>
+<script>
+'use strict';
+const stages={
+ photo:['사진 입력 — 원본을 그대로 받는 단계','사용자가 촬영한 스크린샷을 받습니다. 개인 사진은 로컬 자료로 보관했고, 이번 실험에서는 외부 OCR API에 전송하지 않았습니다.'],
+ detect:['설명창 찾기 — 사진 속 어느 창이 장비 설명인지 찾기','전체 화면에서 장비 설명창 후보를 고릅니다. 새 사진 시험에서는 1장을 찾지 못해 그 사진의 요구치 5개를 모두 실패로 남겼습니다.'],
+ crop:['숫자 영역 자르기 — 항목과 값의 위치를 연결하기','REQ LEV·STR·DEX·INT·LUK 행을 식별하고 콜론 뒤의 숫자 영역을 분리합니다. 항목을 못 찾거나 모호하면 정답 좌표를 대신 넣지 않습니다.'],
+ read:['숫자 읽기 — 잘라 놓은 이미지가 어떤 문자열인지 예측','기존 한국어 Paddle 인식 모델을 미세조정했습니다. 숫자 모양을 보고 문자열을 내는 부분의 가중치를 바꿨으며, 숫자만 허용하는 사전이나 강제 문자 치환은 사용하지 않았습니다.'],
+ review:['항목 해석·검토 — 믿고 사용할 수 있는 값인지 확인','읽은 문자열을 장비 분류·옵션·요구치로 해석하고 누락·충돌·미해결 줄을 검사합니다. 숫자 후보의 출력이 맞았다는 이유로 검토 경고를 지우지 않았습니다.'],
+ save:['적용·저장 — 사용자 데이터로 확정하는 단계','검증된 값을 장비 입력에 반영하고 저장하는 제품 흐름입니다. 이번 학습 후보는 이 경로에 연결하지 않았고 제품 모델·저장값·운영 배포를 바꾸지 않았습니다.']
+};
+document.querySelectorAll('[data-stage]').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelectorAll('[data-stage]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+ const [title,description]=stages[button.dataset.stage];document.getElementById('stage-title').textContent=title;document.getElementById('stage-description').textContent=description;
+}));
+const results={
+ manual:{title:'검수한 숫자 영역 · 새 사진의 숫자 인식 시험',context:'숫자가 온전히 들어 있는 영역을 같은 조건으로 잘라 두 모델에 입력했습니다.',base:16,trained:69,total:70,badge:'98.57% · 제안 목표 99%에는 미달',observations:['학습 모델의 틀린 숫자 출력 0개, 빈 출력 1개.','기존보다 53개 개선, 기존 정상 → 오답 회귀 0개.','사진별 요구 숫자 5개를 모두 맞힌 것은 13/14장.'],meaning:'온전한 숫자 영역을 읽는 능력은 좋아졌습니다. 자동 영역 탐지와 장비 전체 등록이 성공했다는 뜻은 아닙니다.'},
+ automatic:{title:'전체 사진 자동 처리 · 같은 사진의 후속 시험',context:'숫자 좌표를 알려주지 않고, 기존 제품 탐지·행 식별·콜론 분리로 영역을 만들었습니다.',base:60,trained:63,total:70,badge:'90.00% · 추출 실패도 전체 70개에 포함',observations:['공통 추출 실패 6개: 설명창 미탐지 5필드 + 요구 항목 행 미식별 1개.','학습 모델은 추출된 64개 중 63개 일치. 틀린 숫자 1개, 빈/비숫자 출력 0개.','동일 자동 영역에서 3개 개선·정상 회귀 0개. 요구치 5개 동시 일치는 11/14장.'],meaning:'읽는 모델이 좋아져도 앞 단계에서 영역을 못 찾으면 복구되지 않습니다. 추출 실패 6개와 숫자 오류 1개를 모두 해결한 것으로 처리하지 않았습니다.'},
+ existing:{title:'기존 자료 적합도 · 독립 최종시험이 아닙니다',context:'학습 95개 + 기존 검증 38개 + 진단 10개 = 143개입니다. 새 시험 70개와 다른 집합입니다.',base:89,trained:143,total:143,badge:'100% · 기존 출처의 자료에 대한 점수',observations:['기존 A1/B0: 학습 58/95 + 검증 26/38 + 진단 5/10 = 89/143.','BN1과 새 두 학습 모델은 모두 95/95 + 38/38 + 10/10.','실제 원본 수는 늘지 않았습니다. 이 점수로 모델의 새로운 환경 성능을 판단할 수 없습니다.'],meaning:'이미 익숙하거나 관찰한 자료를 잘 맞힌 결과입니다. 새 후보가 기존 BN1보다 낫다는 근거가 없어 교체하지 않았습니다.'}
+};
+document.querySelectorAll('[data-result]').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelectorAll('[data-result]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+ const r=results[button.dataset.result];
+ document.getElementById('result-title').textContent=r.title;document.getElementById('result-context').textContent=r.context;
+ document.getElementById('base-fill').style.width=(r.base/r.total*100)+'%';document.getElementById('trained-fill').style.width=(r.trained/r.total*100)+'%';
+ document.getElementById('base-value').textContent=r.base+' / '+r.total;document.getElementById('trained-value').textContent=r.trained+' / '+r.total;
+ document.getElementById('result-badge').textContent=r.badge;document.getElementById('result-meaning').textContent=r.meaning;
+ document.getElementById('result-observations').replaceChildren(...r.observations.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
+}));
+document.getElementById('print-document').addEventListener('click',()=>window.print());
+let printedDetails=[];
+window.addEventListener('beforeprint',()=>{printedDetails=[...document.querySelectorAll('details')].map(el=>[el,el.open]);printedDetails.forEach(([el])=>{el.open=true;});});
+window.addEventListener('afterprint',()=>printedDetails.forEach(([el,wasOpen])=>{el.open=wasOpen;}));
+if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{entries.filter(e=>e.isIntersecting).forEach(e=>{document.querySelectorAll('.sidebar nav a').forEach(a=>{if(a.hash==='#'+e.target.id)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});});},{rootMargin:'-12% 0px -65% 0px'});document.querySelectorAll('main section').forEach(section=>observer.observe(section));}
+</script>
+</body></html>
