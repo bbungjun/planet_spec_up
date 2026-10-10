@@ -4536,3 +4536,11 @@
 - 자동 검증:관련8파일122테스트통과. 전체717중707통과/10실패이며시작기준의기존10실패와이름이동일해새실패0이다. 타입·전체lint·Vercel/Next및Vinext빌드·diff공백검사통과. 전체검사완전통과나기존10실패해결로표현하지않는다.
 - 문서·근거:기존docs/ocr-accuracy-improvement-plan.md에세문제진단·해결순서·2번구현/검증을추가하고AGENTS§6에요청범위를기록했다. Git제외output/ocr-requirement-discovery-20261010의replay/score/test/build자료와output/playwright/ocr-requirement-20261010/validation.json에개인원문/평가를보존했다. 판독은로컬브라우저에서실행했고외부OCR/LLM전송이없다.
 - 개발 전달·보존:이번소스/테스트/문서12파일만dev-main에커밋·푸시한다. 선행DECISIONS318줄을작업파일에보존하고이번커밋에서제외한다. 소유한실험브라우저/3142하네스만종료했다. 사용자저장·기존서버·원격main/Production·Preview조회·버전/Release·개인사진배포변경없음.
+
+## D-OCR-REQ-DISCOVERY-DELIVERY-20261010-015 — 개발 전달 확인
+
+- 기록 시각: 2026-10-10 18:07:14 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음. D-OCR-REQ-DISCOVERY-20261010-013 및 AGENTS§10의 개발 전달 실행.
+- 결과: 세문제해결계획문서화와2번요구조건누락처리의코드/테스트/문서12파일을커밋f064d90ab10edfa9f5dd3bbec510138f2cd6ed78로dev-main에푸시했다. git ls-remote에서로컬HEAD와원격dev-main의동일SHA를확인했다. 이완료기록도같은브랜치에후속문서커밋으로전달한다.
+- 검증·한계:29필드추적/재시도·정확한추가복구5·미해결24·새오답0,수치/분류3/19·엄격완전일치0/19,별도4장동일·707통과/기존10실패·타입/lint/두빌드통과를D-OCR-REQ-DISCOVERY-RESULT-20261010-014와정확도계획문서에남겼다. 질문44개와새재판독비용/독립자료검증의한계를유지한다.
+- 보존:선행DECISIONS318줄은작업파일에보존하고이번개발커밋에포함하지않았다. 1번전처리·3번모델·main/Production·Preview조회·버전/Release·사용자저장·외부이미지전송변경없음.
