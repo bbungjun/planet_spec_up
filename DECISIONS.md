@@ -4783,3 +4783,16 @@
 - 검증:1440×1000/390×844에서화면을확인했고가로넘침0·외부리소스요청0·콘솔오류0이었다. 단계설명·평가버튼의16/70→69/70,60/70→63/70,89/143→143/143전환·용어펼치기·앵커/근거파일을확인했다.인쇄미디어에서전체결과표/단계도/상세가보이고복귀시접힘상태가복원됐다.실제인쇄대화상자/PDF출력은실행하지않았다.
 - 전달 경로 한계:브라우저자동화도구가file프로토콜접근을차단해직접파일실행검증은하지못했다.제한을우회하지않고loopback미리보기로화면/상호작용을확인했으며이를file실행성공으로표현하지않는다.파일은외부자원없는단일HTML임을정적으로확인했다.검증기록/스크린샷은output/ocr-training-guide-20261011에보존하고소유3156서버/ocr-guide브라우저를종료했다.
 - 보존·전달: HTML과이번기록만dev-main에전달한다.선행DECISIONS378줄·기존학습대기상태·GPU/앱/모델/저장/기존서버·Preview/main/Production은보존한다.
+
+
+## D-OCR-AUTORESEARCH-DESIGN-20261011-021 — Autoresearch 연결 가능성과 설계 설명
+
+- 기록 시각: 2026-10-11 04:16:02 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름.
+- 원요청: 사용자가 OCR 학습 내용을 본인의 Autoresearch 프로젝트와 연결해 하네스를 구축할 수 있는지 질문하고 C:/Autoresearch를 지정했다. 사용자 이유 미명시.
+- 후속 범위 확정: 구현까지/설명부터 선택 질문에 “연결 가능성과 설계 설명부터”라고 답했다. 이 답은 설계 조사·설명 범위이며 하네스 구현/Issue·PR/학습·GPU·배포 실행 승인으로 확대하지 않는다.
+- 조사 근거: Autoresearch의 AGENTS/CLAUDE·기여/작업/금지 지침,README/spec과실제ResearchDomain·ResearchController·ExperimentCard/Feedback·LocalResearchTrialRunner/LocalRunner·Judge/parser·TrialLedger·final consumption을 확인했다. 기준코드HEAD는f06c9ab75461a04df4ccef65bc9ec7bcd90313fa이며해당저장소main의기존미커밋/미추적변경목록이전후같음을확인했다.그저장소에는파일을쓰거나실행/테스트/이슈/브랜치/커밋/푸시를하지않았다.
+- 설계 결론: Autoresearch의공통실험제어를확장하고OcrDomain/OcrTrialRunner Adapter를추가하는방향을제안했다.카드·피드백·예산/기록/복구원칙을재사용하되현재CTR snapshot/추천지표·score CSV·고정5seed·고정harness-predict와final 재학습흐름을그대로OCR에적용하지않는다.도메인별계약과판정을분리하고코드SHA와가중치묶음identity를함께추적하며final은검증에서선택한체크포인트로수행한다.이름과구조는제안이며미구현이다.
+- 판정/실행 제안: OCR은문자열완전일치·틀린숫자·누락/추출실패·정상회귀와제품전체지표를분리하고학습/검증/final 정답권한·실제읽기격리를확인한다.기존노출14장을새final로재포장하지않고새자료없으면대기한다.준비된WSL Paddle과플래닛브라우저환경을호출하되Windows종료와WSL내GPU프로세스종료를별도검증해야한다.연구champion과제품적용/운영은분리한다.과거receipt채점→제한된실제학습루프→복구/대기→새final의단계를제안했다.
+- 산출물·검증: 기존docs/ocr-training-explained.html의9절과목차에흐름도·재사용/수정대조표·실제4필드에맞춘카드예시·구현순서·근거를추가했다.현재코드와제안을명시적으로구분하고기존8절은보존했다.1440/390너비loopback미리보기에서가로넘침0·외부리소스0·9절목차/내부앵커를확인했다.file실행검증이나OCR통합E2E를한것으로표현하지않는다.소유3156서버/ocr-harness-design브라우저를종료했다.
+- 전달·보존: 플래닛HTML과이번기록만dev-main에전달한다.선행DECISIONS378줄·Autoresearch병행변경·기존학습대기상태·앱/모델/저장/기존서버·Preview/main/Production을보존한다.관련codebase-design스킬은설계검토에만사용했고별도에이전트나외부메시지를실행하지않았다.
