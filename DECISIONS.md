@@ -4643,3 +4643,11 @@
 - 변환: 앱 A1·학습 전 B0·Paddle의86개 출력이 같았다. 첫 B1은 GPU/브라우저21개 출력 차이가 있어 호환 합격으로 표시하지 않는다. 선택한 첫 BN1의 Paddle→ONNX opset14→실제 브라우저 WASM 배치1/6은86개 원출력이 모두 동일했다. 한국어 사전11,945개는 유지됐고 연구 tar hash는 ab9b8f02b33a6ecefa4f61469455d4724307079774ead7f2f5ca8862c3824452다. public 모델 자산은 변경하지 않았다.
 - 코드·검증: 검수 crop 생성·원본/분할/출력 보호, 공식 구조 학습·소스/설정 snapshot·checkpoint, export/ONNX 변환·loopback 브라우저 실험·엄격 채점·저장 근거 audit를 scripts/ocr-numeric-training에 추가했다. 자료 분할 누출·미검수/잘린 이미지·기존 crop 덮어쓰기·추론 정답 제거·숫자 혼동·누락/중복·실패/입력 hash·형식 정리 구분8테스트, Python syntax, JS lint, 실제86개 브라우저 비교와 자료/model hash audit를 통과했다. 앱 소스 변경이 없어 앱 전체 테스트/빌드를 반복하지 않았다.
 - 한계·후속: 원본42개 파일의 train38/validation38/diagnostic10은 모두 기존 자료이며 독립 test는0개다. train에3·6·9가 없고 최초500/150/300개 목표는 미충족이다. 실사+합성 비교·매epoch 검증/조기 종료·새 원본 최종시험·자동 분리 포함 장비 전체·실제 Worker/취소/적용·반복시간/프로세스 메모리 검증은 남았다. 본 실행은 마지막epoch 고정 파일럿이며 위 작업 전체의 완료로 표현하지 않는다. 선택모델·로그·개인자료는 output/ocr-numeric-training/run-20261010에 보존하고 이번 코드/환경목록/집계/문서만 dev-main에 전달한다. 선행 DECISIONS 미커밋분·기존 저장·서버·main/Production·Preview조회·버전/Release는 보존한다.
+
+## D-OCR-NUMERIC-PILOT-DELIVERY-20261011-006 — 파일럿 도구·결과 개발 전달
+
+- 기록 시각: 2026-10-11 02:08:02 KST (UTC+09:00)
+- 사용자 결정 시각: 해당 없음 — 새 사용자 결정 없음. D-OCR-NUMERIC-PILOT-RESULT-20261011-005의 개발 전달 결과다.
+- 전달: 이번 도구·정책·계획/결과·검증·환경목록18파일을 dev-main의3d657ccf67cdfc0589b7f015c9a2c2bf4830f819로 커밋/푸시하고 원격동일SHA를 확인했다. 선행 DECISIONS378줄의 미커밋 변경은 byte/text 대조로 보존하고 이번 커밋에서 제외했다. 개인 이미지·라벨·checkpoint·ONNX/tar·Python bytecode가 스테이징에 없음을 검사했다. 이 전달 기록도 같은 개발 브랜치에 후속 문서 커밋으로 전달한다.
+- 마지막 검증: 학습기가 train 정답만 담은 training.json을 읽도록 분리하고 기존38개 train membership을 유지했다. 평가 출력 덮어쓰기도 차단했다. 이 경계 검사를 추가한 최종9테스트·Python syntax·JS lint·문서diff와 저장된 소스/crop/model/hash/브라우저 결과 audit를 통과했다. 학습/모델 비교는 저장된 결과를 사용했고 단순 전달을 위해 다시 학습하지 않았다.
+- 실행 정리·한계: 이번 WSL 학습/변환 프로세스가 없음을 확인하고 ocr-training 브라우저 및 소유한3145/3146/3147 실험 서버를 종료했다. 기존 사용자 서버·다른 GPU 앱은 종료하지 않았다. 합성 비교·독립 최종시험·제품 전체/Worker/성능 검증은 미완료이므로 학습 계획 전체 달성으로 표시하지 않는다. 제품 모델·Preview조회·main/Production·버전/Release 변경 없음.
