@@ -66,4 +66,26 @@ python -m unittest discover -s scripts/ocr-numeric-training -p 'test_*.py'
 npx eslint scripts/ocr-numeric-training/browser.js scripts/ocr-numeric-training/serve.mjs
 ```
 
-합성 자료 비교, 별도 새 최종시험, 자동 영역 추출을 포함한 장비 전체 검증, 실제 Worker/취소/적용과 반복 시간·프로세스 메모리 측정은 남아 있다. 연구 모델을 `public/ocr/`로 자동 복사하거나 제품 모델로 교체하지 않는다.
+합성 자료 비교, 별도 새 최종시험, 자동 영역 추출을 포함한 장비 전체 검증, 제품의 SDK Worker/취소/적용은 남아 있다. 숫자 영역 전용 실험 Worker와 반복 시간·프로세스 메모리 측정은 아래 후속 절을 따른다. 연구 모델을 `public/ocr/`로 자동 복사하거나 제품 모델로 교체하지 않는다.
+
+## 실제 Worker와 프로세스 비용 후속
+
+`runtime.html`은 별도의 실제 Worker에서 같은 recognition-only 모델을 실행한다. `numeric-runtime.worker.js`가 SDK 코어를 직접 사용하고 `runtime-client.js`가 요청 ID·종료·미결 약속 거절을 관리한다. 제품 SDK의 전체 OCR Worker나 제품 적용/저장 경로를 대체하지 않는다. 초기화 및 판독 중 취소 후 결과 미채택·새 Worker 재시작, 배치1/6, 같은 Worker 재사용을 실제 브라우저로 검사한다.
+
+`measure-runtime.ps1`은 Playwright CLI로 trial별 새 브라우저를 열고 해당 PID의 프로세스 트리만 측정한다. 기존 사용자 브라우저는 닫지 않는다. Working Set/Private Bytes·빈 RAM·Worker 수를 관찰하며6GiB Working Set 또는 빈 RAM3GiB 한도/300초를 넘으면 해당 실험을 종료한다. 기존 trial ID의 결과는 덮어쓰지 않는다. 비교 모델은 번갈아 실행하고 중간에 다른 학습/추론 실험을 병렬 실행하지 않는다.
+
+```powershell
+# 서버와 측정은 별도 터미널에서 실행한다.
+node scripts/ocr-numeric-training/serve.mjs --run=output/ocr-numeric-training/run-20261010/additional-aran-20261011 --runtime-output=output/ocr-numeric-training/runtime-20261011 --port=3148
+./scripts/ocr-numeric-training/measure-runtime.ps1
+./scripts/ocr-numeric-training/measure-runtime.ps1 -Cases @('dual01,BN1,6,2,dual','dual02,BN1,6,2,dual','dual03,BN1,6,2,dual','cancel-init,BN1,6,2,cancel-init','cancel-predict,BN1,6,2,cancel-predict','single,BN1,1,2,normal')
+python scripts/ocr-numeric-training/runtime-summary.py --output output/ocr-numeric-training/runtime-20261011 --study output/ocr-numeric-training/run-20261010/additional-aran-20261011 --require a01 b01 b02 a02 a03 b03 dual01 dual02 dual03 cancel-init cancel-predict single
+```
+
+위 날짜/ID의 실행은 이미 존재한다. 재실행할 때는 새 output과 trial ID를 사용한다. `runtime-summary.py`는 입력/모델 hash·원출력·설정·실제 Worker/WASM·종료/취소 결과가 맞아야 비용을 집계한다. p95는 선형 보간이며 모델당3회 준비/최초 판독·15회 이후 판독으로 표본이 작다. Working Set 합계는 공유 페이지를 중복 계상할 수 있고 샘플링은 순간 피크를 놓칠 수 있다. 측정 소스 snapshot은 `measured-harness/`에 보존했다.
+
+## 고정된 자동 분리 결과 재생
+
+`prepare-auto-replay.py --baseline <ocr-numeric-regions 결과> --study <검수 study> --output <새 경로>`는 과거 `original-color/number-tight` 이미지 중 분리 가능한 것만 추론 입력으로 내보내고 실패 목록은 별도 분모로 보존한다. 수동 crop 수정이나 정답별 전처리 선택은 하지 않는다. 같은 `serve.mjs`와 기본 브라우저 판독으로 A1/BN1을 실행한 뒤 `score-auto-replay.py --run <경로>`로 채점한다. 기존 행 위치를 고정한 재생이므로 새 전체 사진 탐지나 장비 저장의 성공률로 표시하지 않는다.
+
+이 후속의 Worker/비용 검사는 완료했지만 제품의 전체 SDK Worker/취소/적용·장비 전체·새 독립시험·실제+합성 비교는 여전히 남아 있다.
