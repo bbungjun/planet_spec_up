@@ -5,6 +5,7 @@
 import { parseEquipmentCategory, parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
 import { buildOcrReview, suggestReviewOptions } from "./reviewRecognition";
 import { retryRequirementLabel } from "./retryRequirements";
+import { suspectedRequirementRetryIssue } from "./requirementDiscovery";
 import type { OcrBounds, OcrReview, OcrReviewLine } from "./types";
 
 /**
@@ -15,6 +16,7 @@ export function retryRecognitionLabel(line: OcrReviewLine): string | null {
   if (line.status !== "check" || !line.bounds) return null;
   const requirement = retryRequirementLabel(line);
   if (requirement) return requirement;
+  if (line.suspectedRequirement) return null;
   if (line.readings.some(reading => readTooltipRequirement(reading.text))) return null;
   const labels = new Set(line.readings.map(reading => readCombatOptionLabel(reading.text)).filter(Boolean));
   if (!labels.size) for (const text of suggestReviewOptions(line)) {
@@ -41,12 +43,12 @@ export function retryRecognitionBounds(review: OcrReview, line: OcrReviewLine): 
     if (other === line || !other.bounds) continue;
     const box = other.bounds;
     const sameRow = Math.abs(center(box) - center(bounds)) < Math.min(box.height, bounds.height) * .65;
-    const field = other.readings.some(reading => readTooltipRequirement(reading.text)
+    const field = !!other.suspectedRequirement || other.readings.some(reading => readTooltipRequirement(reading.text)
       || readCombatOptionLabel(reading.text) || parseEquipmentCategory(reading.text));
     if (sameRow && box.x >= bounds.x + bounds.width && field) stop = Math.min(stop, box.x);
     if (sameRow && !field && box.x >= bounds.x + bounds.width * .8
       && box.x + box.width <= limit) right = Math.max(right, box.x + box.width);
-    if (labelOnly && retryRequirementLabel(line) && other.readings.some(reading => readTooltipRequirement(reading.text))
+    if (labelOnly && retryRequirementLabel(line) && (other.suspectedRequirement || other.readings.some(reading => readTooltipRequirement(reading.text)))
       && Math.abs(box.x - bounds.x) < bounds.width * .2 && Math.abs(center(box) - center(bounds)) < bounds.height * 8
       && box.x + box.width <= limit) right = Math.max(right, box.x + box.width);
   }
@@ -64,6 +66,16 @@ export function mergeRecognitionRetry(review: OcrReview, id: string, text: strin
   if (!line || line.readings.some(reading => reading.pass === pass)) return review;
   const label = retryRecognitionLabel(line), option = parseTooltipOption(text);
   const requirement = !!retryRequirementLabel(line);
+  if (line.suspectedRequirement && label && requirement) {
+    const readings = [...line.readings, { text, pass, bounds: line.bounds }];
+    const [updated, extra] = buildOcrReview(readings).lines;
+    const issue = suspectedRequirementRetryIssue({ ...line, readings });
+    const resolved = !issue && !extra && updated?.status === "recognized";
+    return { ...review, lines: review.lines.map(item => item.id === id ? { ...line, readings,
+      text: option?.requirement && option.label === label ? text : line.text,
+      status: resolved ? "recognized" : "check", reason: resolved ? undefined : issue ?? updated?.reason ?? "요구 조건의 판독이 불완전해요.",
+    } : item) };
+  }
   if (!label || !option || option.label !== label || option.requirement !== requirement) return review;
   // An option above the equipment body may be a requirement with a lost prefix.
   if (!requirement && line.reason?.includes("요구 조건과 장비 옵션")) return review;

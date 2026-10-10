@@ -7,6 +7,7 @@ import type { JobId } from "../domain/types";
 import { isKnownEquipmentCategory, parseEquipmentCategory, parseTooltipOption, readCombatOptionLabel, readTooltipRequirement } from "./parseMapleTooltip";
 import type { LocatedRequirement, OcrBounds, OcrReading, OcrReview, OcrReviewLine, RequirementObservation, StatReplacement, TooltipOption } from "./types";
 import { verifyRequirementRecovery } from "./verifyRequirementRecovery";
+import { discoverRequirementRows } from "./requirementDiscovery";
 
 const combatLabels = new Set(["STR", "DEX", "INT", "LUK", "올스탯", "공격력", "총데미지", "보스데미지", "방어율무시", "크리티컬확률"]);
 const requirementLabel = (text: string): string | null => readTooltipRequirement(text)?.label ?? null;
@@ -55,6 +56,7 @@ export function suggestReviewOptions(line: OcrReviewLine): string[] {
   for (const reading of line.readings) {
     const option = parseTooltipOption(reading.text);
     if (!option) continue;
+    if (line.suspectedRequirement && (!option.requirement || !line.suspectedRequirement.labels.some(label => label === option.label))) continue;
     if (option.requirement) {
       suggestions.add(`REQ ${option.label} : ${option.value}`);
       continue;
@@ -175,7 +177,7 @@ export function buildOcrReview(input: OcrReading[], warnings: string[] = []): Oc
   });
   lines.sort((a, b) => (a.bounds?.y ?? 0) - (b.bounds?.y ?? 0));
   const categoryConflict = new Set(categories.map(item => item.value)).size > 1;
-  return { category: categoryConflict ? null : category, lines,
+  return { category: categoryConflict ? null : category, lines: discoverRequirementRows(lines),
     ...(input.some(reading => reading.provenance?.role === "discovery") ? { initialReadings: input } : {}),
     warnings: [...warnings, ...(categoryConflict ? ["장비 부위가 서로 다르게 읽혔어요. 적용 위치를 선택해주세요."] : [])] };
 }
@@ -220,8 +222,8 @@ export function mapReviewedStats(review: OcrReview, job: JobId): StatReplacement
  * 수동 변경이므로 해당 줄의 이전 자동 복구 증명은 제거하고 다른 줄은 보존한다.
  */
 export function resolveReviewLine(review: OcrReview, id: string, text: string | null): OcrReview {
-  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined, equipmentRecovery: undefined }
-    : { ...line, text, recovery: undefined, equipmentRecovery: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
+  return { ...review, lines: review.lines.map(line => line.id !== id ? line : text === null ? { ...line, status: "ignored", recovery: undefined, equipmentRecovery: undefined, suspectedRequirement: undefined }
+    : { ...line, text, recovery: undefined, equipmentRecovery: undefined, suspectedRequirement: undefined, status: canConfirmReviewText(text) ? "confirmed" : "check", reason: canConfirmReviewText(text) ? undefined : "DEX +6%처럼 옵션 이름과 숫자를 입력해주세요." }) };
 }
 
 /**
@@ -244,6 +246,10 @@ export function overrideReviewRequirement(review: OcrReview | null, job: JobId, 
   }
   const label = field === "requiredLevel" ? "LEV" : JOB_RULES[job].subStat;
   let next = review;
+  for (const line of review.lines) if (line.status !== "confirmed" && line.status !== "ignored"
+    && line.suspectedRequirement?.labels.length === 1 && line.suspectedRequirement.labels[0] === label) {
+    next = resolveReviewLine(next, line.id, value.trim() ? `REQ ${label} : ${value}` : null);
+  }
   for (const line of review.lines) if ((line.recovery || line.equipmentRecovery || line.readings.some(reading => reading.provenance?.role === "verification"))
     && (line.recovery || line.equipmentRecovery?.kind === "requirement" || readTooltipRequirement(line.text))
     && (line.recovery?.target.field ?? line.equipmentRecovery?.option?.label ?? line.equipmentRecovery?.fieldHint ?? readTooltipRequirement(line.text)?.label) === label) {
@@ -295,6 +301,7 @@ export function editedTextReview(text: string): OcrReview {
 export function reviewQuestions(review: OcrReview, job: JobId): OcrReviewLine[] {
   return review.lines.filter(line => {
     if (line.status !== "check") return false;
+    if (line.suspectedRequirement) return line.suspectedRequirement.labels.some(label => label === "LEV" || label === JOB_RULES[job].subStat);
     const options = line.readings.map(reading => parseTooltipOption(reading.text)).filter(option => option !== null);
     if (!options.length) {
       const labels = line.readings.map(reading => requirementLabel(reading.text)).filter(label => label !== null);

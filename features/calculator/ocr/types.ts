@@ -41,6 +41,7 @@ export type OcrSource = { category: string | null; name: string | null; file: Fi
  */
 export type OcrBounds = { x: number; y: number; width: number; height: number };
 export type RequirementField = "LEV" | "STR" | "DEX";
+export type SuspectedRequirementLabel = RequirementField | "INT" | "LUK";
 /**
  * 사진·호출·행·뷰·판독 조각의 출처를 추적해 서로 다른 증거를 혼합하거나 재사용하지 않게 한다.
  */
@@ -113,6 +114,8 @@ export type OcrReviewLine = {
   reason?: string;
   recovery?: RequirementRecovery;
   equipmentRecovery?: EquipmentRecoveryDecision;
+  /** Location/field hints for rereading, never a parsed or verified numeric value. */
+  suspectedRequirement?: { labels: SuspectedRequirementLabel[] };
 };
 
 /** Every real reread remains observable, including text the option parser cannot accept. */

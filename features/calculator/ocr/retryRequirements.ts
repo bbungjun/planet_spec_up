@@ -5,6 +5,7 @@
 import { JOB_RULES } from "../domain/job-rules";
 import { parseTooltipOption, readTooltipRequirement } from "./parseMapleTooltip";
 import { buildOcrReview } from "./reviewRecognition";
+import { suspectedRequirementRetryIssue } from "./requirementDiscovery";
 import type { LocatedRequirement, OcrReview, OcrReviewLine, RequirementField } from "./types";
 
 const usedRequirements = new Set(["LEV", ...Object.values(JOB_RULES).map(rule => rule.subStat)]);
@@ -92,6 +93,10 @@ export function locateRequirementVerification(review: OcrReview, identity: { sou
  */
 export function retryRequirementLabel(line: OcrReviewLine): string | null {
   if (line.status !== "check" || !line.bounds) return null;
+  if (line.suspectedRequirement) {
+    const labels = line.suspectedRequirement.labels;
+    return labels.length === 1 && usedRequirements.has(labels[0]) ? labels[0] : null;
+  }
   return identifiedRequirementLabel(line);
 }
 
@@ -108,5 +113,9 @@ export function mergeRequirementRetry(review: OcrReview, id: string, text: strin
   const readings = [...line.readings, { text, pass, bounds: line.bounds }];
   const [updated, extra] = buildOcrReview(readings).lines;
   if (!updated || extra) return review;
-  return { ...review, lines: review.lines.map(item => item.id === id ? { ...updated, id, bounds: line.bounds } : item) };
+  const issue = line.suspectedRequirement ? suspectedRequirementRetryIssue({ ...line, readings }) : null;
+  return { ...review, lines: review.lines.map(item => item.id === id ? { ...updated, id, bounds: line.bounds,
+    ...(line.suspectedRequirement ? { suspectedRequirement: line.suspectedRequirement } : {}),
+    ...(issue ? { status: "check" as const, reason: issue } : {}),
+  } : item) };
 }

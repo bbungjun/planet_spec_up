@@ -76,6 +76,24 @@ it("rejects unsupported images before creating a model worker", async () => {
   expect(create).not.toHaveBeenCalled();
 });
 
+it.each(["40", "Q"])("rereads a discovered requirement with original value %s without enabling numeric replacement", async value => {
+  predict.mockImplementation(async (image: File) => {
+    if (image.name === "requirement.png") return [{ items: [item("REQ STR : 40", 0, 1)] }];
+    const scale = image.name === "second-tooltip-view.png" ? 2 / 3 : 1;
+    return [{ items: [item("테스트 장비", 10, scale), item("(일반 아이템)", 35, scale),
+      item(`FIEQ STR : ${value}`, 80, scale), item("장비분류: 망토", 200, scale), item("DEX:+5", 250, scale)] }];
+  });
+  const recognizer = createPaddleTooltipRecognizer(), cb = options();
+  await recognizer.recognize(file(), cb);
+  const review: OcrReview = cb.onReview.mock.calls[0][0];
+  expect(requirementView).toHaveBeenCalledTimes(value === "40" ? 2 : 8);
+  expect(requirementVerificationView).not.toHaveBeenCalled();
+  expect(mapReviewedStats(review, "corsair")).toEqual(value === "40" ? { requiredSub: "40", mainFlat: "5" } : { mainFlat: "5" });
+  expect(reviewBlocked(review, "corsair")).toBe(value !== "40");
+  expect(review.initialReadings?.some(r => r.text === `FIEQ STR : ${value}`)).toBe(true);
+  await recognizer.terminate();
+});
+
 it.each(["observe", "apply", "default"] as const)("runs source-backed label recovery in %s mode without manufacturing numeric values", async mode => {
   prepareTooltip.mockImplementation(async (value, args) => {
     args.onSourceFrame?.({ version: 1, kind: "original", inset: 0,

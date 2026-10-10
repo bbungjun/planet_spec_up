@@ -4,7 +4,7 @@ import { locateSourceRegion, type SourceFrameMetadata } from "./sourceFrame";
 import type { OcrBounds, OcrReview, OcrReviewLine } from "./types";
 
 export type RecognitionIssueCode = "label-unreadable" | "label-conflict" | "value-unreadable" | "value-conflict"
-  | "unit-conflict" | "unit-unreadable" | "crop-incomplete" | "source-unavailable" | "runtime-failed";
+  | "unit-conflict" | "unit-unreadable" | "crop-incomplete" | "source-unavailable" | "runtime-failed" | "requirement-unreadable";
 export type RecognitionIssue = { code: RecognitionIssueCode; lineId?: string; bounds?: OcrBounds; detail?: string };
 export type LiteralOptionValue = { labelText: string; value: number; percent: boolean; literal: string };
 const percentOnly = new Set(["총데미지", "보스데미지", "방어율무시", "크리티컬확률"]);
@@ -33,6 +33,7 @@ export function classifyRecognitionIssues(review: OcrReview, frame?: SourceFrame
   for (const line of review.lines) {
     if (line.status !== "check") continue;
     const add = (code: RecognitionIssueCode, detail?: string) => issues.push({ code, lineId: line.id, bounds: line.bounds, ...(detail ? { detail } : {}) });
+    if (line.suspectedRequirement) add("requirement-unreadable", line.suspectedRequirement.labels.join(","));
     const values = line.readings.map(r => literalOptionValue(r.text));
     if (values.some(v => !v) || !values.length) add("value-unreadable");
     if (line.readings.some(r => isUnrecognizedOptionLabel(r.text))) add("label-unreadable");

@@ -32,6 +32,34 @@ function verifiedReview(): OcrReview {
 function recognizer(review: OcrReview): TooltipRecognizer {
   return { recognize: vi.fn(async (_file, options) => { options.onReview?.(review); return reviewModule.reviewText(review); }), terminate: vi.fn(async () => undefined) };
 }
+function suspectedReview(): OcrReview {
+  return reviewModule.buildOcrReview(["FIEQ STR : Q", "장비분류: 망토", "공격력:+5"].flatMap((text, index) => [0, 1].map(pass => ({
+    text, pass, bounds: { x: .2, y: .2 + index * .15, width: .4, height: .03 },
+  }))));
+}
+
+it("keeps a newly discovered requirement blocked until its single-image numeric field is explicitly corrected", async () => {
+  const original = suspectedReview(), apply = vi.fn(), user = userEvent.setup();
+  render(<EquipmentOcrPanel target={{ job: "corsair", slot: "cape" }} onApply={apply} createRecognizer={() => recognizer(original)} />);
+  await user.upload(screen.getByLabelText("장비 스크린샷 파일"), new File(["photo"], "photo.png", { type: "image/png" }));
+  await screen.findByLabelText("인식 요구 STR");
+  expect(screen.getByRole("button", { name: "인식값 적용" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("인식 요구 STR"), { target: { value: "40" } });
+  await user.click(screen.getByRole("button", { name: "인식값 적용" }));
+  expect(apply.mock.calls[0][1]).toMatchObject({ requiredSub: "40", attackFlat: "5" });
+  expect(original.lines[0].suspectedRequirement).toBeDefined();
+});
+
+it("uses the same suspected-requirement correction contract in batch application", async () => {
+  const original = suspectedReview(), apply = vi.fn().mockReturnValue(null), user = userEvent.setup();
+  render(<EquipmentOcrBatchPanel files={[new File(["batch-photo"], "batch.png", { type: "image/png" })]} job="corsair"
+    choices={[{ slot: "cape", label: "망토", equipment: emptyEquipment() }]} onApply={apply} onClose={vi.fn()} createRecognizer={() => recognizer(original)} />);
+  await screen.findByLabelText("1번 인식 요구 STR");
+  expect(screen.getByRole("button", { name: "검토한 1개 장비 적용" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("1번 인식 요구 STR"), { target: { value: "40" } });
+  await user.click(screen.getByRole("button", { name: "검토한 1개 장비 적용" }));
+  expect(apply.mock.calls[0][1][0].replacement).toMatchObject({ requiredSub: "40", attackFlat: "5" });
+});
 function checkEditedProof(review: OcrReview) {
   expect(review.lines.find(line => line.text === "REQ STR : 60")).toMatchObject({ status: "confirmed", recovery: undefined });
   expect(review.lines.find(line => line.recovery?.target.field === "LEV")?.recovery?.status).toBe("verified");
