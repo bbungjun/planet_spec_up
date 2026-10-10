@@ -31,6 +31,9 @@ RUN=output/ocr-numeric-training/run-20261010
 UPSTREAM=output/ocr-numeric-training/PaddleOCR
 WEIGHTS=output/ocr-numeric-training/korean_PP-OCRv5_mobile_rec_pretrained.pdparams
 export LD_LIBRARY_PATH="/usr/lib/wsl/lib:${LD_LIBRARY_PATH:-}"
+# Freeze this per-process setting for future GPU/browser comparisons and training.
+# Prior runs without it remain historical experiments; do not rewrite their receipts.
+export NVIDIA_TF32_OVERRIDE=0
 
 # 이미 기록된 실행 ID를 재사용하지 않는다.
 "$TRAIN_PY" scripts/ocr-numeric-training/pilot.py train \
@@ -50,6 +53,8 @@ export LD_LIBRARY_PATH="/usr/lib/wsl/lib:${LD_LIBRARY_PATH:-}"
 `--freeze-bn`은 BatchNorm의 사전학습 running statistics를 학습 중 유지한다. 모델 구조·한국어 사전·CTC/NRTR 헤드는 유지하고 학습 가능한 계수는 갱신한다. 이 옵션의 효과는 정상 BatchNorm 학습과 별도 실험으로 기록한다.
 
 각 실행은 설정·학습 소스 사본·step별 loss/gradient·epoch별 모델/Adam 상태·RNG·완료 receipt를 저장한다. `--resume <epoch-NN>`은 확장자를 뺀 prefix이며 데이터·가중치·사전·학습 코드·seed/batch/LR/BatchNorm 정책이 일치해야 한다. 이후 목표 epoch는 저장 epoch보다 커야 하고 출력은 새 디렉터리여야 한다. 과거 코드 hash의 체크포인트를 이어서 실행할 때는 해당 실행의 `training-source.py`를 사용한다.
+
+학습/평가 기록의 `numericPrecision`은 `NVIDIA_TF32_OVERRIDE`와 Paddle 연산 플래그를 담는다. 재개 시 정밀도 설정이 다르거나 기록이 없으면 거절한다. 기존 체크포인트에 새 설정을 소급해 붙이지 않고 당시 소스와 설정을 사용한다. 환경변수는 실행 프로세스에 지정하며 다른 GPU 앱의 설정을 바꾸지 않는다.
 
 `verify_checkpoint_load.py`는 모델과 Adam 상태가 읽기 직후 정확히 복원되는지 확인한다. `verify_resume.py`는 연속/재개 실행 후 상태의 **완전 일치**를 검사하므로 작은 GPU 수치 차이에도 종료 코드1을 반환한다. 그 실패를 숨기지 않고 개별 최대 오차·허용오차 판정을 함께 보존한다. 현재 결정적 cuDNN 설정에서도 embedding 관련 3개 텐서의 미세 차이가 남으므로 bitwise 재현을 보장하지 않는다.
 
@@ -123,3 +128,11 @@ python scripts/ocr-numeric-training/runtime-summary.py --output output/ocr-numer
 ## 기존 train 요구치 확장
 
 `train-coverage-20261011` 실험은 기존19장의 사용하지 않은 DEX/INT/LUK57개를 더해 train95개로 확장했다. 기존validation38/diagnostic10과 이전crop86개의hash를 유지했고 새시험14장을 사용하지 않았다. 같은 도구로 실사/외형증강을 비교해 둘 다95/95·38/38·10/10을 얻었지만 기존BN1도 같아 새모델을 채택하지 않았다. 원본/촬영그룹 수는 늘지 않았고 숫자3·6은 여전히 없다. 자세한 선택epoch·갱신횟수·미완료 범위는 학습계획 마지막 절을 따른다. 기존BN1과 새두모델의GPU/브라우저143개는 일치했으나 학습전B0의비숫자2개는 달라 완전동등성실패를 보존했다.
+
+## GPU와 브라우저의 정밀도 대조
+
+`capture-tensors.mjs --run=<브라우저 study> --output=<새 output 경로> --model=B0 --targets=<쉼표로 구분한 ID>`는 설치된 SDK를 메모리에서 관측용으로 변환해, 해당 표본이 포함된 배치의 실제 입력/출력 float32 텐서를 저장한다. 추론 뒤 읽기만 추가하며 설치 패키지·입력·모델·디코더는 수정하지 않는다. 관측 도구의 전체 출력을 기존 브라우저 receipt와 먼저 대조해야 한다. 저장 파일 덮어쓰기는 거절한다.
+
+`compare-tensors.py --run <캡처 경로> --data <학습 data> --upstream <PaddleOCR> --weights <학습 가중치> --onnx <변환 ONNX> --tar <브라우저 tar> --save <새 JSON 이름>`은 같은 배치에 Python/브라우저 입력을 각각 넣어 Paddle CPU/GPU와 ONNX CPU를 비교한다. `NVIDIA_TF32_OVERRIDE` 미설정/0은 별도 프로세스·별도 receipt로 실행한다. 두 문제 배치에서 픽셀/패딩은 같았고 정규화 차이는 최대5.92e-8이었다. 그 작은 입력 차이를 제거해도 GPU 문자 차이가 남았지만, TF32 override0에서는 사라졌다. 전체143개에서도 B0/BN1/확장실사/확장증강의 GPU 문자열이 각각 브라우저와 같았다. 확률 텐서 bitwise 동일성이나 모든 입력/기기의 일치 보장은 아니다.
+
+이 설정은 [NVIDIA cuBLAS의 TF32 제어 문서](https://docs.nvidia.com/cuda/archive/12.6.1/cublas/index.html)에 따른다. 이번 작업은 정밀도 진단/추론 재검증이며 가중치를 다시 학습하거나 OCR 정답률을 개선한 것이 아니다. 기존 실패와 정밀도별 결과는 `tensors-browser-20261011` 아래 보존한다.

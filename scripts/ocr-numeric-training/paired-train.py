@@ -13,7 +13,7 @@ import random
 import shutil
 import time
 
-from pilot import initialize,images,digest
+from pilot import initialize,images,digest,numeric_precision
 
 
 def read(path):return json.loads(path.read_text(encoding='utf-8'))
@@ -77,6 +77,7 @@ def main():
     args.output.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(__file__,args.output/'paired-train.py');shutil.copyfile(Path(__file__).with_name('pilot.py'),args.output/'pilot.py')
     config={'arm':args.arm,'seed':args.seed,'lr':args.lr,'batch':args.batch,'maxEpochs':args.epochs,'patience':args.patience,
+        'numericPrecision':numeric_precision(paddle),
         'freezeBatchNorm':True,'realCount':len(train),'validationCount':len(validation),'testCount':0,
         'samplesPerEpoch':len(train)*2,'realToAugmentation':'1:1' if args.arm=='real-plus-augmentation' else 'real source replayed twice',
         'sourceManifestSha256':source_hash,'trainingSha256':digest(args.data/'training.json'),'validationSha256':digest(args.data/'validation.json'),

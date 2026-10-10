@@ -22,6 +22,17 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def numeric_precision(paddle):
+    return {'NVIDIA_TF32_OVERRIDE':os.environ.get('NVIDIA_TF32_OVERRIDE'),
+            'flags':paddle.get_flags(['FLAGS_cudnn_deterministic','FLAGS_cudnn_exhaustive_search',
+                                    'FLAGS_use_fast_math','FLAGS_enable_cublas_tensor_op_math'])}
+
+
+def verify_resume_precision(metadata,current):
+    if metadata.get('numericPrecision')!=current:
+        raise ValueError('Resume numeric precision differs or was not recorded; use the original archived runner/settings')
+
+
 def initialize(upstream, device):
     sys.path.insert(0,str(upstream.resolve()))
     import cv2
@@ -79,7 +90,8 @@ def evaluate(args):
                 result.append({'id':row['id'],'rawText':text,'score':float(score),'inputSha256':row['cropSha256']})
     args.output.mkdir(parents=True,exist_ok=True)
     receipt={'weightsSha256':digest(args.weights),'inputSha256':digest(args.data/'inputs.json'),
-             'device':args.device,'batch':6,'durationSeconds':time.perf_counter()-started,'rows':result}
+             'device':args.device,'batch':6,'numericPrecision':numeric_precision(paddle),
+             'sourceCodeSha256':digest(Path(__file__)),'durationSeconds':time.perf_counter()-started,'rows':result}
     (args.output/'predictions.json').write_text(json.dumps(receipt,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps({'rows':len(result),'seconds':receipt['durationSeconds']}))
 
@@ -115,6 +127,7 @@ def train(args):
     start_epoch=0;step=0
     if args.resume:
         meta=json.loads(args.resume.with_suffix('.json').read_text())
+        verify_resume_precision(meta,numeric_precision(paddle))
         if meta['manifestSha256']!=digest(args.data/'manifest.json') or meta['sampleIds']!=[r['id'] for r in rows]:
             raise ValueError('Resume dataset mismatch')
         for k in ('seed','batch','lr'):
@@ -138,6 +151,7 @@ def train(args):
            'weightsSha256':digest(args.weights),'dictionarySha256':digest(Path(cfg['Global']['character_dict_path'])),
            'sourceCodeSha256':digest(Path(__file__)),'trainCount':len(rows),'validationCount':0,'testCount':0,
            'runtimeFlags':paddle.get_flags(['FLAGS_cudnn_deterministic','FLAGS_cudnn_exhaustive_search']),
+           'numericPrecision':numeric_precision(paddle),
            'freezeBatchNorm':args.freeze_bn,
            'normalization':'SDK BGR linear resize 48x<=320, zero normalized padding; original-color nearest3x',
            'augmentation':'none','loss':'upstream CTC + NRTR','selection':'fixed last epoch, no diagnostic selection'}
@@ -180,6 +194,7 @@ def train(args):
         paddle.save(paddle.get_rng_state(),str(prefix.with_suffix('.rng')))
         prefix.with_suffix('.json').write_text(json.dumps({**fixed,'epoch':epoch+1,'step':step},indent=2))
     result={'status':'completed','steps':step,'executedSteps':len(events),'startEpoch':start_epoch,
+            'numericPrecision':fixed['numericPrecision'],
             'epoch':args.epochs,'firstLoss':events[0]['loss'],'lastLoss':events[-1]['loss'],
             'parameterDeltaMax':float(np.max(np.abs(first_param.numpy()-before))),
             'durationSeconds':time.perf_counter()-started,'resumeFrom':str(args.resume) if args.resume else None,
