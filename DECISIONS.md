@@ -4860,3 +4860,12 @@
 - 확인: 개인자료없는합성 CPU probe에서소비final의diagnostic등록거절과서로다른crop입력의단일snapshot비교거절을재현했다. 첫probe의임시SQLite조회연결미종료로임시폴더회수가실패해조회연결을명시적으로닫은뒤재실행했다. 이는조사helper문제이며하네스결함으로집계하지않았다. 실제자료DB·사진·모델·GPU·학습/추론은접근하지않았다.
 - 에이전트 제안: 소비final의개발역할전환/재final차단,전처리adapter·입력안비교기,위험조건을적용한후보선택,사진별영수증/재개,validation coverage,OCR feedback/상태별보고,모델·환경identity분리,실제환경preflight 등8항목과완료검증을 docs/ocr-harness-improvement-review.md에정리했다. 기존028계획을보완하는검토이며구현/효과측정완료로표현하지않는다.
 - 결과·후속: 이번검토문서와이번기록만dev-main에선택전달한다. 선행DECISIONS432줄·학습계획11줄과Autoresearch미커밋소스를보존한다. 기능코드수정·새실험·Autoresearch커밋/푸시·Preview/main/Production변경은없다. 관련결정028·030·033을참조한다.
+
+## D-AUTORESEARCH-PROJECT-FEEDBACK-20261011-035 — 머신러닝 자동실험 프로젝트 전체 피드백
+
+- 기록 시각: 2026-10-11 20:04:32 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름.
+- 상태·요청: 검토/설명 요청. 사용자는 머신러닝 자동실험 구축 프로젝트인 현재 Autoresearch에 대한 피드백을 요청했다. 새 사용자 결정 없음. 사용자 이유 미명시. 신규 구현·학습·운영 반영 승인이 아니다.
+- 확인·근거: 원본 C:/Autoresearch main f06c9ab의 README·CTR Controller·ResearchDomain·feedback·ADR0003과 기존 실험 보고서를 직접 확인했다. CTR의 실제 agent 수정/feedback/재학습/final과 합성 조건에서의 offline promote를 인정하고 범용 무인 실행·실사용 효과와 구분했다. task132 OCR 확장은 별도 미커밋 구현 상태를 유지한다.
+- 에이전트 평가·제안: 재현/독립판정/기각/회복이 강점인 로컬 자동실험 MVP로 평가한다. 새 문제 준비 비용, 실패에서 다음 가설로의 연결, 도메인 확장 계약, 자동 개입/유효 실험/사람 시간의 생산성 계측, 동일 예산의 수동·고정탐색·feedback 비교와 실제 분포 검증을 우선 제안했다. 기존 ResearchDomain/CTR feedback을 없는 기능으로 표현하지 않으며 CTR/OCR 지표를 한 판정 규칙으로 강제하지 않는다.
+- 결과·후속: docs/ocr-harness-improvement-review.md에 프로젝트 전체 피드백을 추가하고 이번 문서/기록만 dev-main에 선택 전달한다. 선행 미커밋 기록432줄·학습계획11줄을 보존한다. 하네스 코드·Autoresearch Git·학습/추론·main/Production/Preview는 변경하지 않았다. 신규 생산성/성능 수치는 측정하지 않았다. 관련034를 참조한다.
