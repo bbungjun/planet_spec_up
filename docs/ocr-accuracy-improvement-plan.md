@@ -956,6 +956,17 @@ P0/P1/P2 전처리 탐색을 바로 실행하는 전용 adapter는 없다. BG-3�
 구현 위치 제안은 Planet의 `scripts/ocr-numeric-regions/`·관련 테스트와
 Autoresearch의 `autoresearch/research_harness/`이며 두 저장소의 책임/작업 규칙을 따른다.
 
+적용 계층은 Autoresearch의 **로컬 Research Harness: 실험 실행·독립 평가·기록/재개**다.
+기존 OCR 확장은 `ocr_controller.py`·`ocr_domain.py`·`ocr_runtime.py`가 이 역할을 나눠
+맡고 `ExperimentCard`·`ResearchBudget`·`TrialLedger`를 실제 재사용한다. 이번 전처리
+계획은 이 계층의 입력 생성/실험 실행과 비교 판정을 확장한다. 가설/코드를 자동 생성하는
+LLM agent나 CTR 데이터 수집·추천 서빙을 변경하는 작업으로 확대하지 않는다.
+
+BG-3에서는 서로 다른 입력의 비교 계약도 필요하다. P0/P1/P2마다 crop/마스크 hash가
+달라지므로 각 파생 snapshot과 판독을 먼저 독립 검증·채점하고, 원본/필드 ID·정답
+identity가 같은지 확인한 뒤 회귀를 비교한다. 현재 Judge는 같은 snapshot의 crop hash를
+엄격히 검사하므로 다른 입력의 baseline을 그대로 넣거나 baseline hash를 고쳐 맞추지 않는다.
+
 BG-1의 기존 테스트 `tests/calculator/numeric-region-experiment.test.ts`는 희미한 숫자까지
 보존하기 위해 현재 오른쪽 끝을 유지하는 동작을 검사한다. 이 테스트를 단순히 새 경계에
 맞게 약화시키지 않는다. 원래 알고리즘은 그대로 검사하고 새 실험 알고리즘의 안전성을 추가 검증한다.
