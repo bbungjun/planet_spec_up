@@ -4869,3 +4869,12 @@
 - 확인·근거: 원본 C:/Autoresearch main f06c9ab의 README·CTR Controller·ResearchDomain·feedback·ADR0003과 기존 실험 보고서를 직접 확인했다. CTR의 실제 agent 수정/feedback/재학습/final과 합성 조건에서의 offline promote를 인정하고 범용 무인 실행·실사용 효과와 구분했다. task132 OCR 확장은 별도 미커밋 구현 상태를 유지한다.
 - 에이전트 평가·제안: 재현/독립판정/기각/회복이 강점인 로컬 자동실험 MVP로 평가한다. 새 문제 준비 비용, 실패에서 다음 가설로의 연결, 도메인 확장 계약, 자동 개입/유효 실험/사람 시간의 생산성 계측, 동일 예산의 수동·고정탐색·feedback 비교와 실제 분포 검증을 우선 제안했다. 기존 ResearchDomain/CTR feedback을 없는 기능으로 표현하지 않으며 CTR/OCR 지표를 한 판정 규칙으로 강제하지 않는다.
 - 결과·후속: docs/ocr-harness-improvement-review.md에 프로젝트 전체 피드백을 추가하고 이번 문서/기록만 dev-main에 선택 전달한다. 선행 미커밋 기록432줄·학습계획11줄을 보존한다. 하네스 코드·Autoresearch Git·학습/추론·main/Production/Preview는 변경하지 않았다. 신규 생산성/성능 수치는 측정하지 않았다. 관련034를 참조한다.
+
+## D-OCR-HARNESS-SECOND-REVIEW-20261011-036 — 피드백 문서 후속 코드 검토
+
+- 기록 시각: 2026-10-11 20:06:57 KST (UTC+09:00).
+- 사용자 결정 시각: 미상 — 기록 시각과 다름. 새 사용자 결정 없음.
+- 요청·이유: 플래닛의 OCR 머신러닝 피드백 문서를 읽고 개선점을 찾도록 요청했다. 사용자 이유 미명시. 검토 요청이며 구현·학습·배포 승인이 아니다.
+- 확인: ocr-harness-improvement-review와 정확도 계획, task132의 Controller/Judge/노출 registry, 플래닛 numericRegion/auto-browser를 대조했다. exact 중심 선택 및 patience, final 자료의 진단 등록 차단, 입력 hash 비교 제약, 전체 완료 후 pipeline 저장을 확인했다.
+- 에이전트 제안: 기존 검토 문서에 부분 저장 선행, 선택과 조기 종료 규칙 정렬, 원출력 오답과 제품 오확정 구분, 경계/마스크 통제 비교, 실행 조건을 포함한 feedback 카드를 보완했다. 장비명 필수 조건을 복원하지 않으며 기존31장 결과는 소비된 연구 근거로 유지한다.
+- 결과·범위: 코드 정적 대조와 문서 보완만 수행했다. 새 정확도/성능 시험·모델 실행·소스 구현은 없고 효과 수치는 미측정이다. 이번 문서와 기록만 dev-main에 전달하며 선행 미커밋 내용과 Autoresearch 소스, 모델·제품·운영은 보존한다. 관련034·035 및 D-OCR-CATEGORY-CRITERION-20261010-017.
