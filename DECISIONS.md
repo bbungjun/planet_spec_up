@@ -4878,3 +4878,16 @@
 - 확인: ocr-harness-improvement-review와 정확도 계획, task132의 Controller/Judge/노출 registry, 플래닛 numericRegion/auto-browser를 대조했다. exact 중심 선택 및 patience, final 자료의 진단 등록 차단, 입력 hash 비교 제약, 전체 완료 후 pipeline 저장을 확인했다.
 - 에이전트 제안: 기존 검토 문서에 부분 저장 선행, 선택과 조기 종료 규칙 정렬, 원출력 오답과 제품 오확정 구분, 경계/마스크 통제 비교, 실행 조건을 포함한 feedback 카드를 보완했다. 장비명 필수 조건을 복원하지 않으며 기존31장 결과는 소비된 연구 근거로 유지한다.
 - 결과·범위: 코드 정적 대조와 문서 보완만 수행했다. 새 정확도/성능 시험·모델 실행·소스 구현은 없고 효과 수치는 미측정이다. 이번 문서와 기록만 dev-main에 전달하며 선행 미커밋 내용과 Autoresearch 소스, 모델·제품·운영은 보존한다. 관련034·035 및 D-OCR-CATEGORY-CRITERION-20261010-017.
+
+## D-OCR-AUTONOMOUS-RESEARCH-20261011-037 — 실제 Agent OCR 연구와 다중 도메인 하네스 검증
+
+- 기록 시각: 2026-10-11 21:28:42 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름.
+- 사용자 확정 요청·이유: OCR 개선과 함께 Autoresearch가 여러 ML 도메인의 자율 연구 하네스로 작동하는지 실제 검증한다. Agent의 관측·오류 분석·복수 가설·설계/구현·실행·독립 평가·다음 가설을 하네스가 관리한다. 기존 설정 목록 반복은 자율 연구의 성공 기준이 아니다. 사용자가 목적과 이유를 직접 명시했다.
+- 승인 범위·사전 고정: 기존 로컬 하네스/adapter 최소 구현과 제한 실험. 요구조건5개·기존 소비31장155필드의 수동 값 ROI 개발 연구, 고정M132, 연구1800초·기준선판독1·후보3·실제Agent4/회당180초·새GPU학습/추론호출0. 최종99%·숫자오답0·회귀0 기준을 유지했다. 이미 본14/31장 재final, 외부이미지전송·새유료서비스·제품모델교체·main/Production은 제외했다.
+- 구현·실증: Issue132 spec/plan 절차로 별도 task132 작업트리에 공통 Agent/feedback/후보/독립평가/예산·ledger·단위영수증·자료전환/복구와 OCR RGB adapter를 구현했다. 실제4호출·3후보·956.995초로 완료했다. 초기Gamma1.5 후 실제Judgefeedback의 비0→0 증가를 받아 peak140보존곡선, 다음엔 원본1:1혼합을 Agent가 직접 새로 선택/구현했다. 초기 목록 순회가 아니며 후보 원문은 실제 응답과 같다.
+- 품질·판정: baseline126/155·숫자오답21·빈/비숫자8·회귀0에서 H1 129/155·오답20·빈6·회귀0, H2/H3 127/155·오답20·빈8·회귀0였다. 누락0·분모155 유지. 비0→0은1→2로 늘어 모두 기각하고 제품 적용하지 않았다. 알려진 개발자료+3필드는 관측됐지만 일반화·전체사진탐지·장비전체/무수정POC·수동대비효율은 미검증이다.
+- 사람 개입·한계: 첫 실제 응답은 공개schema에 맞았으나 stopfalse 설명을 의미validator만 거절했다. 계약 수정/명시복구1건이 있었으며 가설·후보알고리즘·정답·원출력·채점기준 수동변경0이었다. 원래 실패/clock/실제응답과 판독자산을 검증해 최초응답·기준선을 재사용했고 실제추가판독/API0으로 이어갔다. GPU사용률·GPU초 자체는 실측하지 않았으며 새CUDA학습/추론경로0·고정WASM을 확인했다.
+- 검증·보존: 독립 raw재채점/전체ledger해시·실제feedback·privacy·cleanup을 감사했다. 원래final claim1·노출535행 불변, parent73/child2564 terminal재호출 파일불변·추가호출0. 원본Autoresearch 선행dirty24파일과 플래닛 선행DECISIONS432줄/계획11줄·제품모델을 보존했다. 지정폴더 학습14/후속31 신규byte원본0이다.
+- 후속 보강: 감사가 발견한continuation sibling예산/중간재개 공백을 실제소스freeze후 최소수정했다. 본체 최초응답복구·부모당단일childclaim·ledger상태/소비호출복원으로 독립 합성검증했다. 전용43·최종관련232통과/1skip·Ruff/JS/whitespace 통과. 최신 보강은 오프라인 검증이며 실제 루프 재실행0이다. 세 번째도메인은 합성target/rawscore 재사용 계약 검증이고 실제ML연구는 아니다.
+- 산출물·전달: C:/Autoresearch-experiments/task132/Autoresearch-task132/docs/reports/2026-10-11-ocr-autonomous-research.md와 adapter가이드·spec/완료archiveplan, Git제외 C:/Autoresearch/output/ocr-autonomous-20261011/의 실제trace·source-snapshot-pilot1/2·audit/재개근거를 보존했다. Autoresearch 소스는 미커밋 작업트리로 유지하고 커밋/푸시/PR/병합하지 않았다. 플래닛 이번 기록만 dev-main에 선택 전달한다. 관련028·034~036을 참조한다.
