@@ -4891,3 +4891,13 @@
 - 검증·보존: 독립 raw재채점/전체ledger해시·실제feedback·privacy·cleanup을 감사했다. 원래final claim1·노출535행 불변, parent73/child2564 terminal재호출 파일불변·추가호출0. 원본Autoresearch 선행dirty24파일과 플래닛 선행DECISIONS432줄/계획11줄·제품모델을 보존했다. 지정폴더 학습14/후속31 신규byte원본0이다.
 - 후속 보강: 감사가 발견한continuation sibling예산/중간재개 공백을 실제소스freeze후 최소수정했다. 본체 최초응답복구·부모당단일childclaim·ledger상태/소비호출복원으로 독립 합성검증했다. 전용43·최종관련232통과/1skip·Ruff/JS/whitespace 통과. 최신 보강은 오프라인 검증이며 실제 루프 재실행0이다. 세 번째도메인은 합성target/rawscore 재사용 계약 검증이고 실제ML연구는 아니다.
 - 산출물·전달: C:/Autoresearch-experiments/task132/Autoresearch-task132/docs/reports/2026-10-11-ocr-autonomous-research.md와 adapter가이드·spec/완료archiveplan, Git제외 C:/Autoresearch/output/ocr-autonomous-20261011/의 실제trace·source-snapshot-pilot1/2·audit/재개근거를 보존했다. Autoresearch 소스는 미커밋 작업트리로 유지하고 커밋/푸시/PR/병합하지 않았다. 플래닛 이번 기록만 dev-main에 선택 전달한다. 관련028·034~036을 참조한다.
+
+## D-OCR-TIME-LIMIT-RELEASE-20261011-038 — 총30분 한도 해제와 Autoresearch Agent 보고서 전달
+
+- 기록 시각: 2026-10-11 21:47:06 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름.
+- 사용자 확정 요청: “30분한도제한을없애고 이평가보고서를 AUTORESEARCH AGNET 에게 보내줘”. 사용자 이유 미명시. 이번 요청은037의 총30분 예산을 후속 자율 연구에서 해제하고 평가보고서를 별도Autoresearch 채팅에 보내는 직접 승인이다.
+- 적용·범위: task132의 도메인독립 AutonomousBudget에총시간None을지원하고 OCR CLI의기본None/1800상한제거를구현했다. 기존CTR ResearchBudget/Controller·후보3/Agent4·개별180/240초·메모리/GPU/자료/품질조건을유지한다. 이미완료한파일럿1800초config/clock/source/원출력은변경하지않았고새연구/판독은없다. 제한변경은새run설정에적용하며완료run예산을고쳐재개하지않는다.
+- 검증: fakeclock1시간이상경과에서도총시간상한없이trial/call한도를지키는테스트와 CLI None/3600초수용을추가했다. 관련67통과·Ruff·독립읽기리뷰로열린P0/P1/P2없음을확인했다. Autoresearch소스는기존미커밋작업트리를유지한다.
+- 전달 결과: Codex 앱 도구로 C:/Autoresearch의 “플래닛 OCR 피드백 개선점 찾기”(thread01a12aa3-fbfa-7ed3-8a90-3e3c9dfb440d)에 평가보고서전문과최신시간정책·실제개발성과/위험·본체/adapter구현·actualsource와후속offline검증의구분을직접전달했다. 도구성공응답으로전송을확인했다. 수신Agent의검토/본체피드백을요청했으며추가실험자동시작으로확대하지않았다.
+- 산출물·후속: 기존연구보고서/spec/adapter가이드에시간정책변경을별도추가했다. 선행DECISIONS432줄·계획11줄·실행증거·제품/운영을보존한다. 이번플래닛기록만dev-main에선택전달한다. 관련037 및034~036을참조한다.
