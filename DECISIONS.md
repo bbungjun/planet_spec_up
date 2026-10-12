@@ -4912,3 +4912,13 @@
 - 근거·적용: 설치된 SKILL.md와 원문 https://github.com/typesafe-ai/skills/blob/main/skills/typesafe-ai/SKILL.md, 공식 문서 색인 https://docs.typesafe.ai/llms.txt 및 설치 문서 https://docs.typesafe.ai/agent-skill 을 확인했다. 관련 작업에서 최신 문서를 읽고 확정 계산과 의미 판단을 구분하는 사용 기준을 AGENTS.md에 추가했다.
 - 범위·보존: 에이전트 스킬과 프로젝트 지침 설정 작업이다. 기존 미커밋 AGENTS.md/DECISIONS.md/OCR 계획은 보존하며 설치 파일·이번 지침·이번 결정 기록만 §10에 따라 `dev-main`에 커밋·푸시한다. 앱 코드·package/lock·계산식·OCR 모델·사용자 데이터와 기존 D-ENV-DEVONLY-20261001-001·D-146의 승인 경계를 유지한다.
 - 검증·후속: 설치 조회와 문서/라이선스/변경 범위를 확인한다. 앱 실행·테스트·빌드는 이번 스킬 설치의 검증 범위에 포함하지 않는다. 커밋·푸시 후 로컬/원격 SHA 일치를 확인하고 결과 기록을 추가한다.
+
+## D-TYPESAFE-SKILL-DELIVERY-20261012-001 — TypeSafe 설치의 개발 전달 확인
+
+- 기록 시각: 2026-10-12 16:39:09 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름. 새 사용자 결정 없음.
+- 상태·요청: D-TYPESAFE-SKILL-INSTALL-20261012-001의 설치·프로젝트 지침 설정과 §10의 개발 전달을 완료하고 확인 결과를 기록한다.
+- 이유: 사용자 이유 미명시.
+- 전달 결과: 설치 파일 2개·출처 lock·AGENTS.md 사용 지침·이번 결정 기록만 커밋 `8087a8380f786497803bbe645cfa057bc143505a`로 `dev-main`에 푸시했다. `git ls-remote origin refs/heads/dev-main`의 SHA와 로컬 HEAD가 동일하다.
+- 검증·보존: Codex 프로젝트 설치 조회와 `git diff --check`/스테이징 검사에 통과했다. 기존 미커밋 AGENTS.md 27줄·DECISIONS.md 632줄·OCR 계획 11줄은 커밋 범위에서 제외하고 보존했다. 기존 문서 내용 대조와 OCR 계획의 바이트 동일성을 확인했다. 앱 런타임·계산/OCR 품질 시험은 이번 설정 검증과 구분한다.
+- 후속: 이 전달 확인 기록만 추가 문서 커밋으로 같은 개발 브랜치에 푸시하고 최종 로컬/원격 SHA를 확인한다. 스킬은 현재 턴에서 직접 읽었으며 이후 이 프로젝트 관련 작업에 적용한다. D-ENV-DEVONLY-20261001-001의 Preview 조회 생략과 D-146의 운영 반영 경계를 유지한다.
