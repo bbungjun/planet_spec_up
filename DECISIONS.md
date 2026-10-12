@@ -4901,3 +4901,14 @@
 - 검증: fakeclock1시간이상경과에서도총시간상한없이trial/call한도를지키는테스트와 CLI None/3600초수용을추가했다. 관련67통과·Ruff·독립읽기리뷰로열린P0/P1/P2없음을확인했다. Autoresearch소스는기존미커밋작업트리를유지한다.
 - 전달 결과: Codex 앱 도구로 C:/Autoresearch의 “플래닛 OCR 피드백 개선점 찾기”(thread01a12aa3-fbfa-7ed3-8a90-3e3c9dfb440d)에 평가보고서전문과최신시간정책·실제개발성과/위험·본체/adapter구현·actualsource와후속offline검증의구분을직접전달했다. 도구성공응답으로전송을확인했다. 수신Agent의검토/본체피드백을요청했으며추가실험자동시작으로확대하지않았다.
 - 산출물·후속: 기존연구보고서/spec/adapter가이드에시간정책변경을별도추가했다. 선행DECISIONS432줄·계획11줄·실행증거·제품/운영을보존한다. 이번플래닛기록만dev-main에선택전달한다. 관련037 및034~036을참조한다.
+
+## D-TYPESAFE-SKILL-INSTALL-20261012-001 — TypeSafe 스킬 설치와 프로젝트 사용 지침
+
+- 기록 시각: 2026-10-12 16:37:03 KST (UTC+09:00)
+- 사용자 결정 시각: 미상 — 기록 시각과 다름.
+- 결정 상태·요청: 사용자 확정. TypeSafe 스킬을 설치 방식 하나로 설치하고 이 프로젝트 작업에 사용하도록 요청했다. Codex에서는 `npx skills add typesafe-ai/skills --skill typesafe-ai`로 Codex를 선택하는 요청을 따른다.
+- 이유: 사용자 이유 미명시.
+- 실행 결과: `npx --yes skills add typesafe-ai/skills --skill typesafe-ai --agent codex --yes`가 종료 코드 0으로 완료됐다. `.agents/skills/typesafe-ai/SKILL.md`와 MIT `LICENSE`, 출처·경로·해시를 담은 `skills-lock.json`이 생성됐다. `npx --yes skills list --agent codex --json`에서 `typesafe-ai`, scope `project`, agent `Codex`, source `typesafe-ai/skills`를 확인했다.
+- 근거·적용: 설치된 SKILL.md와 원문 https://github.com/typesafe-ai/skills/blob/main/skills/typesafe-ai/SKILL.md, 공식 문서 색인 https://docs.typesafe.ai/llms.txt 및 설치 문서 https://docs.typesafe.ai/agent-skill 을 확인했다. 관련 작업에서 최신 문서를 읽고 확정 계산과 의미 판단을 구분하는 사용 기준을 AGENTS.md에 추가했다.
+- 범위·보존: 에이전트 스킬과 프로젝트 지침 설정 작업이다. 기존 미커밋 AGENTS.md/DECISIONS.md/OCR 계획은 보존하며 설치 파일·이번 지침·이번 결정 기록만 §10에 따라 `dev-main`에 커밋·푸시한다. 앱 코드·package/lock·계산식·OCR 모델·사용자 데이터와 기존 D-ENV-DEVONLY-20261001-001·D-146의 승인 경계를 유지한다.
+- 검증·후속: 설치 조회와 문서/라이선스/변경 범위를 확인한다. 앱 실행·테스트·빌드는 이번 스킬 설치의 검증 범위에 포함하지 않는다. 커밋·푸시 후 로컬/원격 SHA 일치를 확인하고 결과 기록을 추가한다.
