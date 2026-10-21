@@ -21,9 +21,10 @@ if(set==='dev19+new14'){
   const dev=fs.readdirSync(devDir).filter(n=>/^\d{14}\.png$/.test(n)).sort().map((n,i)=>({id:`dev-${String(i).padStart(2,'0')}`,set:'dev19',path:path.join(devDir,n),name:n}));
   fixtures=[...dev,...lockedRows('output/ocr-numeric-training/new-photos-20261011/pretest-lock.json','new14')];
 }else if(set==='followup31')fixtures=lockedRows('output/ocr-numeric-training/followup-photos-20261011/pretest-lock.json','followup31');
+else if(set==='capture29')fixtures=lockedRows('output/ocr-tooltip-capture-sim-20261021/pretest-lock.json','capture29');
 else throw Error('Unknown fixture set '+set);
 fixtures=fixtures.map(f=>{const h=sha(f.path);if(f.expected&&h!==f.expected)throw Error('Source changed '+f.id);return {...f,sha256:h};});
-if(fixtures.length!==(set==='followup31'?31:33))throw Error('Unexpected fixture count');
+if(fixtures.length!==({followup31:31,capture29:29}[set]??33))throw Error('Unexpected fixture count');
 const models={A1:{path:'public/ocr/paddle/models/rec-ko.tar',sha256:'568ed8b43a260adc9f484d92105e425ea8cddf8ce16940c177bc12864cfb0eb0'},
   BN1:{path:'output/ocr-numeric-training/run-20261010/convert-BN1/rec.tar',sha256:'ab9b8f02b33a6ecefa4f61469455d4724307079774ead7f2f5ca8862c3824452'}};
 for(const m of Object.values(models))if(sha(path.join(app,m.path))!==m.sha256)throw Error('Model changed '+m.path);
@@ -36,7 +37,9 @@ const protocol={set,createdAt:new Date().toISOString(),head:execFileSync('git',[
   sourceHashes:Object.fromEntries(sources.map(n=>[n,sha(path.join(app,n))])),
   recipe:'Unchanged product recognizeBatch (concurrency 1) → locateRequirementBlock (8 evenly spaced left-aligned rows, order LEV/STR/DEX/INT/LUK/POP/ITEM LEV/ITEM EXP, label veto, >=2 anchors) → locateSourceRegion padding2 → unchanged numericRegion → original RGB nearest3x → A1 then BN1 batch6 greedy CTC. Values accepted only as plain 1~3 digit integers.',
   mergeRule:'Per requirement field: dedicated value v (BN1 primary, A1 ablation), product value p. p absent & v valid → v. Both present & equal → p. Both present & different → conflict, field left unresolved. v invalid/absent → p. Product output is never overwritten.',
-  scope:set==='followup31'
+  scope:set==='capture29'
+    ?'Simulated guided capture: the same follow-up photos cut along each tooltip gold border (+6px), so they skip frame detection like a Win+Shift+S capture. Same truth, same limits as followup31 (one session, already used for M132 final), and a simulation rather than real user captures.'
+    :set==='followup31'
     ?'Follow-up 31 photos (one capture session). BN1 (frozen 2026-10-10) never trained on them and the block rule was designed before seeing them, but they were already used as the final test of a different model (M132), so this is an unseen-to-BN1 evaluation, not a new independent final test. Numeric predictions are not written to product review or storage.'
     :'Development-set comparison on 19 previous Dotum photos + 14 previously tested new photos; the locator rule was designed after inspecting these reviews, so this is not an independent final test. Numeric predictions are not written to product review or storage.'};
 fs.writeFileSync(path.join(output,'protocol.json'),JSON.stringify(protocol,null,2),{flag:'wx'});

@@ -5,6 +5,7 @@ import {parseTooltipOption} from '../../features/calculator/ocr/parseMapleToolti
 import {mapReviewedStats,resolveReviewLine,reviewBlocked,reviewQuestions} from '../../features/calculator/ocr/reviewRecognition';
 import {locateSourceRegion,type PixelRect} from '../../features/calculator/ocr/sourceFrame';
 import type {OcrReview} from '../../features/calculator/ocr/types';
+import {setExperimentalRedTextContrast} from '../../features/calculator/ocr/enlargeTooltip.client';
 import {numericRegion} from '../ocr-numeric-regions/regions';
 import {locateRequirementBlock,requirementFields,requirementValue,type RequirementField} from './block';
 
@@ -36,6 +37,9 @@ document.getElementById('cancel')!.onclick=()=>controller.abort();
 document.getElementById('run')!.onclick=async()=>{
   (document.getElementById('run') as HTMLButtonElement).disabled=true;
   const started=performance.now();
+  // Variant is fixed by URL before any inference and recorded in every receipt.
+  const variant=new URLSearchParams(location.search).get('variant')??'default';
+  setExperimentalRedTextContrast(variant==='red-text');
   try{
     const manifest:{fixtures:Fixture[];models:Record<string,Model>}=await fetch('/api/inputs').then(r=>r.json());
     const files:File[]=[];const outputs:Array<{index:number;result:BatchRecognitionResult}>=[];
@@ -80,7 +84,7 @@ document.getElementById('run')!.onclick=async()=>{
       }}finally{bitmap.close();}
     }
     const cropMs=performance.now()-blockStarted;
-    await save('pipeline',{createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
+    await save('pipeline',{variant,createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
     const located=regions.filter(r=>!r.failure);
     if(located.length!==canvases.length)throw Error('Crop alignment changed');
     const timings:Record<string,number>={};const predicted:Record<string,Prediction[]>={};
@@ -122,6 +126,6 @@ document.getElementById('run')!.onclick=async()=>{
     });
     await save('merged',{rule:'BN1 merge applied to review lines',merged});
     state.phase='complete';document.getElementById('status')!.textContent=JSON.stringify(state);
-    await save('complete',{...state,durationMs:performance.now()-started,recognitionMs,cropMs,timings,regions:regions.length,located:located.length});
+    await save('complete',{...state,variant,durationMs:performance.now()-started,recognitionMs,cropMs,timings,regions:regions.length,located:located.length});
   }catch(e){state.phase='failed';document.getElementById('status')!.textContent=String(e);await save('failed',{...state,error:String(e),durationMs:performance.now()-started});}
 };

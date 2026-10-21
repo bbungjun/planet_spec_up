@@ -41,6 +41,10 @@ export async function tooltipImageSize(file: File): Promise<{ width: number; hei
   try { return { width: bitmap.width, height: bitmap.height }; } finally { bitmap.close(); }
 }
 
+let keepRedText = false;
+/** 실험 전용: 강한 빨간 글자(충족하지 못한 요구 조건)도 글자로 남긴다. 기본값은 꺼져 있다. */
+export function setExperimentalRedTextContrast(enabled: boolean): void { keepRedText = enabled; }
+
 /**
  * min(R,G,B)를 135~200 구간에서 대비·반전해 어두운 배경 위의 흰 글자를 강조한다.
  * 135 이하는 흰색, 200 이상은 검은색이 된다. 색상 글자는 사라질 수 있어 원래 색상 이미지도 별도로 보존한다.
@@ -56,7 +60,8 @@ export async function contrastTooltip(file: File): Promise<File> {
     context.drawImage(bitmap, 0, 0);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < pixels.data.length; i += 4) {
-      const white = Math.min(pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]);
+      const r = pixels.data[i], g = pixels.data[i + 1], b = pixels.data[i + 2];
+      const white = keepRedText && r >= 150 && r > g * 1.6 && r > b * 1.6 ? r : Math.min(r, g, b);
       const value = 255 - Math.round(Math.max(0, Math.min(1, (white - 135) / 65)) * 255);
       pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
     }
