@@ -13,6 +13,8 @@ for(const r of Object.values(models))if(r.rows.length!==located.length||r.rows.s
 
 const devTruth=read('output/ocr-accuracy-implementation/ground-truth.json').rows;
 const newTruth=read('output/ocr-numeric-training/new-photos-20261011/review.json').rows;
+const followupDir='output/ocr-numeric-training/followup-photos-20261011/';
+const followupTruth=protocol.set==='followup31'?['review-dev.json','review-test.json'].flatMap(n=>read(followupDir+n).rows).filter(r=>r.source.includes('followup-photos')):[];
 const fieldOf={requiredLevel:'LEV',requiredSub:'STR'};
 const value=raw=>{const t=String(raw??'').normalize('NFKC').trim();return /^\d{1,3}$/.test(t)?Number(t):null;};
 
@@ -21,8 +23,8 @@ const truth=new Map();
 for(const f of protocol.fixtures){
   if(f.set==='dev19'){const t=devTruth.find(t=>t.name===f.name);if(!t)throw Error('Missing truth '+f.name);
     truth.set(f.id,{category:t.category,stats:t.stats,requirements:Object.fromEntries(Object.entries(fieldOf).filter(([k])=>t.stats[k]!==undefined).map(([k,l])=>[l,t.stats[k]]))});}
-  else{const rows=newTruth.filter(r=>r.id.startsWith(f.id+'-'));if(rows.length!==5)throw Error('Missing truth '+f.id);
-    truth.set(f.id,{requirements:Object.fromEntries(rows.map(r=>[r.field,Number(r.label)]))});}
+  else{const rows=(f.set==='followup31'?followupTruth:newTruth).filter(r=>r.id.startsWith(f.id+'-'));if(rows.length!==5)throw Error('Missing truth '+f.id);
+    truth.set(f.id,{requirements:Object.fromEntries(rows.map(r=>[r.field,Number(r.label)])),equipmentGroup:rows[0].equipmentGroup??null});}
 }
 
 const arms=['product','BN1-only','A1-only','BN1-merged','A1-merged'];
@@ -61,7 +63,7 @@ for(const review of pipeline.reviews){
     }
     equipment.push(row);
   }else{
-    const row={source:review.source,ok:review.ok};
+    const row={source:review.source,ok:review.ok,equipmentGroup:t.equipmentGroup};
     for(const arm of arms)row[arm]={complete:fields.filter(f=>f.source===review.source).every(f=>f[arm]==='correct')};
     equipment.push(row);
   }
@@ -69,7 +71,7 @@ for(const review of pipeline.reviews){
 
 const count=(rows,arm,kind)=>rows.filter(r=>r[arm]===kind).length;
 const summary={};
-for(const set of ['dev19','new14']){
+for(const set of [...new Set(protocol.fixtures.map(f=>f.set))]){
   const rows=fields.filter(f=>f.set===set),eq=equipment.filter(e=>pipeline.reviews.find(r=>r.source===e.source).set===set);
   summary[set]={fields:rows.length,blockLocated:pipeline.reviews.filter(r=>r.set===set&&r.block?.status==='located').length,
     images:eq.length,regionFailures:rows.filter(r=>r.regionFailure).length,
@@ -81,7 +83,7 @@ for(const set of ['dev19','new14']){
 const mergedPath=path.join(dir,'merged.json');
 if(fs.existsSync(mergedPath)){
   const merged=read(mergedPath).merged;
-  for(const set of ['dev19','new14']){
+  for(const set of [...new Set(protocol.fixtures.map(f=>f.set))]){
     const rows=equipment.filter(e=>pipeline.reviews.find(r=>r.source===e.source).set===set);
     const outcome=rows.map(e=>{const r=pipeline.reviews.find(r=>r.source===e.source),m=merged.find(m=>m.source===e.source);
       return {source:e.source,
