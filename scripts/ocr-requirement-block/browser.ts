@@ -6,15 +6,17 @@ import {mapReviewedStats,resolveReviewLine,reviewBlocked,reviewQuestions} from '
 import {locateSourceRegion,type PixelRect} from '../../features/calculator/ocr/sourceFrame';
 import type {OcrReview} from '../../features/calculator/ocr/types';
 import {setExperimentalRedTextContrast} from '../../features/calculator/ocr/enlargeTooltip.client';
-import {setExperimentalDetectOptions} from '../../features/calculator/ocr/prepareTooltip.client';
+import {setExperimentalDetectOptions} from '../../features/calculator/ocr/experimentalDetect';
 import {numericRegion} from '../ocr-numeric-regions/regions';
 import {locateRequirementBlock,requirementFields,requirementValue,type RequirementField} from './block';
+import {locateRequirementBlockByPitch} from './block-pitch';
+import {hasGlyphs,redShare,trimAtGap,whitenRed} from './value-crop';
 
 type Fixture={id:string;set:string;sha256:string;url:string};
 type Model={path:string;sha256:string};
 type Prediction={text:string;score:number};
 type Engine={cv:{matFromImageData(image:ImageData):Mat};recModel:{predict(cv:Engine['cv'],mats:Mat[]):Promise<Prediction[]>};dispose():Promise<void>};
-type Region={id:string;source:string;field:RequirementField;failure?:string;sourceCrop?:PixelRect;valueCrop?:PixelRect;cropSha256?:string;preview?:string};
+type Region={id:string;source:string;field:RequirementField;failure?:string;red?:number;sourceCrop?:PixelRect;valueCrop?:PixelRect;cropSha256?:string;preview?:string};
 const state={phase:'ready',completed:0};
 const controller=new AbortController();
 const save=async(id:string,body:unknown)=>{const r=await fetch('/api/result/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error('Receipt rejected '+id);};
@@ -41,10 +43,12 @@ document.getElementById('run')!.onclick=async()=>{
   // Variant is fixed by URL before any inference and recorded in every receipt.
   const variant=new URLSearchParams(location.search).get('variant')??'default';
   setExperimentalRedTextContrast(variant==='red-text');
-  setExperimentalDetectOptions(variant==='border-frames'?{borderFrames:true}:undefined);
+  // 'pitch' places rows from label anchors and whitens red values; it changes only the crop stage.
+  const locate=(review:OcrReview)=>variant==='pitch'?locateRequirementBlockByPitch(review):locateRequirementBlock(review);
+  setExperimentalDetectOptions(variant==='border-frames'?{borderFrames:true}:variant==='border-first'?{borderFrames:true,borderFirst:true}:undefined);
   try{
     const manifest:{fixtures:Fixture[];models:Record<string,Model>}=await fetch('/api/inputs').then(r=>r.json());
-    const files:File[]=[];const outputs:Array<{index:number;result:BatchRecognitionResult}>=[];
+    const photoMs:number[]=[];const files:File[]=[];const outputs:Array<{index:number;result:BatchRecognitionResult}>=[];
     let reporting:Promise<void>=Promise.resolve();
     for(const f of manifest.fixtures){const b=await fetch(f.url).then(r=>r.blob());if(await sha(await b.arrayBuffer())!==f.sha256)throw Error('Source hash changed');files.push(new File([b],f.id+'.png',{type:'image/png'}));}
     const replay=await fetch('/api/replay').then(r=>{if(!r.ok)throw Error('Replay does not match this fixture set');return r.json();}) as Array<{source:string;ok:boolean;review?:OcrReview;error?:unknown;duplicateOf?:number}>|null;
@@ -53,8 +57,8 @@ document.getElementById('run')!.onclick=async()=>{
       replay.forEach((r,index)=>outputs.push({index,result:r.ok?{ok:true,text:'',preview:files[index],review:r.review,duplicateOf:r.duplicateOf}:{ok:false,error:r.error}}));
     }else{
       await progress('full-photo-recognition');
-      await recognizeBatch(files,{signal:controller.signal,concurrency:1,onStart(){},onPrepared(){},onProgress(){},
-        onResult(index,result){outputs.push({index,result});state.completed++;reporting=reporting.then(()=>progress('full-photo-recognition'));}});
+      await recognizeBatch(files,{signal:controller.signal,concurrency:1,onStart(index){photoMs[index]=-performance.now();},onPrepared(){},onProgress(){},
+        onResult(index,result){photoMs[index]+=performance.now();outputs.push({index,result});state.completed++;reporting=reporting.then(()=>progress('full-photo-recognition'));}});
     }
     await reporting;active();if(outputs.length!==files.length)throw Error('Full-photo result count mismatch');
     const recognitionMs=performance.now()-started;
@@ -63,7 +67,7 @@ document.getElementById('run')!.onclick=async()=>{
     const reviews=outputs.sort((a,b)=>a.index-b.index).map(({index,result})=>{
       const f=manifest.fixtures[index];
       if(!result.ok||!result.review)return {source:f.id,set:f.set,ok:false,error:result.ok?'no-review':result.error,duplicateOf:result.ok?result.duplicateOf:undefined};
-      const block=locateRequirementBlock(result.review);
+      const block=locate(result.review);
       return {source:f.id,set:f.set,ok:true,duplicateOf:result.duplicateOf,category:result.review.category,
         product:{requirements:productRequirements(result.review),corsair:mapReviewedStats(result.review,'corsair'),
           blocked:reviewBlocked(result.review,'corsair'),questions:reviewQuestions(result.review,'corsair').length},
@@ -73,7 +77,7 @@ document.getElementById('run')!.onclick=async()=>{
       const source=manifest.fixtures[index].id;
       const add=(field:RequirementField,failure?:string)=>{const row:Region={id:source+'-'+field,source,field,failure};regions.push(row);return row;};
       if(!result.ok||!result.review?.diagnostics?.sourceFrame){for(const field of requirementFields)add(field,!result.ok?'recognition-failed':'source-frame-missing');continue;}
-      const block=locateRequirementBlock(result.review);
+      const block=locate(result.review);
       if(block.status!=='located'){for(const field of requirementFields)add(field,'block-'+block.reason);continue;}
       const bitmap=await createImageBitmap(files[index]);
       try{for(const target of block.rows){
@@ -82,8 +86,15 @@ document.getElementById('run')!.onclick=async()=>{
         if(!located||located.clipped){row.failure='source-region-clipped';continue;}
         row.sourceCrop=located.crop;const c=makeCanvas(located.crop.width,located.crop.height);const ctx=c.getContext('2d')!;
         ctx.drawImage(bitmap,located.crop.x,located.crop.y,c.width,c.height,0,0,c.width,c.height);
-        const split=numericRegion(ctx.getImageData(0,0,c.width,c.height));
+        let plane=ctx.getImageData(0,0,c.width,c.height);
+        if(variant==='pitch'){
+          if(!hasGlyphs(plane)){row.failure='no-glyph-pixels';continue;}
+          row.red=redShare(plane);
+          if(row.red>.3){const white=whitenRed(plane);plane=new ImageData(white.data as Uint8ClampedArray<ArrayBuffer>,white.width,white.height);ctx.putImageData(plane,0,0);}
+        }
+        const split=numericRegion(plane);
         if(split.status!=='located'){row.failure=split.reason;continue;}
+        if(variant==='pitch')split.region.width=trimAtGap(plane,split.region);
         row.valueCrop={x:located.crop.x+split.region.x,y:located.crop.y,width:split.region.width,height:split.region.height};
         const value=makeCanvas(split.region.width*3,split.region.height*3);const vc=value.getContext('2d')!;vc.imageSmoothingEnabled=false;
         vc.drawImage(c,split.region.x,split.region.y,split.region.width,split.region.height,0,0,value.width,value.height);
@@ -92,7 +103,7 @@ document.getElementById('run')!.onclick=async()=>{
       }}finally{bitmap.close();}
     }
     const cropMs=performance.now()-blockStarted;
-    await save('pipeline',{variant,replayed:!!replay,createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
+    await save('pipeline',{variant,replayed:!!replay,photoMs:manifest.fixtures.map((f,i)=>({source:f.id,ms:photoMs[i]??null})),createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
     const located=regions.filter(r=>!r.failure);
     if(located.length!==canvases.length)throw Error('Crop alignment changed');
     const timings:Record<string,number>={};const predicted:Record<string,Prediction[]>={};
@@ -112,11 +123,14 @@ document.getElementById('run')!.onclick=async()=>{
     }
     // Apply the fixed merge rule to the review itself so remaining questions can be counted.
     // Only this harness edits its in-memory copy; product code, storage and other lines are unchanged.
-    const bn1=new Map(located.map((r,i)=>[r.id,requirementValue(predicted.BN1[i].text)]));
+    // Agreement gate (pitch variant): A1 must have read no digit or the same integer as BN1.
+    const gate=variant==='pitch';
+    const bn1=new Map(located.map((r,i)=>{const v=requirementValue(predicted.BN1[i].text),a1=predicted.A1[i].text.normalize('NFKC').replace(/\D/g,'');
+      return [r.id,gate&&v!==null&&a1!==''&&Number(a1)!==v?null:v];}));
     const merged=outputs.map(({index,result})=>{
       const source=manifest.fixtures[index].id;
       if(!result.ok||!result.review)return {source,ok:false};
-      let review=result.review;const block=locateRequirementBlock(review);const applied:string[]=[],conflicts:string[]=[];
+      let review=result.review;const block=locate(review);const applied:string[]=[],conflicts:string[]=[];
       if(block.status==='located'){
         const product=productRequirements(review);
         for(const row of block.rows){
@@ -132,7 +146,7 @@ document.getElementById('run')!.onclick=async()=>{
       }
       return {source,ok:true,applied,conflicts,corsair:mapReviewedStats(review,'corsair'),questions:reviewQuestions(review,'corsair').map(l=>l.text),blocked:reviewBlocked(review,'corsair')};
     });
-    await save('merged',{rule:'BN1 merge applied to review lines',merged});
+    await save('merged',{rule:gate?'gated BN1 merge applied to review lines':'BN1 merge applied to review lines',merged});
     state.phase='complete';document.getElementById('status')!.textContent=JSON.stringify(state);
     await save('complete',{...state,variant,durationMs:performance.now()-started,recognitionMs,cropMs,timings,regions:regions.length,located:located.length});
   }catch(e){state.phase='failed';document.getElementById('status')!.textContent=String(e);await save('failed',{...state,error:String(e),durationMs:performance.now()-started});}

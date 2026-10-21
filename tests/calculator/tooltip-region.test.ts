@@ -239,3 +239,34 @@ describe("browser-local tooltip preparation", () => {
     expect(bitmap.close).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("experimental border-colour frames", () => {
+  // A blue panel filled with one saturated colour, and a gold tooltip whose left
+  // border is hidden for 40px by a cursor. The default strict pairing rejects it.
+  function auctionScene() {
+    const pixels = screenshot(1000, 800);
+    for (let y = 0; y < 800; y++) for (let x = 0; x < 300; x++) pixels.set(x, y, [34, 102, 187]);
+    const tooltip = { x: 450, y: 100, width: 300, height: 600 };
+    pixels.frame(tooltip, [255, 204, 0]);
+    for (let y = 300; y < 340; y++) pixels.set(tooltip.x, y, [200, 200, 200]);
+    return { pixels, tooltip };
+  }
+
+  it("is off by default and finds a cursor-split gold border only when enabled", () => {
+    const { pixels, tooltip } = auctionScene();
+    expect(detectTooltipRegions(pixels).some(rect => rect.x === tooltip.x && rect.width === tooltip.width)).toBe(false);
+    const found = detectTooltipRegions(pixels, { borderFrames: true });
+    expect(found[0]).toEqual({ ...tooltip, kind: "border" });
+  });
+
+  it("does not treat a filled single-colour panel as a border", () => {
+    const { pixels } = auctionScene();
+    expect(detectTooltipRegions(pixels, { borderFrames: true }).filter(rect => rect.kind === "border")).toHaveLength(1);
+  });
+
+  it("rejects a gap longer than the allowed bridge", () => {
+    const { pixels, tooltip } = auctionScene();
+    for (let y = 200; y < 400; y++) pixels.set(tooltip.x, y, [200, 200, 200]);
+    expect(detectTooltipRegions(pixels, { borderFrames: true }).some(rect => rect.kind === "border")).toBe(false);
+  });
+});

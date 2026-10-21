@@ -2,11 +2,12 @@
  * 전체 화면에서 장비 설명창 후보를 색상 테두리와 어두운 내부의 픽셀 규칙으로 찾는다.
  * 이 단계는 글자를 읽지 않는다. 여러 후보가 남으면 호출자가 추가 OCR 또는 영역 선택으로 구분한다.
  */
-export type TooltipRect = { x: number; y: number; width: number; height: number };
+export type TooltipRect = { x: number; y: number; width: number; height: number; kind?: "border" };
 type Pixels = { width: number; height: number; data: ArrayLike<number> };
 type Edge = { x: number; top: number; bottom: number; color: number[] };
 /** Experimental detector switches. Off by default so the product path is unchanged. */
-export type DetectOptions = { borderFrames?: boolean };
+/** borderFirst: a border frame that passes the OCR structure check ends the candidate search. */
+export type DetectOptions = { borderFrames?: boolean; borderFirst?: boolean };
 
 /**
  * 두 사각형의 겹치는 면적을 구해 중복 프레임과 합성 프레임 판정에 사용한다.
@@ -215,14 +216,15 @@ function detectBorderFrames({ width, height, data }: Pixels): TooltipRect[] {
   const edges: Edge[] = [];
   for (let x = 0; x < width; x++) {
     let start = -1, last = -1, hits = 0, color: number[] = [];
-    // A border is a thin line: beside it the colour changes. Columns inside a filled
-    // panel of one colour are not borders and would crowd out the real outline.
+    // A border is a thin line: the colour changes on BOTH sides. The edge column of a
+    // filled one-colour panel changes on one side only and is not an outline.
     const thin = (top: number, bottom: number) => {
+      if (x < 3 || x >= width - 3) return false;
       let edgeLike = 0;
       for (let k = 1; k <= 7; k++) {
         const y = Math.round(top + (bottom - top) * k / 8), c = colorAt(x, y);
         if (!same(c, color)) continue;
-        if ((x < 3 || !same(color, colorAt(x - 3, y))) || (x >= width - 3 || !same(color, colorAt(x + 3, y)))) edgeLike++;
+        if (!same(color, colorAt(x - 3, y)) && !same(color, colorAt(x + 3, y))) edgeLike++;
       }
       return edgeLike >= 5;
     };
@@ -267,7 +269,7 @@ function detectBorderFrames({ width, height, data }: Pixels): TooltipRect[] {
       const [r, g, b] = colorAt(x, y); if ((r + g + b) / 3 < 150) dark++; samples++;
     }
     if (!samples || dark / samples < .65) continue;
-    const rect = { x: left.x, y: upper.y, width: w, height: lower.y - upper.y + 1 };
+    const rect: TooltipRect = { x: left.x, y: upper.y, width: w, height: lower.y - upper.y + 1, kind: "border" };
     if (!found.some(other => intersection(other, rect) / Math.min(other.width * other.height, rect.width * rect.height) > .8)) found.push(rect);
   }
   return found;

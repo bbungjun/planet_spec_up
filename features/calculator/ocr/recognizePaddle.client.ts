@@ -6,6 +6,7 @@
  */
 
 import { prepareTooltip } from "./prepareTooltip.client";
+import { experimentalDetectOptions } from "./experimentalDetect";
 import { contrastTooltip, enlargeTooltip, tooltipImageSize } from "./enlargeTooltip.client";
 import { applyRequirementRecovery, buildOcrReview, reviewText } from "./reviewRecognition";
 import { readTooltipRequirement } from "./parseMapleTooltip";
@@ -160,6 +161,11 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
         const selectedFrame = candidates.selectedFrame;
         const selected = candidates.selected;
         const regions = [...(selected ? [selected] : []), ...candidates.regions.slice(0, 4)];
+        // Experiment only: a complete border-frame candidate ends the search early.
+        const borderFirst = !!experimentalDetectOptions()?.borderFirst && !!candidates.borderRegions;
+        const borderFrames = candidates.regions.slice(0, 4).filter((_, i) => candidates?.borderRegions?.[i]);
+        const isBorder = (region: OcrBounds) => borderFrames.some(frame => sameCandidateRegion(frame, region))
+          || (region === selected && !!selectedFrame && borderFrames.some(frame => sameCandidateRegion(frame, selectedFrame)));
         for (const [index, region] of regions.entries()) {
           active();
           if (selectedFrame && selected && sameCandidateRegion(region, selectedFrame)
@@ -190,6 +196,7 @@ export function createPaddleTooltipRecognizer(configuration: { experimentalRequi
           }
           if (assessment.status === "complete") matches.push({ file: candidate, warnings: candidateWarnings, region, assessment, sourceFrame: candidateFrame,
             first: { items: result.items, ...dimensions } });
+          if (borderFirst && assessment.status === "complete" && isBorder(region)) { matches.splice(0, matches.length - 1); break; }
         }
         const distinct = distinctCompleteCandidates(matches);
         if (distinct.length !== 1) throw { code: distinct.length ? "MULTIPLE_TOOLTIPS" : "TOOLTIP_NOT_FOUND", retryable: false };

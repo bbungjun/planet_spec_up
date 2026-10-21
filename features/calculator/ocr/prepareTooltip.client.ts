@@ -6,13 +6,9 @@
  */
 
 import { prepareTooltipImage, type TooltipCandidateRegions } from "./prepareTooltipImage";
-import type { DetectOptions } from "./detectTooltip";
+import { experimentalDetectOptions } from "./experimentalDetect";
 import type { OcrBounds } from "./types";
 import type { SourceFrameMetadata } from "./sourceFrame";
-
-let experimentalDetect: DetectOptions | undefined;
-/** 실험 전용 탐지 옵션. 기본값은 없음이며 제품 경로는 설정하지 않는다. */
-export function setExperimentalDetectOptions(options: DetectOptions | undefined): void { experimentalDetect = options; }
 
 /**
  * 파일·영역·잘림 경고를 전처리 구현에 전달하고 처리된 File을 반환한다.
@@ -22,7 +18,7 @@ export async function prepareTooltip(file: File, options: { region?: OcrBounds; 
   onCandidates?: (candidates: TooltipCandidateRegions) => void; onSourceFrame?: (frame: SourceFrameMetadata) => void } = {}): Promise<File> {
   const { signal, region } = options;
   if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-  if (typeof Worker !== "function" || typeof OffscreenCanvas !== "function") return prepareTooltipImage(file, region, options.onWarnings, options.onCandidates, options.onSourceFrame, experimentalDetect);
+  if (typeof Worker !== "function" || typeof OffscreenCanvas !== "function") return prepareTooltipImage(file, region, options.onWarnings, options.onCandidates, options.onSourceFrame, experimentalDetectOptions());
   return new Promise<File>((resolve, reject) => {
     let worker: Worker;
     try { worker = new Worker(new URL("./prepareTooltip.worker.ts", import.meta.url), { type: "module" }); }
@@ -42,6 +38,6 @@ export async function prepareTooltip(file: File, options: { region?: OcrBounds; 
       }
     };
     worker.onerror = () => { if (finish()) reject({ code: "OCR_UNAVAILABLE", retryable: true }); };
-    worker.postMessage({ file, region, detect: experimentalDetect });
+    worker.postMessage({ file, region, detect: experimentalDetectOptions() });
   });
 }

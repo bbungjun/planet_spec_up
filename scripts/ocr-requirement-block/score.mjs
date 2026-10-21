@@ -27,7 +27,10 @@ for(const f of protocol.fixtures){
     truth.set(f.id,{requirements:Object.fromEntries(rows.map(r=>[r.field,Number(r.label)])),equipmentGroup:rows[0].equipmentGroup??null});}
 }
 
-const arms=['product','BN1-only','A1-only','BN1-merged','A1-merged'];
+const arms=['product','BN1-only','A1-only','BN1-merged','A1-merged','gate-merged'];
+// Agreement gate: BN1's integer is used only when A1 read no digit at all or the same integer.
+// BN1 learned almost no 6s; A1 often reads nonzero values but misses lone 0s.
+const gated=(bn1,a1raw)=>{const digits=String(a1raw??'').normalize('NFKC').replace(/\D/g,'');return bn1!==null&&(digits===''||Number(digits)===bn1)?bn1:null;};
 function decide(arm,p,dedicated){
   if(arm==='product')return {value:p};
   const v=dedicated[arm.split('-')[0]];
@@ -40,8 +43,9 @@ function decide(arm,p,dedicated){
 const fields=[],equipment=[];
 for(const review of pipeline.reviews){
   const t=truth.get(review.source);
-  const dedicated=label=>Object.fromEntries(['A1','BN1'].map(m=>{
-    const row=models[m].rows.find(r=>r.id===`${review.source}-${label}`);return [m,row?value(row.rawText):null];}));
+  const dedicated=label=>{const raw=m=>models[m].rows.find(r=>r.id===`${review.source}-${label}`)?.rawText;
+    const out={A1:raw('A1')!=null?value(raw('A1')):null,BN1:raw('BN1')!=null?value(raw('BN1')):null};
+    return {...out,gate:gated(out.BN1,raw('A1'))};};
   const perArm=Object.fromEntries(arms.map(a=>[a,{}]));
   for(const [label,expected] of Object.entries(t.requirements)){
     const p=review.ok?review.product.requirements[label]??null:null;
@@ -82,13 +86,14 @@ for(const set of [...new Set(protocol.fixtures.map(f=>f.set))]){
 // Review-level outcome: product as recognized vs. review after the BN1 merge was applied to its lines.
 const mergedPath=path.join(dir,'merged.json');
 if(fs.existsSync(mergedPath)){
-  const merged=read(mergedPath).merged;
+  const mergedReceipt=read(mergedPath),merged=mergedReceipt.merged;
+  const mergedArm=mergedReceipt.rule.startsWith('gated')?'gate-merged':'BN1-merged';
   for(const set of [...new Set(protocol.fixtures.map(f=>f.set))]){
     const rows=equipment.filter(e=>pipeline.reviews.find(r=>r.source===e.source).set===set);
     const outcome=rows.map(e=>{const r=pipeline.reviews.find(r=>r.source===e.source),m=merged.find(m=>m.source===e.source);
       return {source:e.source,
         product:{questions:r.product?.questions??null,blocked:r.product?.blocked??true,complete:e.product.complete},
-        merged:{questions:m?.questions?.length??null,blocked:m?.blocked??true,complete:e['BN1-merged'].complete,applied:m?.applied,conflicts:m?.conflicts}};});
+        merged:{questions:m?.questions?.length??null,blocked:m?.blocked??true,complete:e[mergedArm].complete,applied:m?.applied,conflicts:m?.conflicts}};});
     const noEdit=k=>outcome.filter(o=>o[k].complete&&o[k].questions===0&&!o[k].blocked).length;
     summary[set].review={productQuestions:outcome.reduce((n,o)=>n+(o.product.questions??0),0),mergedQuestions:outcome.reduce((n,o)=>n+(o.merged.questions??0),0),
       productNoEdit:noEdit('product'),mergedNoEdit:noEdit('merged'),productBlocked:outcome.filter(o=>o.product.blocked).length,mergedBlocked:outcome.filter(o=>o.merged.blocked).length,
