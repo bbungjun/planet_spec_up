@@ -42,7 +42,7 @@ const server=await createServer({configFile:false,root:dir,publicDir:path.join(a
     if(url?.startsWith('/source/')){const f=fixtures.find(f=>f.id===url.slice(8));if(!f||sha(f.path)!==f.sha256){res.statusCode=409;res.end();return;}res.setHeader('Content-Type','image/png');fs.createReadStream(f.path).pipe(res);return;}
     if(url?.startsWith('/numeric-model/')){const m=models[url.slice(15)];if(!m||sha(path.join(app,m.path))!==m.sha256){res.statusCode=409;res.end();return;}res.setHeader('Content-Type','application/x-tar');res.setHeader('Cache-Control','no-store');fs.createReadStream(path.join(app,m.path)).pipe(res);return;}
     if(url?.startsWith('/api/result/')&&req.method==='POST'){
-      try{const id=url.slice('/api/result/'.length);if(!['progress','pipeline','A1','BN1','complete','failed'].includes(id))throw Error('Unknown phase');
+      try{const id=url.slice('/api/result/'.length);if(!['progress','pipeline','A1','BN1','merged','complete','failed'].includes(id))throw Error('Unknown phase');
         const body=await readJsonBody(req,60_000_000);
         if(id!=='progress')fs.writeFileSync(path.join(output,`${id}.json`),JSON.stringify(body,null,2),{flag:'wx'});
         status=body;res.end('{}');

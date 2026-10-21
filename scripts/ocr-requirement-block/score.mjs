@@ -77,6 +77,22 @@ for(const set of ['dev19','new14']){
       equipmentComplete:eq.filter(e=>e[a].complete).length}])),
     regressions:Object.fromEntries(arms.slice(1).map(a=>[a,rows.filter(r=>r.product==='correct'&&r[a]!=='correct').length]))};
 }
+// Review-level outcome: product as recognized vs. review after the BN1 merge was applied to its lines.
+const mergedPath=path.join(dir,'merged.json');
+if(fs.existsSync(mergedPath)){
+  const merged=read(mergedPath).merged;
+  for(const set of ['dev19','new14']){
+    const rows=equipment.filter(e=>pipeline.reviews.find(r=>r.source===e.source).set===set);
+    const outcome=rows.map(e=>{const r=pipeline.reviews.find(r=>r.source===e.source),m=merged.find(m=>m.source===e.source);
+      return {source:e.source,
+        product:{questions:r.product?.questions??null,blocked:r.product?.blocked??true,complete:e.product.complete},
+        merged:{questions:m?.questions?.length??null,blocked:m?.blocked??true,complete:e['BN1-merged'].complete,applied:m?.applied,conflicts:m?.conflicts}};});
+    const noEdit=k=>outcome.filter(o=>o[k].complete&&o[k].questions===0&&!o[k].blocked).length;
+    summary[set].review={productQuestions:outcome.reduce((n,o)=>n+(o.product.questions??0),0),mergedQuestions:outcome.reduce((n,o)=>n+(o.merged.questions??0),0),
+      productNoEdit:noEdit('product'),mergedNoEdit:noEdit('merged'),productBlocked:outcome.filter(o=>o.product.blocked).length,mergedBlocked:outcome.filter(o=>o.merged.blocked).length,
+      conflicts:outcome.reduce((n,o)=>n+(o.merged.conflicts?.length??0),0),outcome};
+  }
+}
 const complete=fs.existsSync(path.join(dir,'complete.json'))?read(path.join(dir,'complete.json')):null;
 fs.writeFileSync(path.join(dir,'score.json'),JSON.stringify({summary,timing:complete,fields,equipment},null,2));
 console.log(JSON.stringify({summary,timing:complete&&{durationMs:complete.durationMs,recognitionMs:complete.recognitionMs,cropMs:complete.cropMs,timings:complete.timings}},null,2));

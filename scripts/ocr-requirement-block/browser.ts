@@ -2,11 +2,11 @@ import {PaddleOCR} from '@paddleocr/paddleocr-js';
 import type {Mat} from '@techstark/opencv-js';
 import {recognizeBatch,type BatchRecognitionResult} from '../../features/calculator/ocr/recognizeBatch.client';
 import {parseTooltipOption} from '../../features/calculator/ocr/parseMapleTooltip';
-import {mapReviewedStats,reviewBlocked,reviewQuestions} from '../../features/calculator/ocr/reviewRecognition';
+import {mapReviewedStats,resolveReviewLine,reviewBlocked,reviewQuestions} from '../../features/calculator/ocr/reviewRecognition';
 import {locateSourceRegion,type PixelRect} from '../../features/calculator/ocr/sourceFrame';
 import type {OcrReview} from '../../features/calculator/ocr/types';
 import {numericRegion} from '../ocr-numeric-regions/regions';
-import {locateRequirementBlock,requirementFields,type RequirementField} from './block';
+import {locateRequirementBlock,requirementFields,requirementValue,type RequirementField} from './block';
 
 type Fixture={id:string;set:string;sha256:string;url:string};
 type Model={path:string;sha256:string};
@@ -83,7 +83,7 @@ document.getElementById('run')!.onclick=async()=>{
     await save('pipeline',{createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
     const located=regions.filter(r=>!r.failure);
     if(located.length!==canvases.length)throw Error('Crop alignment changed');
-    const timings:Record<string,number>={};
+    const timings:Record<string,number>={};const predicted:Record<string,Prediction[]>={};
     for(const model of ['A1','BN1']){
       active();await progress('numeric-'+model);const t0=performance.now();let engine:Engine|undefined;const mats:Mat[]=[];
       try{
@@ -94,10 +94,33 @@ document.getElementById('run')!.onclick=async()=>{
         }
         const t1=performance.now();
         const predictions=engine?await engine.recModel.predict(engine.cv,mats):[];active();if(predictions.length!==located.length)throw Error('Prediction count mismatch');
-        timings[model+'-load']=t1-t0;timings[model+'-predict']=performance.now()-t1;
+        predicted[model]=predictions;timings[model+'-load']=t1-t0;timings[model+'-predict']=performance.now()-t1;
         await save(model,{model,modelSha256:manifest.models[model].sha256,batch:6,rows:predictions.map((r,i)=>({id:located[i].id,rawText:r.text,score:r.score,inputSha256:located[i].cropSha256}))});
       }finally{mats.forEach(m=>m.delete());await engine?.dispose();}
     }
+    // Apply the fixed merge rule to the review itself so remaining questions can be counted.
+    // Only this harness edits its in-memory copy; product code, storage and other lines are unchanged.
+    const bn1=new Map(located.map((r,i)=>[r.id,requirementValue(predicted.BN1[i].text)]));
+    const merged=outputs.map(({index,result})=>{
+      const source=manifest.fixtures[index].id;
+      if(!result.ok||!result.review)return {source,ok:false};
+      let review=result.review;const block=locateRequirementBlock(review);const applied:string[]=[],conflicts:string[]=[];
+      if(block.status==='located'){
+        const product=productRequirements(review);
+        for(const row of block.rows){
+          const v=bn1.get(source+'-'+row.field)??null,p=product[row.field];
+          if(v===null)continue;
+          if(p!==undefined&&p!==v){conflicts.push(row.field);continue;}
+          const lines=review.lines.filter(l=>row.lineIds.includes(l.id)&&l.bounds);
+          const main=lines.filter(l=>l.bounds!.width>=0.15).sort((a,b)=>a.bounds!.x-b.bounds!.x)[0];
+          if(!main)continue;
+          for(const l of lines)review=resolveReviewLine(review,l.id,l===main?`REQ ${row.field} : ${v}`:null);
+          applied.push(row.field);
+        }
+      }
+      return {source,ok:true,applied,conflicts,corsair:mapReviewedStats(review,'corsair'),questions:reviewQuestions(review,'corsair').map(l=>l.text),blocked:reviewBlocked(review,'corsair')};
+    });
+    await save('merged',{rule:'BN1 merge applied to review lines',merged});
     state.phase='complete';document.getElementById('status')!.textContent=JSON.stringify(state);
     await save('complete',{...state,durationMs:performance.now()-started,recognitionMs,cropMs,timings,regions:regions.length,located:located.length});
   }catch(e){state.phase='failed';document.getElementById('status')!.textContent=String(e);await save('failed',{...state,error:String(e),durationMs:performance.now()-started});}
