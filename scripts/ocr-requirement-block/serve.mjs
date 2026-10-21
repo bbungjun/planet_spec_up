@@ -13,6 +13,8 @@ const port=Number(arg('port','3162')),sha=p=>crypto.createHash('sha256').update(
 if(!output.startsWith(path.join(app,'output')+path.sep))throw Error('Private output must stay under output/');
 if(fs.existsSync(output)&&fs.readdirSync(output).length)throw Error('Use a new experiment directory');
 const set=arg('set','dev19+new14');
+// Replay reuses the full-photo reviews of an earlier run of the same set; only cropping and numeric reads run again.
+const replay=arg('replay','')?path.resolve(app,arg('replay','')):null;
 const lockedRows=(lockPath,prefix)=>JSON.parse(fs.readFileSync(path.join(app,lockPath),'utf8')).rows
   .map(r=>({id:r.id,set:prefix,path:path.resolve(app,r.frozenSource),expected:r.sha256}));
 let fixtures;
@@ -31,7 +33,7 @@ for(const m of Object.values(models))if(sha(path.join(app,m.path))!==m.sha256)th
 const sources=[...execFileSync('git',['ls-files','features/calculator/ocr'],{cwd:app,encoding:'utf8'}).trim().split('\n').filter(Boolean),
   ...['block.ts','browser.ts','index.html','serve.mjs','score.mjs'].map(n=>'scripts/ocr-requirement-block/'+n),'scripts/ocr-numeric-regions/regions.ts'];
 fs.mkdirSync(output,{recursive:true});
-const protocol={set,createdAt:new Date().toISOString(),head:execFileSync('git',['rev-parse','HEAD'],{cwd:app,encoding:'utf8'}).trim(),
+const protocol={set,replay:replay?path.relative(app,replay):null,replayPipelineSha256:replay?sha(path.join(replay,'pipeline.json')):null,createdAt:new Date().toISOString(),head:execFileSync('git',['rev-parse','HEAD'],{cwd:app,encoding:'utf8'}).trim(),
   branch:execFileSync('git',['branch','--show-current'],{cwd:app,encoding:'utf8'}).trim(),
   fixtures:fixtures.map(({id,set,name,sha256})=>({id,set,name,sha256})),models,detectorSha256:sha(path.join(app,'public/ocr/paddle/models/det.tar')),
   sourceHashes:Object.fromEntries(sources.map(n=>[n,sha(path.join(app,n))])),
@@ -50,6 +52,9 @@ const server=await createServer({configFile:false,root:dir,publicDir:path.join(a
     if(url?.startsWith('/api/')){res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');}
     if(url==='/api/inputs'){res.end(JSON.stringify({fixtures:fixtures.map(({id,set,sha256})=>({id,set,sha256,url:'/source/'+id})),models}));return;}
     if(url==='/api/status'){res.end(JSON.stringify(status));return;}
+    if(url==='/api/replay'){if(!replay){res.end('null');return;}const prior=JSON.parse(fs.readFileSync(path.join(replay,'protocol.json'),'utf8'));
+      if((prior.set??'dev19+new14')!==set||JSON.stringify(prior.fixtures)!==JSON.stringify(protocol.fixtures)){res.statusCode=409;res.end('{}');return;}
+      res.end(JSON.stringify(JSON.parse(fs.readFileSync(path.join(replay,'pipeline.json'),'utf8')).reviews));return;}
     if(url?.startsWith('/source/')){const f=fixtures.find(f=>f.id===url.slice(8));if(!f||sha(f.path)!==f.sha256){res.statusCode=409;res.end();return;}res.setHeader('Content-Type','image/png');fs.createReadStream(f.path).pipe(res);return;}
     if(url?.startsWith('/numeric-model/')){const m=models[url.slice(15)];if(!m||sha(path.join(app,m.path))!==m.sha256){res.statusCode=409;res.end();return;}res.setHeader('Content-Type','application/x-tar');res.setHeader('Cache-Control','no-store');fs.createReadStream(path.join(app,m.path)).pipe(res);return;}
     if(url?.startsWith('/api/result/')&&req.method==='POST'){

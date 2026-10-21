@@ -6,6 +6,7 @@ import {mapReviewedStats,resolveReviewLine,reviewBlocked,reviewQuestions} from '
 import {locateSourceRegion,type PixelRect} from '../../features/calculator/ocr/sourceFrame';
 import type {OcrReview} from '../../features/calculator/ocr/types';
 import {setExperimentalRedTextContrast} from '../../features/calculator/ocr/enlargeTooltip.client';
+import {setExperimentalDetectOptions} from '../../features/calculator/ocr/prepareTooltip.client';
 import {numericRegion} from '../ocr-numeric-regions/regions';
 import {locateRequirementBlock,requirementFields,requirementValue,type RequirementField} from './block';
 
@@ -40,14 +41,21 @@ document.getElementById('run')!.onclick=async()=>{
   // Variant is fixed by URL before any inference and recorded in every receipt.
   const variant=new URLSearchParams(location.search).get('variant')??'default';
   setExperimentalRedTextContrast(variant==='red-text');
+  setExperimentalDetectOptions(variant==='border-frames'?{borderFrames:true}:undefined);
   try{
     const manifest:{fixtures:Fixture[];models:Record<string,Model>}=await fetch('/api/inputs').then(r=>r.json());
     const files:File[]=[];const outputs:Array<{index:number;result:BatchRecognitionResult}>=[];
     let reporting:Promise<void>=Promise.resolve();
     for(const f of manifest.fixtures){const b=await fetch(f.url).then(r=>r.blob());if(await sha(await b.arrayBuffer())!==f.sha256)throw Error('Source hash changed');files.push(new File([b],f.id+'.png',{type:'image/png'}));}
-    await progress('full-photo-recognition');
-    await recognizeBatch(files,{signal:controller.signal,concurrency:1,onStart(){},onPrepared(){},onProgress(){},
-      onResult(index,result){outputs.push({index,result});state.completed++;reporting=reporting.then(()=>progress('full-photo-recognition'));}});
+    const replay=await fetch('/api/replay').then(r=>{if(!r.ok)throw Error('Replay does not match this fixture set');return r.json();}) as Array<{source:string;ok:boolean;review?:OcrReview;error?:unknown;duplicateOf?:number}>|null;
+    if(replay){
+      if(replay.length!==files.length||replay.some((r,i)=>r.source!==manifest.fixtures[i].id))throw Error('Replay order changed');
+      replay.forEach((r,index)=>outputs.push({index,result:r.ok?{ok:true,text:'',preview:files[index],review:r.review,duplicateOf:r.duplicateOf}:{ok:false,error:r.error}}));
+    }else{
+      await progress('full-photo-recognition');
+      await recognizeBatch(files,{signal:controller.signal,concurrency:1,onStart(){},onPrepared(){},onProgress(){},
+        onResult(index,result){outputs.push({index,result});state.completed++;reporting=reporting.then(()=>progress('full-photo-recognition'));}});
+    }
     await reporting;active();if(outputs.length!==files.length)throw Error('Full-photo result count mismatch');
     const recognitionMs=performance.now()-started;
     const blockStarted=performance.now();
@@ -84,7 +92,7 @@ document.getElementById('run')!.onclick=async()=>{
       }}finally{bitmap.close();}
     }
     const cropMs=performance.now()-blockStarted;
-    await save('pipeline',{variant,createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
+    await save('pipeline',{variant,replayed:!!replay,createdAt:new Date().toISOString(),reviews,regions,recognitionMs,cropMs});
     const located=regions.filter(r=>!r.failure);
     if(located.length!==canvases.length)throw Error('Crop alignment changed');
     const timings:Record<string,number>={};const predicted:Record<string,Prediction[]>={};

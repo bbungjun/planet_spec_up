@@ -5,6 +5,8 @@
 export type TooltipRect = { x: number; y: number; width: number; height: number };
 type Pixels = { width: number; height: number; data: ArrayLike<number> };
 type Edge = { x: number; top: number; bottom: number; color: number[] };
+/** Experimental detector switches. Off by default so the product path is unchanged. */
+export type DetectOptions = { borderFrames?: boolean };
 
 /**
  * 두 사각형의 겹치는 면적을 구해 중복 프레임과 합성 프레임 판정에 사용한다.
@@ -201,6 +203,77 @@ function detectFlexibleFrames({ width, height, data }: Pixels, neutral: boolean)
 }
 
 /**
+ * 실험: 장비 등급 색의 단색 테두리로 닫힌 설명창을 찾는다. 커서 등이 세로 테두리를 잠깐 가려도
+ * 같은 색이 짧은 틈 뒤에 이어지면 한 테두리로 본다. 같은 색 세로 테두리가 안쪽에 또 있으면
+ * 두 창을 감싼 사각형으로 보고 버린다. 숫자·위치·아이템을 고정하지 않는다.
+ */
+function detectBorderFrames({ width, height, data }: Pixels): TooltipRect[] {
+  const colorAt = (x: number, y: number) => { const o = (y * width + x) * 4; return [data[o], data[o + 1], data[o + 2]]; };
+  const saturated = (c: number[]) => Math.max(...c) >= 100 && Math.max(...c) - Math.min(...c) >= 45;
+  const same = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) <= 24);
+  const gap = Math.max(8, Math.round(height * .06)), minimum = Math.max(90, Math.round(height * .055));
+  const edges: Edge[] = [];
+  for (let x = 0; x < width; x++) {
+    let start = -1, last = -1, hits = 0, color: number[] = [];
+    // A border is a thin line: beside it the colour changes. Columns inside a filled
+    // panel of one colour are not borders and would crowd out the real outline.
+    const thin = (top: number, bottom: number) => {
+      let edgeLike = 0;
+      for (let k = 1; k <= 7; k++) {
+        const y = Math.round(top + (bottom - top) * k / 8), c = colorAt(x, y);
+        if (!same(c, color)) continue;
+        if ((x < 3 || !same(color, colorAt(x - 3, y))) || (x >= width - 3 || !same(color, colorAt(x + 3, y)))) edgeLike++;
+      }
+      return edgeLike >= 5;
+    };
+    const close = () => {
+      if (start >= 0 && last - start >= minimum && hits / (last - start + 1) >= .9 && thin(start, last)) edges.push({ x, top: start, bottom: last, color });
+      start = -1; hits = 0;
+    };
+    for (let y = 0; y < height; y++) {
+      const pixel = colorAt(x, y);
+      if (saturated(pixel) && start >= 0 && !same(color, pixel) && last - start < minimum) close();
+      if (saturated(pixel) && (start < 0 || same(color, pixel))) {
+        if (start < 0) { start = y; color = pixel; }
+        last = y; hits++;
+      } else if (start >= 0 && y - last > gap) close();
+    }
+    close();
+  }
+  edges.sort((a, b) => (b.bottom - b.top) - (a.bottom - a.top));
+  const strongest = edges.slice(0, 80);
+  const rowCoverage = (left: number, right: number, y: number, color: number[]) => {
+    let best = { coverage: 0, y };
+    for (let offset = -6; offset <= 6; offset++) {
+      if (y + offset < 0 || y + offset >= height) continue;
+      let matches = 0, samples = 0;
+      for (let x = left; x <= right; x += 3) { samples++; if (same(color, colorAt(x, y + offset))) matches++; }
+      if (matches / samples > best.coverage) best = { coverage: matches / samples, y: y + offset };
+    }
+    return best;
+  };
+  const found: TooltipRect[] = [];
+  for (const left of strongest) for (const right of strongest) {
+    const w = right.x - left.x + 1;
+    if (w < 90 || w > Math.min(width * .8, 1200) || !same(left.color, right.color)) continue;
+    const top = Math.min(left.top, right.top), bottom = Math.max(left.bottom, right.bottom), h = bottom - top + 1;
+    if (h < w * .85 || h > w * 5 || Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top) < h * .6) continue;
+    const upper = rowCoverage(left.x, right.x, top, left.color), lower = rowCoverage(left.x, right.x, bottom, left.color);
+    if (upper.coverage < .8 || lower.coverage < .8) continue;
+    if (strongest.some(inner => inner.x > left.x + 4 && inner.x < right.x - 4 && same(inner.color, left.color)
+      && Math.min(inner.bottom, lower.y) - Math.max(inner.top, upper.y) > (lower.y - upper.y) * .5)) continue;
+    let dark = 0, samples = 0;
+    for (let y = upper.y + 5; y < lower.y - 4; y += 9) for (let x = left.x + 5; x < right.x - 4; x += 9) {
+      const [r, g, b] = colorAt(x, y); if ((r + g + b) / 3 < 150) dark++; samples++;
+    }
+    if (!samples || dark / samples < .65) continue;
+    const rect = { x: left.x, y: upper.y, width: w, height: lower.y - upper.y + 1 };
+    if (!found.some(other => intersection(other, rect) / Math.min(other.width * other.height, rect.width * rect.height) > .8)) found.push(rect);
+  }
+  return found;
+}
+
+/**
  * 큰 세로 설명창과 함께 검출된 작은 퀵슬롯 형태를 후보에서 제외한다.
  * 비슷한 폭의 짧은 실제 설명창은 유지해 작은 이미지라는 이유만으로 버리지 않는다.
  */
@@ -217,13 +290,16 @@ function withoutSmallControls(candidates: TooltipRect[]): TooltipRect[] {
  * 엄격한 프레임과 색상/어두운 경계의 보조 탐지 결과를 함께 수집한다.
  * 겹치는 후보와 여러 창을 감싼 후보, 작은 조작 버튼을 정리해 사각형 목록을 반환한다.
  */
-export function detectTooltipRegions(pixels: Pixels): TooltipRect[] {
+export function detectTooltipRegions(pixels: Pixels, options: DetectOptions = {}): TooltipRect[] {
   const strict = detectStrictFrames(pixels);
+  // Experimental border frames already proved a closed single-colour outline, so they go
+  // first (inside the bounded set the caller verifies) and skip the composite heuristic.
+  const border = options.borderFrames ? detectBorderFrames(pixels) : [];
   // A strict inventory frame must not hide a translucent tooltip candidate.
-  const candidates = [...strict, ...detectFlexibleFrames(pixels, false), ...detectFlexibleFrames(pixels, true)];
+  const candidates = [...border, ...strict, ...detectFlexibleFrames(pixels, false), ...detectFlexibleFrames(pixels, true)];
   const distinct: TooltipRect[] = [];
   for (const candidate of candidates) {
-    if (compositeFrame(candidate, candidates)) continue;
+    if (!border.includes(candidate) && compositeFrame(candidate, candidates)) continue;
     if (distinct.some(other => {
       const intersection = Math.max(0, Math.min(other.x + other.width, candidate.x + candidate.width) - Math.max(other.x, candidate.x))
         * Math.max(0, Math.min(other.y + other.height, candidate.y + candidate.height) - Math.max(other.y, candidate.y));

@@ -23,8 +23,8 @@ const pipeline=read(path.join(runDir,'pipeline.json'));
 const inside=(rect,[x,y,w,h])=>x>=rect.x&&y>=rect.y&&x+w<=rect.x+rect.width&&y+h<=rect.y+rect.height;
 
 const decode=async file=>{const {data,info}=await sharp(path.resolve(app,file)).ensureAlpha().raw().toBuffer({resolveWithObject:true});return {width:info.width,height:info.height,data};};
-// The edge-gap bridging variant was tried (+5/-4 full frames) and reverted; only the product detector remains.
-const variants={default:()=>({})};
+// The edge-gap bridging variant (+5/-4 full frames) was reverted; 'border' is the additive border-colour detector.
+const variants={default:()=>({}),border:()=>({borderFrames:true})};
 const rows=[];
 for(const row of lock){
   const pixels=await decode(row.frozenSource),info=pixels;
@@ -47,10 +47,20 @@ for(const row of lock){
 }
 const stage=r=>!r.candidates?'no-frame-candidate':!r.containing?'frames-miss-tooltip':!r.selected?'selection-rejected':!r.selectedContainsTruth?'selected-wrong-frame':'pixel-ok';
 for(const r of rows)r.stage=stage(r);
-const summary={variant:arg('variant','default'),images:rows.length,byStage:{},byProduct:{}};
+// Regression: on the earlier 33 photos the selected region and top-4 candidates must not change.
+const regression=[];
+for(const file of [...fs.readdirSync('output/ocr-accuracy-implementation').filter(n=>/^\d{14}\.png$/.test(n)).map(n=>'output/ocr-accuracy-implementation/'+n),
+  ...read('output/ocr-numeric-training/new-photos-20261011/pretest-lock.json').rows.map(r=>r.frozenSource)]){
+  const pixels=await decode(file);
+  const pick=v=>{const c=detectTooltipRegions(pixels,variants[v](pixels));return {selected:selectTooltipRegion(pixels,c),top4:c.slice(0,4)};};
+  const before=pick('default'),after=pick(arg('variant','default'));
+  regression.push({file:path.basename(file),sameSelected:JSON.stringify(before.selected)===JSON.stringify(after.selected),
+    sameTop4:JSON.stringify(before.top4)===JSON.stringify(after.top4),before,after});
+}
+const summary={regressionSelectedChanged:regression.filter(r=>!r.sameSelected).length,regressionTop4Changed:regression.filter(r=>!r.sameTop4).length,variant:arg('variant','default'),images:rows.length,byStage:{},byProduct:{}};
 for(const r of rows){const k=`${r.condition}|${r.stage}`;summary.byStage[k]=(summary.byStage[k]??0)+1;
   const p=`${r.stage}|${r.product}`;summary.byProduct[p]=(summary.byProduct[p]??0)+1;}
-fs.writeFileSync(path.join(output,`detection-${summary.variant}.json`),JSON.stringify({summary,rows},null,2));
+fs.writeFileSync(path.join(output,`detection-${summary.variant}.json`),JSON.stringify({summary,rows,regression},null,2));
 fs.rmSync(bundle);
 process.exitCode=0;
 console.log(JSON.stringify(summary,null,2));

@@ -2,7 +2,7 @@
  * 설명창 탐지 또는 사용자가 지정한 영역으로 원본 스크린샷을 분리한다.
  * 색상·원래 픽셀을 유지한 PNG가 이후 미리보기와 확대/재인식의 기준 이미지가 된다.
  */
-import { detectTooltipRegions, selectTooltipRegion } from "./detectTooltip";
+import { detectTooltipRegions, selectTooltipRegion, type DetectOptions } from "./detectTooltip";
 import type { OcrBounds } from "./types";
 import type { SourceFrameMetadata } from "./sourceFrame";
 
@@ -14,7 +14,7 @@ export type TooltipCandidateRegions = { regions: OcrBounds[]; selected: OcrBound
  * 작은 캡처는 그대로 사용한다. 후보가 모호하거나 영역이 너무 작으면 오류를 반환하고, 사진 끝에 닿은 영역은 잘림 경고를 전달한다.
  */
 export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarnings?: (warnings: string[]) => void, onCandidates?: (candidates: TooltipCandidateRegions) => void,
-  onSourceFrame?: (frame: SourceFrameMetadata) => void): Promise<File> {
+  onSourceFrame?: (frame: SourceFrameMetadata) => void, detectOptions: DetectOptions = {}): Promise<File> {
   if (typeof createImageBitmap !== "function") return file;
   const bitmap = await createImageBitmap(file);
   try {
@@ -40,7 +40,7 @@ export async function prepareTooltipImage(file: File, region?: OcrBounds, onWarn
     } else {
       context.drawImage(bitmap, 0, 0);
       const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
-      const candidates = detectTooltipRegions(pixels);
+      const candidates = detectTooltipRegions(pixels, detectOptions);
       detectedRegions = candidates.slice(0, 4).map(candidate => ({ x: candidate.x / bitmap.width, y: candidate.y / bitmap.height,
         width: candidate.width / bitmap.width, height: candidate.height / bitmap.height }));
       rect = selectTooltipRegion(pixels, candidates);

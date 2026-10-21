@@ -3,17 +3,18 @@
  * 파일/지정 영역을 받아 분리된 File과 경고를 돌려주고, 예외는 공통 인식 오류 형식으로 전달한다.
  */
 import { prepareTooltipImage, type TooltipCandidateRegions } from "./prepareTooltipImage";
+import type { DetectOptions } from "./detectTooltip";
 import type { OcrBounds } from "./types";
 import type { SourceFrameMetadata } from "./sourceFrame";
 
 // Worker 안에서만 파일을 처리하고 결과/경고를 호출 탭으로 돌려준다. 서버 업로드 호출은 하지 않는다.
-self.onmessage = async (event: MessageEvent<{ file: File; region?: OcrBounds }>) => {
+self.onmessage = async (event: MessageEvent<{ file: File; region?: OcrBounds; detect?: DetectOptions }>) => {
   let candidates: TooltipCandidateRegions | undefined;
   try {
     let warnings: string[] = [];
     let sourceFrame: SourceFrameMetadata | undefined;
     const file = await prepareTooltipImage(event.data.file, event.data.region, result => { warnings = result; },
-      result => { candidates = result; }, result => { sourceFrame = result; });
+      result => { candidates = result; }, result => { sourceFrame = result; }, event.data.detect);
     self.postMessage({ file, warnings, candidates, sourceFrame });
   }
   catch (error) { self.postMessage({ candidates, error: error && typeof error === "object" && "code" in error ? error : { code: "OCR_FAILED", retryable: true } }); }

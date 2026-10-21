@@ -11,7 +11,7 @@ export type BlockRow = { field: RequirementField; lineIds: string[]; bounds: Ocr
 export type RequirementBlock = { status: "located"; rows: BlockRow[]; anchors: number }
   | { status: "unavailable"; reason: string };
 
-const WIDE = 0.15, COLUMN = 0.02, PITCH = 0.3, MARGIN = 0.02, REACH = 0.28;
+const WIDE = 0.15, COLUMN = 0.02, PITCH = 0.3, MARGIN = 0.01, REACH = 0.28;
 type Row = { center: number; height: number; main: OcrReviewLine; lines: OcrReviewLine[] };
 
 const center = (b: OcrBounds) => b.y + b.height / 2;
@@ -71,10 +71,11 @@ export function locateRequirementBlock(review: OcrReview): RequirementBlock {
   const left = Math.min(...stack.map(r => r.main.bounds!.x));
   // Only lines starting inside the block column can widen a row; another column at the same height cannot.
   const own = (r: Row) => r.lines.filter(line => line.bounds!.x <= left + REACH);
-  const right = Math.max(...stack.slice(0, requirementFields.length)
-    .flatMap(r => own(r).map(line => line.bounds!.x + line.bounds!.width))) + MARGIN;
+  // Each row ends at its own text: a shared block width let short rows pick up marks to
+  // their right (a 0 was read as 04).
   return { status: "located", anchors, rows: requirementFields.map((field, k) => {
     const row = { lines: own(stack[k]) }, top = Math.min(...row.lines.map(l => l.bounds!.y));
+    const right = Math.max(...row.lines.map(l => l.bounds!.x + l.bounds!.width)) + MARGIN;
     const bottom = Math.max(...row.lines.map(l => l.bounds!.y + l.bounds!.height));
     return { field, lineIds: row.lines.map(l => l.id), bounds: { x: left, y: top, width: right - left, height: bottom - top } };
   }) };

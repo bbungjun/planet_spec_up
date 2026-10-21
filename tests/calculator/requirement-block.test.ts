@@ -35,7 +35,15 @@ describe('requirement block experiment locator',()=>{
     if(result.status!=='located')throw Error(result.reason);
     expect(result.rows[4].lineIds).toContain('frag');
     expect(result.rows[0].lineIds).not.toContain('other');
-    expect(result.rows[0].bounds.x+result.rows[0].bounds.width).toBeCloseTo(.39+.26+.02);
+    expect(result.rows[0].bounds.x+result.rows[0].bounds.width).toBeCloseTo(.39+.26+.01);
+    expect(result.rows[4].bounds.x+result.rows[4].bounds.width).toBeCloseTo(.39+.26+.01);
+  });
+  it('ends each row at its own text so marks right of a short row stay out',()=>{
+    const rows=block();rows[0].bounds!.width=.32;
+    const result=locateRequirementBlock(review(rows));
+    if(result.status!=='located')throw Error(result.reason);
+    expect(result.rows[0].bounds.width).toBeCloseTo(.32+.01);
+    expect(result.rows[2].bounds.width).toBeCloseTo(.26+.01);
   });
   it('accepts only plain integers from the numeric reader',()=>{
     expect(['0','120',' 45 '].map(requirementValue)).toEqual([0,120,45]);
