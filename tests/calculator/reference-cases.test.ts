@@ -36,7 +36,6 @@ const common = {
 
 describe("2026-07-27 행성.com frozen cases", () => {
   it.each([
-    ["marksman", 7430, 7165],
     ["corsair", 7430, 6241],
     ["night_lord", 7300, 8176],
   ] as const)("matches %s", (job, statAttack, convertedAttack) => {
@@ -44,14 +43,23 @@ describe("2026-07-27 행성.com frozen cases", () => {
       ...common,
       job,
       nightLordStrStat: job === "night_lord" ? 4 : 0,
-      skillPercent: job === "marksman" ? 270 : job === "corsair" ? 380 : 150,
+      skillPercent: job === "corsair" ? 380 : 150,
     })).toMatchObject({ statAttack, convertedAttack });
   });
 });
 
+// The 행성.com Marksman case (7430 / 7165) predates the Marksman master passives
+// (D-MARKSMAN-IMPLEMENT-001: Crossbow Expert +10 attack, Sharp Eyes passive +10/+10).
+// These pins track the current internal model only; Marksman is withdrawn from the
+// public pages (D-MARKSMAN-WITHDRAW-20261023-001) and its game QA was never done.
+it("keeps the Marksman master-passive model on the frozen 행성.com snapshot", () => {
+  expect(calculateFromSnapshot({ ...common, job: "marksman", nightLordStrStat: 0, skillPercent: 270 }))
+    .toMatchObject({ statAttack: 7961, convertedAttack: 8049 });
+});
+
 it.each([
-  ["usable", 2.075],
-  ["sharp_30", 2.32],
+  ["usable", 2.35],
+  ["sharp_30", 2.625],
 ] as const)("applies the %s Sharp Eyes bonuses", (sharpEyes, criticalMultiplier) => {
   expect(calculateFromSnapshot({
     ...common,
@@ -103,16 +111,16 @@ it("orchestrates normalized equipment and AP allocation", () => {
   input.equipment.weapon!.subPercent = "10";
   input.equipment.weapon!.attackFlat = "100";
   input.equipment.weapon!.attackPercent = "10";
-  input.equipment.projectile!.attackFlat = "30";
+  input.equipment.projectile!.attackFlat = "2";
   input.equipment.weapon!.requiredLevel = "0";
   input.equipment.weapon!.requiredSub = "0";
 
   expect(calculateDamageResult(input)).toMatchObject({
     mainStat: 1458,
     subStat: 59,
-    totalAttack: 140,
-    statAttack: 7430,
-    convertedAttack: 7165,
+    totalAttack: 122, // floor(100 × 1.1) + arrows 2 + Crossbow Expert 10
+    statAttack: 6475,
+    convertedAttack: 8712,
     pureMain: 818,
     pureSub: 4,
     issues: [],
@@ -280,7 +288,7 @@ it("passes normalized critical rate into the critical multiplier", () => {
   input.character.criticalRate = "10";
   input.equipment.weapon!.attackFlat = "1";
 
-  expect(calculateDamageResult(input).criticalMultiplier).toBe(1.5);
+  expect(calculateDamageResult(input).criticalMultiplier).toBe(2.875);
 });
 
 it("uses Night Lord stat-window STR directly in stat attack", () => {

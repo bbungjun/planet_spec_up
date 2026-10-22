@@ -11,7 +11,8 @@ it.each(["corsair", "marksman", "night_lord", "aran"] as const)("starts %s with 
   const result = calculateDamageResult(input);
   expect(input.equipment.buff!.attackFlat).toBe("35");
   expect(input.attackBuffs).toEqual({ sprinkling: false, rage: false });
-  expect(result.totalAttack).toBe(job === "aran" ? 140 : 160); // weapon 100 + guild 5 + Pink Bean 35 + ammo (non-Aran) 20
+  // weapon 100 + guild 5 + Pink Bean 35, plus bullets/stars 20 or Marksman arrows 0 + Crossbow Expert 10
+  expect(result.totalAttack).toBe({ aran: 140, marksman: 150 }[job as string] ?? 160);
   expect(result.windowStats).toMatchObject({ bossDamagePercent: 5, ignoreDefensePercent: 10 });
 });
 

@@ -14,9 +14,8 @@ it("keeps another job's save untouched while using and reloading the captain bet
   expect(screen.getByText("BETA", { exact: true })).toBeVisible();
   expect(screen.queryByText("캡틴 전용 베타")).not.toBeInTheDocument();
   expect(screen.getByLabelText("직업")).toHaveValue("corsair");
-  expect(screen.getByLabelText("직업")).toBeDisabled();
-  expect(within(screen.getByLabelText("직업")).getAllByRole("option")).toHaveLength(1);
-  expect(screen.getByRole("alert")).toHaveTextContent("기존 다른 직업의 저장값은 보존");
+  expect(within(screen.getByLabelText("직업")).getAllByRole("option").map(option => (option as HTMLOptionElement).value)).toEqual(["corsair", "aran"]);
+  expect(screen.getByRole("alert")).toHaveTextContent("직업이 캡틴이 아닙니다. 기존 데이터는 보존했습니다.");
   await user.click(screen.getByRole("button", { name: "불러오기" }));
   expect(screen.getByLabelText("직업")).toHaveValue("corsair");
   fireEvent.change(screen.getByLabelText("레벨"), { target: { value: "180" } });

@@ -9,14 +9,15 @@ import { getVisibleEquipmentSlots } from "@/features/calculator/domain/slots";
 
 beforeEach(() => { localStorage.clear(); vi.restoreAllMocks(); });
 
-it("defaults projectile attack to 20 while excluding it from all equipment destinations", async () => {
+it("defaults projectile attack to 20 (Marksman arrows 0) while excluding it from all equipment destinations", async () => {
   for (const job of ["corsair", "night_lord", "marksman"] as const) {
     const input = createDefaultInput(job);
-    expect(input.equipment.projectile?.attackFlat).toBe("20");
+    expect(input.equipment.projectile?.attackFlat).toBe(job === "marksman" ? "0" : "20");
     for (const slot of ["projectile", "blessing_1", "blessing_2", "buff"]) {
       expect(getVisibleEquipmentSlots(input)).not.toContain(slot);
     }
-    expect(calculateDamageResult(input).totalAttack).toBe(60); // projectile 20 + guild 5 + Pink Bean 35
+    // projectile 20 (Marksman: arrows 0 + Crossbow Expert 10) + guild 5 + Pink Bean 35
+    expect(calculateDamageResult(input).totalAttack).toBe(job === "marksman" ? 50 : 60);
   }
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   const user = userEvent.setup();

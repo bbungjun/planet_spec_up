@@ -69,7 +69,6 @@ function firstSlot(job: JobId): EquipmentSlot {
 const loadErrorMessage = (message: string) => message === "unsupported-job"
   ? "저장된 세팅의 직업이 캡틴이 아닙니다. 기존 데이터는 보존했습니다."
   : message === "unsupported-aran-job" ? "저장된 세팅의 직업이 아란이 아닙니다. 기존 데이터는 보존했습니다."
-  : message === "unsupported-marksman-job" ? "저장된 세팅의 직업이 신궁이 아닙니다. 기존 데이터는 보존했습니다."
   : message === "empty" ? "저장된 세팅이 없습니다." : "저장 데이터를 불러올 수 없습니다.";
 
 export function CalculatorApp({ mode = "sandbox", developmentDefault = null }: { mode?: CalculatorMode; developmentDefault?: string | null }) {

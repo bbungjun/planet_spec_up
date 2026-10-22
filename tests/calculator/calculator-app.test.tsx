@@ -423,13 +423,13 @@ describe("calculator app", () => {
     expect(convertedAttack).not.toBeInTheDocument();
   });
 
-  it("offers only Captain on the public beta page", () => {
+  it("offers Captain and Aran on the public page, without the withdrawn Marksman", async () => {
     render(<Page />);
 
     const job = screen.getByLabelText("직업");
-    expect(within(job).getAllByRole("option")).toHaveLength(1);
-    expect(job).toHaveTextContent("캡틴");
-    expect(job).toBeDisabled();
+    expect(within(job).getAllByRole("option").map(option => (option as HTMLOptionElement).value)).toEqual(["corsair", "aran"]);
+    expect(job).not.toHaveTextContent("신궁");
+    await waitFor(() => expect(job).toBeEnabled());
     expect(screen.getByText("BETA", { exact: true })).toBeVisible();
     expect(screen.queryByText("캡틴 전용 베타")).not.toBeInTheDocument();
   });

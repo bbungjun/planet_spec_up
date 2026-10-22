@@ -5,7 +5,7 @@ import { ARAN_BETA_STORAGE_KEY, CAPTAIN_BETA_STORAGE_KEY, DEVELOPMENT_STORAGE_KE
 
 beforeEach(() => localStorage.clear());
 it.each([
-  ["captain", "corsair", CAPTAIN_BETA_STORAGE_KEY, "/"], ["aran", "aran", ARAN_BETA_STORAGE_KEY, "/aran"], ["marksman", "marksman", MARKSMAN_BETA_STORAGE_KEY, "/marksman"],
+  ["captain", "corsair", CAPTAIN_BETA_STORAGE_KEY, "/"], ["aran", "aran", ARAN_BETA_STORAGE_KEY, "/aran"],
 ] as const)("couples %s initial job, navigation and isolated key", (mode, job, key, route) => {
   const runtime = createCalculatorRuntime(mode);
   expect(runtime.initialJob).toBe(job); expect(runtime.jobs).not.toContain("night_lord");
@@ -14,14 +14,15 @@ it.each([
   expect(localStorage.getItem(key)).not.toBeNull(); expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   expect(() => runtime.save(localStorage, createDefaultInput("night_lord"))).toThrow();
 });
-it("keeps Marksman isolated from legacy and local seed, and reset cannot resurrect them", () => {
-  const seed = serializeSetup(createDefaultInput("marksman")); localStorage.setItem(STORAGE_KEY, seed); localStorage.setItem(CAPTAIN_BETA_STORAGE_KEY, seed);
-  const runtime = createCalculatorRuntime("marksman", seed);
-  expect(runtime.load(localStorage)).toEqual({ ok: false, message: "empty" });
-  runtime.save(localStorage, createDefaultInput("marksman")); runtime.clear(localStorage);
-  expect(localStorage.getItem(MARKSMAN_BETA_STORAGE_KEY)).toBe("null");
-  expect(createCalculatorRuntime("marksman", seed).load(localStorage)).toEqual({ ok: false, message: "empty" });
-  expect(localStorage.getItem(STORAGE_KEY)).toBe(seed);
+it("withdraws Marksman from public pages but leaves its saved key and development access", () => {
+  const saved = serializeSetup(createDefaultInput("marksman")); localStorage.setItem(MARKSMAN_BETA_STORAGE_KEY, saved);
+  for (const mode of ["captain", "aran"] as const) {
+    const runtime = createCalculatorRuntime(mode);
+    expect(runtime.jobs).not.toContain("marksman"); expect(runtime.destination("marksman")).toBeNull();
+    runtime.save(localStorage, createDefaultInput(runtime.initialJob)); runtime.clear(localStorage);
+  }
+  expect(localStorage.getItem(MARKSMAN_BETA_STORAGE_KEY)).toBe(saved);
+  expect(createCalculatorRuntime("development").jobs).toContain("marksman");
 });
 it("keeps development Night Lord access, seed and explicit-reset sentinel separate", () => {
   const seed = serializeSetup(createDefaultInput("night_lord")); const runtime = createCalculatorRuntime("development", seed);
